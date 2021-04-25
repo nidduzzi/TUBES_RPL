@@ -1,7 +1,7 @@
 <template>
   <div class="formsignup">
     <div class="row w-100">
-      <div class="offset-lg-3 col-lg-6">
+      <div class="offset-md-4 col-md-4">
         <div class="card">
           <div class="card-body">
             <h2 class="text-center">Sign Up</h2>
@@ -22,7 +22,7 @@
               </div>
               <div class="form-group">
                 <label for="passwordre">Password Confirmation</label>
-                <input type="passwordre" class="form-control" />
+                <input type="password" class="form-control" />
               </div>
               <div class="form-check">
                 <input
@@ -60,7 +60,7 @@
 
 <script>
 export default {
-  name: "loginform",
+  name: "signupform",
 };
 </script>
 
@@ -84,7 +84,7 @@ export default {
 .button-orange {
   background-color: #f4743b;
   color: white;
-  border-radius: 2em;
+  border-radius: 1em;
   &:hover {
       background: darken(#F4743B, 10%);
   }

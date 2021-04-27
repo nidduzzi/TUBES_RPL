@@ -16,12 +16,25 @@ export default new Router({
     {
       path: "/login",
       name: "login",
-      component: () => import("./views/Login.vue")
+      component: () => import("./views/Login.vue"),
+      props: { role: 'user'}
+    },
+    {
+      path: "/admin",
+      name: "admin",
+      component: () => import("./views/Login.vue"),
+      props: { role: 'admin'}
     },
     {
       path: "/signup",
       name: "signup",
       component: () => import("./views/Signup.vue")
+    },
+    {
+      path: "/eventorganizer",
+      name: "eventorganizer",
+      component: () => import("./views/Login.vue"),
+      props: { role: 'eo'}
     }
   ]
 });

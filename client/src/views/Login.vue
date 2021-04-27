@@ -1,14 +1,24 @@
 <template>
   <div class="login">
-    <loginform />
+    <loginform v-if="role === 'user'"/>
+    <eoform v-else-if="role === 'eo'"/>
+    <adminform v-else/>
   </div>
 </template>
 
 <script>
 import loginform from "@/components/LoginForm.vue"
+import adminform from "@/components/AdminForm.vue"
+import eoform from "@/components/EoForm.vue"
 export default {
+  name: 'Login',
+  props: {
+    role: String,
+  },
   components: {
-    loginform
+    loginform,
+    adminform,
+    eoform
   }
 }
 </script>

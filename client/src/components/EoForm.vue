@@ -3,11 +3,14 @@
     <div class="row w-100">
       <div class="offset-lg-3 col-lg-6">
         <div class="card">
-           <img src="../assets/login.jpg" class="card-img-top" />
+          <img src="../assets/eo.png" class="card-img-top p-4" />
           <div class="card-body">
+            <h2 class="text-center">Event Organizer</h2>
+            <hr class="w-75" />
+            <hr class="w-50" />
             <form>
               <div class="form-group">
-                <label for="email">Username/Email</label>
+                <label for="email">Username</label>
                 <input
                   type="email"
                   class="form-control"
@@ -20,7 +23,7 @@
                   class="form-control"
                 />
               </div>
-              <label class="question">Belum punya akun ?</label>
+              <label class="question">Belum punya akun sebagai penyelenggara?</label>
               <router-link to="/signup" class="question font-weight-bold linked"> Signup here</router-link>
               <button type="submit" class="btn button-orange btn-block">Login</button>
             </form>

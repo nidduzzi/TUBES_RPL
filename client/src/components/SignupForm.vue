@@ -91,13 +91,13 @@ export default {
 }
 
 .card {
-  padding: 2.5em 0;
+  padding: 1em 0;
   margin-top: 0;
   margin-bottom: 0;
   flex-direction: row;
-  border-radius: 2em;
+  border-radius: 1em;
   img {
-    border-radius: 2em 0 0 2em;
+    border-radius: 1em 0 0 1em;
     width: 50%;
   }
 }

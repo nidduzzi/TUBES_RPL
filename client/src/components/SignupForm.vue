@@ -24,25 +24,13 @@
                 <label for="passwordre">Password Confirmation</label>
                 <input type="password" class="form-control" />
               </div>
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  name="role"
-                  value="user"
-                  id="user"
-                />
-                <label class="form-check-label" for="role">Partisipan</label>
+              <div class="form-group">
+                <label for="date">Date of Birth</label>
+                <input type="date" class="form-control" />
               </div>
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  name="role"
-                  value="eventorganizer"
-                  id="eventorganizer"
-                />
-                <label for="role">Penyelenggara</label>
+              <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" class="form-control" />
               </div>
               <button
                 type="submit"

@@ -1,11 +1,11 @@
 <template>
-  <div class="signup">
+  <div class="signup py-5">
     <signupform />
   </div>
 </template>
 
 <script>
-import signupform from "@/components/SignupForm.vue"
+import signupform from "@/components/SignupForm2.vue"
 export default {
   components: {
     signupform

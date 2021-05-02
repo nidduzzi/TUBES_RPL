@@ -2,22 +2,28 @@
   <div id="app">
     <NProgress />
     <div class="container">
-      <VueNavigationBar :options="navbarOptions" />
+      <VueNavigationBar
+        :class="[isSticky ? stickyClass : '']"
+        :options="navbarOptions"
+      />
     </div>
     <router-view />
+    <Footer />
   </div>
 </template>
 
 <script>
 import VueNavigationBar from "vue-navigation-bar";
-import NProgress from 'nprogress'
-import 'nprogress/nprogress.css'
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
 import "vue-navigation-bar/dist/vue-navigation-bar.css";
+import Footer from "@/components/Footer.vue";
 
 export default {
   components: {
     VueNavigationBar,
     NProgress,
+    Footer,
   },
   data() {
     return {
@@ -38,7 +44,7 @@ export default {
           {
             type: "link",
             text: "Home",
-            path: { name: "home" }
+            path: { name: "home" },
           },
           {
             type: "link",
@@ -81,7 +87,26 @@ export default {
           },
         ],
       },
+      isSticky: false,
+      stickyClass: "is_sticky",
+      scrollPosition: 0,
     };
+  },
+  created() {
+    window.addEventListener("scroll", this.handleScroll);
+  },
+  destroyed() {
+    window.removeEventListener("scroll", this.handleScroll);
+  },
+  methods: {
+    handleScroll() {
+      this.scrollPosition = window.scrollY;
+      if (this.scrollPosition >= 100) {
+        this.isSticky = true;
+      } else {
+        this.isSticky = false;
+      }
+    },
   },
 };
 </script>
@@ -89,6 +114,9 @@ export default {
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap");
 @import url("https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css");
 @import url("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css");
+// scss/main.scss
+@import '../node_modules/@braid/vue-formulate/themes/snow/snow.scss';
+
 #app {
   font-family: "Open Sans", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -99,6 +127,21 @@ export default {
 
 body {
   margin: 0;
+}
+
+.is_sticky {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1030;
+  width: 100%;
+  -webkit-animation: 0.95s ease-in-out 0s normal none 1 running fadeInDown;
+  animation: 0.95s ease-in-out 0s normal none 1 running fadeInDown;
+  -webkit-transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  -webkit-box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.1);
 }
 
 .vnb {

@@ -36,7 +36,7 @@
 
 <script>
 export default {
-  name: "loginform",
+  name: "eoform",
 };
 </script>
 

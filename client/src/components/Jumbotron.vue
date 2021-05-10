@@ -22,7 +22,7 @@
               <span class="d-block"><b>Selasa, 27 April 2021</b></span>
               <p>Universitas Something</p>
             </figcaption>
-            <a href="" class="btn btn-beli py-1 px-3">Beli Tiket</a>
+            <router-link to="/order" class="btn btn-beli py-1 px-3">Beli Tiket</router-link>
           </figure>
         </slide>
       </carousel-3d>

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { PrismaClient, RefreshToken, User } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { generatedRefreshToken } from '../../interfaces/generatedRefreshToken.interface';
 const prisma = new PrismaClient();
 

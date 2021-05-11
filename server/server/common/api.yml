@@ -22,7 +22,7 @@ tags:
   - name: User Endpoint
   - name: Webhook
 servers:
-  - url: '/api/v1'
+  - url: 'http://localhost:9000'
 paths:
   /users:
     post:
@@ -560,7 +560,7 @@ paths:
         required: true
     get:
       summary: Get a list of all refresh tokens (active and revoked) of the user by id
-      description: "Admin users can access any user's refresh tokens, regular users are restricted to their own refresh tokens."
+      description: 'Admin users can access any user''s refresh tokens, regular users are restricted to their own refresh tokens.'
       operationId: get-users-id-RefreshTokens
       security:
         - bearerAuth: []
@@ -1704,7 +1704,7 @@ paths:
         required: true
     get:
       summary: Get a list of all refresh tokens (active and revoked) of the admin by id
-      description: "Admin users can access any user's refresh tokens, regular users are restricted to their own refresh tokens."
+      description: 'Admin users can access any user''s refresh tokens, regular users are restricted to their own refresh tokens.'
       operationId: get-admins-id-RefreshTokens
       security:
         - bearerAuth: []
@@ -2188,15 +2188,11 @@ components:
         id:
           type: integer
           example: 1
-        username:
+        role:
           type: string
-        jwtToken:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWIxMmUxOTdlMDZhNzZjY2RlZmMxMjEiLCJpZCI6IjVlYjEyZTE5N2UwNmE3NmNjZGVmYzEyMSIsImlhdCI6MTU4ODc1ODE1N30.xR9H0STbFOpSkuGA9jHNZOJ6eS7umHHqKRhI807YT1Y
       required:
         - id
-        - username
-        - jwtToken
+        - role
   securitySchemes:
     bearerAuth:
       type: http
@@ -2242,9 +2238,14 @@ components:
             type: object
             properties:
               auth:
-                $ref: '#/components/schemas/Authentification'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Authentification'
+              jwtToken:
+                type: string
             required:
               - auth
+              - jwtToken
       headers:
         Set-Cookie:
           schema:

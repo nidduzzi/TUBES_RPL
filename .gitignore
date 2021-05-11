@@ -91,3 +91,5 @@ typings/
 
 # Compiled typescript
 **/dist
+
+*.cpuprofile

@@ -28,8 +28,8 @@ export const checkPermissions = (
 
         if (options && options.failWithError) {
           return next({
-            statusCode: 403,
-            error: 'Forbidden',
+            status: 403,
+            errors: 'Forbidden',
             message: err_message,
           });
         }
@@ -48,20 +48,27 @@ export const checkPermissions = (
       let allowed = false;
       const id = Number.parseInt(req.params['id']);
       if (options && options.checkAllScopes) {
+        // check all scopes provided in the request
         allowed = user.scopes.every((scope) =>
+          // against scopes expected for the path
           expectedScopes.every(
             (expectedScope) =>
+              // validate role
               scope.role == expectedScope.role &&
+              // validate id if provided with id validator by expected scopes
               (expectedScope.idValidator != undefined && id != NaN
                 ? expectedScope.idValidator(id, scope.id)
                 : true)
           )
         );
       } else {
+        // check scopes provided in the request if at least one satisfy the expected scopes
         allowed = user.scopes.some((scope) =>
           expectedScopes.every(
             (expectedScope) =>
+              // validate role
               scope.role == expectedScope.role &&
+              // validate id if provided with id validator by expected scopes
               (expectedScope.idValidator != undefined && id != NaN
                 ? expectedScope.idValidator(id, scope.id)
                 : true)

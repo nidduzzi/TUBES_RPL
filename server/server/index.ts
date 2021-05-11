@@ -4,8 +4,8 @@ import routes from './routes';
 import 'source-map-support/register';
 
 process.on('unhandledRejection', console.log);
-if (!process.env.SESSION_SECERET) {
-  process.env.SESSION_SECERET = 'TEMPORARYSECRETTTTT';
+if (!process.env.SESSION_SECRET) {
+  process.env.SESSION_SECRET = 'TEMPORARYSECRETTTTT';
 }
 
 const port = parseInt(process.env.PORT ?? '9000');

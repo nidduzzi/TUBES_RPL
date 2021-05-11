@@ -1,10 +1,5 @@
-interface Scope {
-  id: number;
-  role: string;
-}
+import { Scope } from './authentification.interface';
 
-interface JwtDataStore {
+export default interface JwtDataStore {
   scopes: Array<Scope>;
 }
-
-export default JwtDataStore;

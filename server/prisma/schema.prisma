@@ -51,6 +51,7 @@ model EventOrganizer {
     suspensions      Suspension[]
     termination      Termination?
     notifications    Notification[]
+    Event            Event[]
 }
 
 model Admin {
@@ -177,17 +178,19 @@ model Notification {
 }
 
 model Event {
-    id           Int           @id @default(autoincrement())
-    name         String
-    tagline      String?
-    description  String        @db.LongText
-    schedule     Schedule[]
-    ticketTypes  TicketType[]
-    tags         Tag[]
-    logo         Bytes?
-    rsvpDeadline DateTime?
-    hasRsvp      Boolean
-    reservations Reservation[]
+    id               Int            @id @default(autoincrement())
+    name             String
+    tagline          String?
+    description      String         @db.LongText
+    schedule         Schedule[]
+    ticketTypes      TicketType[]
+    tags             Tag[]
+    logo             Bytes?
+    rsvpDeadline     DateTime?
+    hasRsvp          Boolean
+    reservations     Reservation[]
+    eventOrganizerId Int
+    eventOrganizer   EventOrganizer @relation(fields: [eventOrganizerId], references: [id])
 }
 
 model Schedule {

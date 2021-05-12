@@ -197,6 +197,8 @@ paths:
               properties:
                 username:
                   type: string
+                  pattern: '^[A-Za-z0-9-_]'
+                  minLength: 1
                 profilePicture:
                   type: string
                   format: binary
@@ -206,6 +208,9 @@ paths:
                 password:
                   type: string
                   minLength: 8
+                  pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+                  format: password
+                  example: fFf9@qe!
             examples:
               Update User Profile Picture:
                 value:
@@ -233,14 +238,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  policy_breach:
-                    type: string
-                  description:
-                    type: string
-                  id_admin:
-                    type: string
+                $ref: '#/components/schemas/Termination'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
@@ -296,28 +294,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  suspensionLength:
-                    type: string
-                  policy_breach:
-                    type: string
-                  description:
-                    type: string
-                  id_admin:
-                    type: integer
-                required:
-                  - suspensionLength
-                  - policy_breach
-                  - description
-                  - id_admin
+                $ref: '#/components/schemas/Suspension'
               examples:
                 Bob Ross Suspended for 1 week:
                   value:
-                    policy_breach: Harassment
-                    suspensionLength: 3 days
+                    policyBreach: Harassment
+                    length: 3d
                     description: Bob Ross Suspended for 1 week
-                    id_admin: 0
+                    adminId: 0
+                    id: 20
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
@@ -333,27 +318,25 @@ paths:
             schema:
               type: object
               properties:
-                suspensionLength:
-                  description: suspend user for specified ammount of time
+                length:
                   type: string
-                policy_breach:
+                  description: suspend user for specified ammount of time
+                  pattern: '^[1-9][0-9]*[smhdwMy]$'
+                  minLength: 2
+                policyBreach:
                   type: string
                 description:
                   type: string
-                id_admin:
-                  type: integer
               required:
-                - suspensionLength
-                - policy_breach
+                - length
+                - policyBreach
                 - description
-                - id_admin
             examples:
               Suspend User for 3 days:
                 value:
-                  policy_breach: Ethical conduct
+                  policyBreach: Ethical conduct
                   description: User conducted unethical acts
-                  suspensionLength: 3 days
-                  id_admin: 0
+                  length: 3d
         description: 'Details of user suspension '
       tags:
         - Admin Endpoint
@@ -1356,14 +1339,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  policy_breach:
-                    type: string
-                  description:
-                    type: string
-                  id_admin:
-                    type: integer
+                $ref: '#/components/schemas/Termination'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
@@ -1419,28 +1395,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  suspensionLength:
-                    type: string
-                  policy_breach:
-                    type: string
-                  description:
-                    type: string
-                  id_admin:
-                    type: integer
-                required:
-                  - suspensionLength
-                  - policy_breach
-                  - description
-                  - id_admin
+                $ref: '#/components/schemas/Suspension'
               examples:
                 Bob Ross Suspended for 1 week:
                   value:
-                    policy_breach: Harassment
-                    suspensionLength: 3 days
+                    policyBreach: Harassment
+                    length: 3d
                     description: Bob Ross Suspended for 1 week
-                    id_admin: 0
+                    adminId: 0
+                    id: 20
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
@@ -1456,24 +1419,25 @@ paths:
             schema:
               type: object
               properties:
-                suspensionLength:
-                  description: suspend user for specified ammount of time
+                length:
                   type: string
-                policy_breach:
+                  description: suspend user for specified ammount of time
+                  pattern: '^[1-9][0-9]*[smhdwMy]$'
+                  minLength: 2
+                policyBreach:
                   type: string
                 description:
                   type: string
               required:
-                - suspensionLength
-                - policy_breach
+                - length
+                - policyBreach
                 - description
             examples:
               Suspend User for 3 days:
                 value:
-                  policy_breach: Ethical conduct
+                  policyBreach: Ethical conduct
                   description: User conducted unethical acts
-                  suspensionLength: 3 days
-                  id_admin: 0
+                  length: 3d
         description: 'Details of event organizer suspension '
       tags:
         - Admin Endpoint
@@ -1784,7 +1748,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFoundError'
-      operationId: get-eventOrganizers-id
+      operationId: get-eventOrganizers-id-events
       description: Retrieve all details of events created by the specified event organizer
       security:
         - bearerAuth: []
@@ -1883,6 +1847,28 @@ paths:
                   - message
       operationId: get-eventOrganizers-verify-email-verification_token
       description: Verify event organizer email by sending request with verification token sent to email
+  '/users/{id}/profilePicture':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get User's Profile Picture
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+      operationId: get-users-id-profilePicture
+      security:
+        - bearerAuth: []
+      description: Users can retrieve their profile pictures
 components:
   schemas:
     User:
@@ -1908,7 +1894,7 @@ components:
           description: The date that the user was created.
         profilePicture:
           type: string
-          format: binary
+          format: byte
       required:
         - id
         - username
@@ -2193,6 +2179,45 @@ components:
       required:
         - id
         - role
+    Termination:
+      title: Termination
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        policyBreach:
+          type: string
+        adminId:
+          type: integer
+      required:
+        - id
+        - description
+        - policyBreach
+        - adminId
+    Suspension:
+      title: Suspension
+      type: object
+      properties:
+        id:
+          type: integer
+        policyBreach:
+          type: string
+        description:
+          type: string
+        length:
+          type: string
+          pattern: '^[1-9][0-9]*[smhdwMy]$'
+          minLength: 2
+        adminId:
+          type: integer
+      required:
+        - id
+        - policyBreach
+        - description
+        - length
+        - adminId
   securitySchemes:
     bearerAuth:
       type: http

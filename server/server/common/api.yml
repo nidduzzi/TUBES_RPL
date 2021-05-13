@@ -1861,14 +1861,96 @@ paths:
         '200':
           description: OK
           content:
-            image/png:
+            image/jpeg:
               schema:
                 type: string
-                format: binary
+                format: byte
       operationId: get-users-id-profilePicture
       security:
         - bearerAuth: []
-      description: Users can retrieve their profile pictures
+      description: Users can retrieve their profile picture
+  '/eventOrganizers/{id}/profilePicture':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Event Organizer Profile Picture
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: byte
+      operationId: get-eventOrganizers-id-profilePicture
+      description: Retrive profile pictures of event organizers
+  '/users/{id}/notifications':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get users notifications
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                required:
+                  - notifications
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id-notifications
+      security:
+        - bearerAuth: []
+      description: Users retrieve notifications for their accounts
+  '/eventOrganizers/{id}/notifications':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Event Organizer notifications
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                required:
+                  - notifications
+      operationId: get-eventOrganizers-id-notifications
+      security:
+        - bearerAuth: []
+      description: Event organizers retrieve their notifications
 components:
   schemas:
     User:
@@ -1895,6 +1977,10 @@ components:
         profilePicture:
           type: string
           format: byte
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
       required:
         - id
         - username
@@ -2003,13 +2089,17 @@ components:
           type: string
           pattern: '^[+][0-9]{2,}[0-9]+$'
           minLength: 1
-        authorizedUsersId:
+        usersId:
           type: array
           minItems: 1
           uniqueItems: true
           description: users authorized to use event organizer
           items:
             type: integer
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
       required:
         - id
         - name
@@ -2019,6 +2109,7 @@ components:
         - registrationDate
         - verificationDate
         - phone
+        - usersId
     Schedule:
       title: Schedule
       type: object
@@ -2218,6 +2309,19 @@ components:
         - description
         - length
         - adminId
+    Notification:
+      title: Notification
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+      required:
+        - id
+        - title
   securitySchemes:
     bearerAuth:
       type: http

@@ -22,7 +22,7 @@ tags:
   - name: User Endpoint
   - name: Webhook
 servers:
-  - url: 'http://localhost:9000'
+  - url: /api/v1
 paths:
   /users:
     post:
@@ -419,16 +419,22 @@ paths:
               properties:
                 username:
                   type: string
-                  example: jason
+                  example: BobFellow
                 password:
                   type: string
-                  example: pass123
+                  example: fFf9@qe!
                 email:
                   type: string
                   format: email
-                  example: jason@example.com
+                  example: bob.fellow@gmail.com
               required:
                 - password
+            examples:
+              BobFellow Login:
+                value:
+                  username: BobFellow
+                  password: fFf9@qe!
+                  email: bob.fellow@gmail.com
         description: User Credentials
       responses:
         '200':
@@ -479,8 +485,6 @@ paths:
       tags:
         - Authentification Endpoint
         - User Endpoint
-      security:
-        - bearerAuth: []
   /users/revoke-token:
     post:
       summary: Revoke a refresh token
@@ -1605,8 +1609,6 @@ paths:
       tags:
         - Authentification Endpoint
         - Admin Endpoint
-      security:
-        - bearerAuth: []
   /admins/revoke-token:
     post:
       summary: Revoke an Admin refresh token
@@ -1853,7 +1855,8 @@ paths:
         required: true
     get:
       summary: Get User's Profile Picture
-      tags: []
+      tags:
+        - User Endpoint
       responses:
         '200':
           description: OK
@@ -1875,7 +1878,8 @@ paths:
         required: true
     get:
       summary: Get Event Organizer Profile Picture
-      tags: []
+      tags:
+        - Event Organizer Endpoint
       responses:
         '200':
           description: OK
@@ -1895,7 +1899,8 @@ paths:
         required: true
     get:
       summary: Get users notifications
-      tags: []
+      tags:
+        - User Endpoint
       responses:
         '200':
           description: OK
@@ -1929,7 +1934,8 @@ paths:
         required: true
     get:
       summary: Get Event Organizer notifications
-      tags: []
+      tags:
+        - Event Organizer Endpoint
       responses:
         '200':
           description: OK
@@ -1948,6 +1954,39 @@ paths:
       security:
         - bearerAuth: []
       description: Event organizers retrieve their notifications
+  '/event/{id}/verify-ticket/{token}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+        description: event id
+      - schema:
+          type: string
+        name: token
+        in: path
+        required: true
+        description: ticket token
+    get:
+      summary: Verify the ticket for a certain event
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validTicket:
+                    type: boolean
+                required:
+                  - validTicket
+      operationId: get-event-id-verify-ticket-token
+      description: event organizers verify whether a ticket is valid or not based on the provided token
+      security:
+        - bearerAuth: []
 components:
   schemas:
     User:

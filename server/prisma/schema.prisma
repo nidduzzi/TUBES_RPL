@@ -22,7 +22,7 @@ model User {
     email            String          @unique
     username         String          @unique
     passwordHash     String
-    profilePicture   Bytes?
+    profilePicture   Bytes
     dateOfBirth      DateTime?
     emailVerified    Boolean         @default(false)
     address          String?
@@ -93,13 +93,14 @@ model Reservation {
 
 model Ticket {
     id                    Int                        @id @default(autoincrement())
+    uuid                  String                     @unique @default(uuid())
     identification        Identification
     identificationNumber  String
-    reservation           Reservation?               @relation(fields: [reservationId], references: [id])
-    reservationId         Int?
+    reservation           Reservation                @relation(fields: [reservationId], references: [id])
     type                  TicketType                 @relation(fields: [ticketTypeId], references: [id])
     ticketTypeId          Int
     ticketAttributeValues TicketTypeAttributeValue[]
+    reservationId         Int
 }
 
 model TicketType {

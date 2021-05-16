@@ -26,6 +26,6 @@
     "outDir": "dist",
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["server/**/*.ts", "server/**/*.js"],
+  "include": ["server/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

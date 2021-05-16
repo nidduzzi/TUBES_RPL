@@ -394,16 +394,13 @@ paths:
             schema:
               type: object
               properties:
-                policy_breach:
+                policyBreach:
                   type: string
                 description:
                   type: string
-                id_admin:
-                  type: integer
               required:
-                - policy_breach
+                - policyBreach
                 - description
-                - id_admin
         description: Description of the breach and the moderating admin.
       tags:
         - Admin Endpoint
@@ -1495,12 +1492,12 @@ paths:
             schema:
               type: object
               properties:
-                policy_breach:
+                policyBreach:
                   type: string
                 description:
                   type: string
               required:
-                - policy_breach
+                - policyBreach
                 - description
         description: Description of the breach and the moderating admin.
       tags:

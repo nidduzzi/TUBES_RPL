@@ -5,15 +5,15 @@ import http from 'http';
 import os from 'os';
 import cookieParser from 'cookie-parser';
 import { m, l } from './logger';
-import expressPinoLogger from 'express-pino-logger';
 import errorHandler from '../api/middlewares/error.handler';
 import * as OpenApiValidator from 'express-openapi-validator';
-
+import cors from 'cors';
 const app = express();
 
 export default class ExpressServer {
   private routes: (app: Application) => void;
   constructor() {
+    app.use(cors());
     const root = path.normalize(__dirname + '/../..');
     app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(

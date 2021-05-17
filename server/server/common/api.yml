@@ -683,7 +683,7 @@ paths:
         - bearerAuth: []
       requestBody:
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
@@ -697,11 +697,11 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Schedule'
-                rsvp_deadline:
+                rsvpDeadline:
                   type: string
-                has_rsvp:
+                hasRsvp:
                   type: boolean
-                ticket_types:
+                ticketTypes:
                   type: array
                   items:
                     $ref: '#/components/schemas/Ticket-Type'
@@ -709,13 +709,18 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Tag'
+                maxTickets:
+                  type: integer
+                unlimitedTickets:
+                  type: boolean
               required:
                 - name
                 - description
                 - schedule
-                - has_rsvp
-                - ticket_types
+                - hasRsvp
+                - ticketTypes
                 - tags
+                - unlimitedTickets
             examples: {}
         description: Event creation form data.
       tags:
@@ -785,14 +790,14 @@ paths:
                     $ref: '#/components/schemas/Schedule'
                 description:
                   type: string
-                rsvp_deadline:
+                rsvpDeadline:
                   type: string
                   format: time
-                has_rsvp:
+                hasRsvp:
                   type: boolean
                 tagline:
                   type: string
-                ticket_types:
+                ticketTypes:
                   type: array
                   items:
                     $ref: '#/components/schemas/Ticket-Type'
@@ -804,8 +809,8 @@ paths:
                 - name
                 - schedule
                 - description
-                - has_rsvp
-                - ticket_types
+                - hasRsvp
+                - ticketTypes
                 - tags
         description: Details of revised event
       tags:
@@ -1203,8 +1208,8 @@ paths:
       summary: Create a New Event Organizer
       operationId: post-eventOrganizers
       responses:
-        '200':
-          description: OK
+        '201':
+          description: Created
       security:
         - bearerAuth: []
       requestBody:
@@ -1287,7 +1292,7 @@ paths:
         - bearerAuth: []
       requestBody:
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
@@ -1296,9 +1301,6 @@ paths:
                 email:
                   type: string
                   format: email
-                profilePicture:
-                  type: string
-                  format: binary
                 address:
                   type: string
                 phone:
@@ -1317,11 +1319,11 @@ paths:
               required:
                 - name
                 - email
-                - profilePicture
                 - address
                 - phone
                 - password
                 - authorizedUsersId
+        description: ''
       tags:
         - Event Organizer Endpoint
   '/eventOrganizers/terminate/{id}':
@@ -1867,10 +1869,59 @@ paths:
               schema:
                 type: string
                 format: byte
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
       operationId: get-users-id-profilePicture
       security:
         - bearerAuth: []
       description: Users can retrieve their profile picture
+    put:
+      summary: Put a profile picture
+      operationId: put-users-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Users put a profile picture for themselves
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  format: byte
+      tags:
+        - User Endpoint
+    delete:
+      summary: Remove a User's Profile Picture
+      operationId: delete-users-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove a User's Profile Picture
+      security:
+        - bearerAuth: []
+      tags:
+        - User Endpoint
   '/eventOrganizers/{id}/profilePicture':
     parameters:
       - schema:
@@ -1892,6 +1943,49 @@ paths:
                 format: byte
       operationId: get-eventOrganizers-id-profilePicture
       description: Retrive profile pictures of event organizers
+    put:
+      summary: Put an Event Organizer's Profile Picture
+      operationId: put-eventOrganizers-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Put an Event Organizer's Profile Picture
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  format: byte
+      tags:
+        - Event Organizer Endpoint
+    delete:
+      summary: Remove an Event Organizer's Profile Picture
+      operationId: delete-eventOrganizers-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove an Event Organizer's Profile Picture
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Organizer Endpoint
   '/users/{id}/notifications':
     parameters:
       - schema:
@@ -2040,6 +2134,224 @@ paths:
       security:
         - bearerAuth: []
       description: EO requests another verification email
+  '/events/{id}/logo':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get the logo of an event
+      tags:
+        - Event Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-logo
+      description: Get the logo stored for an event
+    put:
+      summary: Put an Event's Logo
+      operationId: put-events-id-logo
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Event Organizers put an Event's Logo
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                logo:
+                  type: string
+                  format: byte
+              required:
+                - logo
+        description: ''
+      tags:
+        - Event Endpoint
+    delete:
+      summary: Remove an Event's Logo
+      operationId: delete-events-id-logo
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove an Event's Logo
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Endpoint
+  '/events/{id}/image/{image_number}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: image_number
+        in: path
+        required: true
+    get:
+      summary: Replace a specific image of an Event
+      tags:
+        - Event Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-image-image_number
+      description: Get an image for an event
+    put:
+      summary: Replace a specific Image of an event
+      operationId: put-events-id-image-image_number
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Replace a specific Image of an event
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: byte
+      tags:
+        - Event Endpoint
+    delete:
+      summary: Remove a specific image of an Event
+      operationId: delete-events-id-image-image_number
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove a specific image of an Event
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Endpoint
+  '/events/{id}/image':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    post:
+      summary: Post a new images to an Event
+      operationId: post-events-id-image
+      responses:
+        '201':
+          description: Created
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Post a new images to an Event
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: string
+                  format: byte
+      tags:
+        - Event Endpoint
+  /tags:
+    get:
+      summary: Get existing tags
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+                required:
+                  - tags
+      operationId: get-tags
+      description: Get existing tags
+    parameters: []
+  '/tags/{id}/events':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Events with specified tag
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                required:
+                  - events
+      operationId: get-tags-id-events
+      description: Get Events with specified tag
 components:
   schemas:
     User:
@@ -2092,21 +2404,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Schedule'
-        rsvp_deadline:
+        rsvpDeadline:
           type: string
-        has_rsvp:
+        hasRsvp:
           type: boolean
-        id_event_organizer:
+        eventOrganizerId:
           type: integer
         tags:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
-        max_tickets:
+        maxTickets:
           type: integer
-        unlimited_tickets:
+        unlimitedTickets:
           type: boolean
-        reserved_tickets:
+        reservedTickets:
           type: integer
         public:
           type: boolean
@@ -2114,22 +2426,28 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Reservation'
-        ticket_types:
+        ticketTypes:
           type: array
           items:
             $ref: '#/components/schemas/Ticket-Type'
+        hasLogo:
+          type: boolean
+        numImages:
+          type: integer
       required:
         - id
         - name
         - description
         - schedule
-        - has_rsvp
-        - id_event_organizer
+        - hasRsvp
+        - eventOrganizerId
         - tags
-        - max_tickets
-        - unlimited_tickets
-        - reserved_tickets
-        - ticket_types
+        - maxTickets
+        - unlimitedTickets
+        - reservedTickets
+        - ticketTypes
+        - hasLogo
+        - numImages
     Tag:
       title: Tag
       type: object
@@ -2147,9 +2465,7 @@ components:
         description:
           type: string
       required:
-        - id
         - name
-        - description
     Event-Organizer:
       title: Event-Organizer
       type: object
@@ -2221,7 +2537,6 @@ components:
         place:
           type: string
       required:
-        - id
         - name
         - start_time
         - end_time
@@ -2298,7 +2613,6 @@ components:
           type: string
           maxLength: 3
       required:
-        - id
         - name
         - price
         - currency
@@ -2313,7 +2627,6 @@ components:
         value:
           type: string
       required:
-        - id
         - name
     Payment:
       title: Payment

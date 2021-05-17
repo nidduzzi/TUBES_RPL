@@ -1818,6 +1818,8 @@ paths:
                     type: string
                 required:
                   - message
+        '400':
+          description: Bad Request
       operationId: get-users-verify-email-verification-token
       description: Verify user email by sending request with verification token sent to email
   '/eventOrganizers/verify-email/{verification_token}':
@@ -1970,7 +1972,8 @@ paths:
         description: ticket token
     get:
       summary: Verify the ticket for a certain event
-      tags: []
+      tags:
+        - Ticket Endpoint
       responses:
         '200':
           description: OK
@@ -1987,6 +1990,56 @@ paths:
       description: event organizers verify whether a ticket is valid or not based on the provided token
       security:
         - bearerAuth: []
+  '/users/{id}/resend-verification':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Resend User verification email
+      tags:
+        - User Endpoint
+        - Registration Endpoint
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id-resend-verification
+      security:
+        - bearerAuth: []
+      description: User requests another email verification
+  '/eventOrganizers/{id}/resend-verification':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Resend EO verification email
+      tags:
+        - Event Organizer Endpoint
+        - Registration Endpoint
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers-id-resend-verification
+      security:
+        - bearerAuth: []
+      description: EO requests another verification email
 components:
   schemas:
     User:

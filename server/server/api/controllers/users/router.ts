@@ -15,8 +15,8 @@ export default express
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, userId: number): boolean => {
-          return id == userId;
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
         },
       },
       {
@@ -30,8 +30,8 @@ export default express
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, userId: number): boolean => {
-          return id == userId;
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
         },
       },
       {
@@ -46,8 +46,8 @@ export default express
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, userId: number): boolean => {
-          return id == userId;
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
         },
       },
       {
@@ -61,8 +61,8 @@ export default express
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, userId: number): boolean => {
-          return id == userId;
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
         },
       },
       {
@@ -70,6 +70,21 @@ export default express
       },
     ]),
     controller.getNotifications
+  )
+  .get(
+    '/:id/resend-verification',
+    checkPermissions([
+      {
+        role: Roles.User,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.getResendVerification
   )
   .get(
     '/:id/refresh-tokens',
@@ -81,8 +96,8 @@ export default express
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, userId: number): boolean => {
-          return id == userId;
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
         },
       },
       {
@@ -122,4 +137,5 @@ export default express
     '/revoke-token',
     checkPermissions([{ role: Roles.Admin }]),
     controller.postRevokeToken
-  );
+  )
+  .get('/verify-email/:token', controller.getVerifyEmail);

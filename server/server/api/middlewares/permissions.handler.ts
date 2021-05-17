@@ -5,7 +5,7 @@ import JwtDataStore from '../interfaces/jwtDataStore.interface';
 
 interface scopeValidator {
   role: string;
-  idValidator?: (id: number, userId: number) => boolean;
+  idValidator?: (id: number, roleId: number) => boolean;
 }
 
 interface options {

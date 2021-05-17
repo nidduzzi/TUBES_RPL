@@ -11,6 +11,7 @@ import { ENCRYPT_ROUNDS } from '../../../config.json';
 import Jimp from 'jimp';
 import path from 'path';
 import JwtDataStore from '../../interfaces/jwtDataStore.interface';
+import emailService from '../../services/email.service';
 const prisma = new PrismaClient();
 
 function strToMilis(str: string): number {
@@ -48,6 +49,34 @@ function generateJwtToken(user: User): string {
       algorithm: 'HS256',
     }
   );
+}
+function generateEmailVerificationToken(user: User): string {
+  return jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.SESSION_SECRET ?? 'MySecret',
+    {
+      expiresIn: '1d',
+      algorithm: 'HS256',
+    }
+  );
+}
+
+function sendVerificationEmail(req: Request, user: User) {
+  const token = generateEmailVerificationToken(user);
+  const verificationLink: string =
+    'http://' +
+    req.hostname +
+    ':' +
+    process.env.PORT +
+    '/api/v1/users/verify-email/' +
+    token;
+  const emailHtml: string =
+    '<h2>Verification Link</h2><br><p>Link: ' +
+    verificationLink +
+    '</p><br><p>Token: ' +
+    token +
+    '</p><br>';
+  emailService(user.email, 'Ticketin Email Verification', emailHtml);
 }
 
 function generateRefreshToken(
@@ -178,40 +207,26 @@ export class Controller {
           if (user) {
             res.status(400).send({ message: 'username or email exists' });
           } else {
-            Jimp.read(
-              path.join(
-                __dirname,
-                '../../../../public/defaultProfilePicture.png'
-              )
-            ).then((def) => {
-              def.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
-                if (err) {
-                  console.log(err);
-                  next(err);
-                } else {
-                  prisma.user
-                    .create({
-                      data: {
-                        username: username,
-                        email: email,
-                        passwordHash: bcrypt.hashSync(password, ENCRYPT_ROUNDS),
-                        profilePicture: buffer,
-                        status: 'ACTIVE',
-                      },
-                    })
-                    .then((u) => {
-                      res.status(200).send({
-                        id: u.id,
-                        username: u.username,
-                        email: u.email,
-                        emailVerified: u.emailVerified,
-                        registrationDate: u.registrationDate,
-                      });
-                    })
-                    .catch((err) => next(err));
-                }
-              });
-            });
+            prisma.user
+              .create({
+                data: {
+                  username: username,
+                  email: email,
+                  passwordHash: bcrypt.hashSync(password, ENCRYPT_ROUNDS),
+                  status: 'ACTIVE',
+                },
+              })
+              .then((u) => {
+                sendVerificationEmail(req, u);
+                res.status(200).send({
+                  id: u.id,
+                  username: u.username,
+                  email: u.email,
+                  emailVerified: u.emailVerified,
+                  registrationDate: u.registrationDate,
+                });
+              })
+              .catch((err) => next(err));
           }
         })
         .catch((err) => next(err));
@@ -290,6 +305,91 @@ export class Controller {
       } else {
         res.status(400).json({ message: 'invalid username/email or password' });
       }
+    }
+  }
+
+  getResendVerification(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id) {
+      const id: number = Number.parseInt(req.params.id);
+      prisma.user
+        .findUnique({
+          where: { id: id },
+        })
+        .then((user) => {
+          if (user) {
+            if (!user.emailVerified) {
+              sendVerificationEmail(req, user);
+              res.status(200).send();
+            } else {
+              res.status(404).send({ message: 'user email already verified' });
+            }
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(404).send({ message: 'invalid id given' });
+    }
+  }
+
+  getVerifyEmail(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.token) {
+      const token: string = req.params.token;
+      if (token.length > 0) {
+        try {
+          jwt.verify(
+            token,
+            process.env.SESSION_SECRET ?? 'MySecret',
+            {
+              algorithms: ['HS256'],
+            },
+            (err, payload: any) => {
+              if (err) {
+                return next(err);
+              }
+              if (payload && payload.id && payload.email) {
+                prisma.user
+                  .findUnique({
+                    where: {
+                      id:
+                        typeof payload.id == 'number'
+                          ? payload.id
+                          : Number.parseInt(payload.id),
+                    },
+                  })
+                  .then((user) => {
+                    if (user) {
+                      if (!user.emailVerified && user.email == payload.email) {
+                        prisma.user
+                          .update({
+                            where: { id: user.id },
+                            data: { emailVerified: true },
+                          })
+                          .then((_user) => {
+                            res.status(200).send({ message: 'email verified' });
+                          });
+                      } else {
+                        res
+                          .status(404)
+                          .send({ message: 'email already verified' });
+                      }
+                    } else {
+                      res.status(404).send({ message: 'invalid token given' });
+                    }
+                  })
+                  .catch((err) => next(err));
+              } else {
+                res.status(404).send({ message: 'invalid token given' });
+              }
+            }
+          );
+        } catch (err) {
+          next(err);
+        }
+      }
+    } else {
+      res.status(400).send({ message: 'invalid verification token given' });
     }
   }
 
@@ -439,10 +539,31 @@ export class Controller {
     if (req.params.id != undefined) {
       const id = Number.parseInt(req.params.id);
       prisma.user
-        .findUnique({ where: { id: id } })
+        .findUnique({ where: { id: id }, select: { profilePicture: true } })
         .then((user) => {
           if (user) {
-            res.status(200).contentType('image/png').send(user.profilePicture);
+            if (user.profilePicture) {
+              res
+                .status(200)
+                .contentType('image/png')
+                .send(user.profilePicture);
+            } else {
+              Jimp.read(
+                path.join(
+                  __dirname,
+                  '../../../../public/defaultProfilePicture.png'
+                )
+              ).then((def) => {
+                def.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
+                  if (err) {
+                    console.log(err);
+                    next(err);
+                  } else {
+                    res.status(200).contentType('image/png').send(buffer);
+                  }
+                });
+              });
+            }
           } else {
             res.status(404).send({ message: 'invalid id given' });
           }

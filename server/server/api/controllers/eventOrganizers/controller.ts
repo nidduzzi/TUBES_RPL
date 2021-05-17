@@ -3,46 +3,34 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { Prisma, PrismaClient, User } from '@prisma/client';
-import { generatedRefreshToken } from '../../interfaces/generatedRefreshToken.interface';
+
 const prisma = new PrismaClient();
 
-function generateJwtToken(user: User): string {
-  const scopes = [{ id: user.id, role: 'user' }];
-  if (user.eventOrganizerId) {
-    scopes.push({ id: user.eventOrganizerId, role: 'EO' });
-  }
-  return jwt.sign(
-    { scopes: scopes },
-    process.env.SESSION_SECRET ?? 'MySecret',
-    {
-      expiresIn: '10m',
-    }
-  );
-}
-
-function generateRefreshToken(
-  user: User,
-  ipAddress: string
-): generatedRefreshToken {
-  const refreshToken: generatedRefreshToken = {
-    adminId: null,
-    userId: user.id,
-    createdByIp: ipAddress,
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    token: randomBytes(64).toString('hex'),
-  };
-
-  return refreshToken;
-}
-
 export class Controller {
-  all(_: Request, res: Response): void {
-    res.status(200);
+  async all(_: Request, res: Response): Promise<void> {
+    const eventOrganizers = await prisma.eventOrganizer.findMany({
+      include: {
+        allowedUsers: true
+      }
+    });
+    res.status(200).send({ eventOrganizers: eventOrganizers });
   }
 
-  byId(req: Request, res: Response): void {
+  async byId(req: Request, res: Response): Promise<void> {
     const id = Number.parseInt(req.params['id']);
-    res.status(200).json({ id: id });
+    const eventOrganizer = await prisma.eventOrganizer.findUnique({
+      where: {
+        id: id
+      },
+      include: {
+        allowedUsers: true
+      }
+    });
+    if (eventOrganizer) {
+      res.status(200).send(eventOrganizer);
+    } else {
+      res.status(404).send({ message: 'Event Organizer not found' });
+    }
   }
 
   async register(req: Request, res: Response): Promise<void> {
@@ -78,6 +66,103 @@ export class Controller {
       res
         .status(400)
         .send({ message: 'invalid username or email or password' });
+    }
+  }
+
+  async update(req: Request, res: Response): Promise<void> {
+    const data = req.body;
+    data.allowedUsers = data.allowedUsers.map(parseInt);
+    const id = Number.parseInt(req.params['id']);
+
+    // const updateEventOrganizer = await prisma.eventOrganizer.update({
+    //   where: {
+    //     id: id,
+    //   },
+    //   data: data
+    // })
+
+    console.log(data);
+    res.status(200).send({ message: 'ok' });
+  }
+
+  async getEvents(req: Request, res: Response): Promise<void> {
+    const id = Number.parseInt(req.params['id']);
+    const eventOrganizer = await prisma.eventOrganizer.findUnique({
+      where: {
+        id: id
+      }
+    })
+
+    if (eventOrganizer) {
+      const events = await prisma.event.findMany({
+        where: {
+          eventOrganizerId: id
+        },
+        select: {
+          id: true,
+          name: true,
+          tagline: true,
+          description: true,
+          logo: true,
+          rsvpDeadline: true,
+          hasRsvp: true,
+          eventOrganizerId: false
+        }
+      })
+
+      res.status(200).send({ events: events });
+    } else {
+      res.status(404).send({ message: 'Event Organizer not found' });
+    }
+  }
+
+  async verify(req: Request, res: Response): Promise<void> {
+    const id = Number.parseInt(req.params['id']);
+    const eventOrganizer = await prisma.eventOrganizer.findUnique({
+      where: {
+        id: id
+      }
+    })
+
+    if (eventOrganizer) {
+      await prisma.eventOrganizer.update({
+        where: {
+          id: id
+        },
+        data: {
+          verified: true,
+          verificationDate: new Date(Date.now())
+        }
+      })
+
+      res.status(204).send();
+    } else {
+      res.status(404).send({ message: 'Event Organizer not found' });
+    }
+  }
+
+  async unverify(req: Request, res: Response): Promise<void> {
+    const id = Number.parseInt(req.params['id']);
+    const eventOrganizer = await prisma.eventOrganizer.findUnique({
+      where: {
+        id: id
+      }
+    })
+
+    if (eventOrganizer) {
+      await prisma.eventOrganizer.update({
+        where: {
+          id: id
+        },
+        data: {
+          verified: false,
+          verificationDate: null
+        }
+      })
+
+      res.status(204).send();
+    } else {
+      res.status(404).send({ message: 'Event Organizer not found' });
     }
   }
 }

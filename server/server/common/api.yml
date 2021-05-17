@@ -22,7 +22,7 @@ tags:
   - name: User Endpoint
   - name: Webhook
 servers:
-  - url: 'http://localhost:9000'
+  - url: '/api/v1'
 paths:
   /users:
     post:
@@ -1312,32 +1312,27 @@ paths:
                 email:
                   type: string
                   format: email
-                profilePicture:
+                profilPicture:
                   type: string
                   format: binary
                 address:
                   type: string
                 phone:
                   type: string
-                password:
-                  type: string
-                  format: password
-                authorizedUsersId:
+                allowedUsers:
                   type: array
                   description: needs at least one user ID
                   minItems: 1
                   uniqueItems: true
                   items:
-                    type: integer
+                    type: string
                     minimum: 0
               required:
                 - name
                 - email
-                - profilePicture
                 - address
                 - phone
-                - password
-                - authorizedUsersId
+                - allowedUsers
       tags:
         - Event Organizer Endpoint
   '/eventOrganizers/terminate/{id}':

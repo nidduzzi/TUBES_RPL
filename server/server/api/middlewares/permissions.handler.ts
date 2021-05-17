@@ -36,9 +36,8 @@ export const checkPermissions = (
 
         res.append(
           'WWW-Authenticate',
-          `Bearer scope="${
-            expectedScopes.join(' ') +
-            (req.params['id'] ? ' id:' + req.params['id'] : '')
+          `Bearer scope="${expectedScopes.join(' ') +
+          (req.params['id'] ? ' id:' + req.params['id'] : '')
           }", error="${err_message}"`
         );
         res.status(403).send(err_message);

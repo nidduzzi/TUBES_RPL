@@ -4,8 +4,8 @@ import bodyParser from 'body-parser';
 import http from 'http';
 import os from 'os';
 import cookieParser from 'cookie-parser';
-import l from './logger';
-
+import { m, l } from './logger';
+import expressPinoLogger from 'express-pino-logger';
 import errorHandler from '../api/middlewares/error.handler';
 import * as OpenApiValidator from 'express-openapi-validator';
 
@@ -31,6 +31,9 @@ export default class ExpressServer {
       process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION &&
       process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION.toLowerCase() === 'true'
     );
+    if (process.env.NODE_ENV == 'development') {
+      app.use(m);
+    }
     app.use(process.env.OPENAPI_SPEC || '/spec', express.static(apiSpec));
     app.use(
       OpenApiValidator.middleware({

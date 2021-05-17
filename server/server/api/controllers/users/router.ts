@@ -38,7 +38,6 @@ export default express
         role: Roles.Admin,
       },
     ]),
-    upload.single('profilePicture'),
     controller.putUpdateUser
   )
   .get(
@@ -55,6 +54,37 @@ export default express
       },
     ]),
     controller.getProfilePicture
+  )
+  .put(
+    '/:id/profilePicture',
+    checkPermissions([
+      {
+        role: Roles.User,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    upload.single('profilePicture'),
+    controller.putProfilePicture
+  )
+  .delete(
+    '/:id/profilePicture',
+    checkPermissions([
+      {
+        role: Roles.User,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.deleteProfilePicture
   )
   .get(
     '/:id/notifications',

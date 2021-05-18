@@ -40,6 +40,7 @@ export default class ExpressServer {
         apiSpec,
         validateResponses,
         ignorePaths: /.*\/spec(\/|$)/,
+        fileUploader: false,
       })
     );
   }

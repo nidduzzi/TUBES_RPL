@@ -45,6 +45,7 @@ model EventOrganizer {
     phone            String
     address          String
     status           AccountStatus  @default(INACTIVE)
+    emailVerified    Boolean        @default(false)
     verificationDate DateTime?
     verified         Boolean
     allowedUsers     User[]

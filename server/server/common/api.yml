@@ -22,11 +22,7 @@ tags:
   - name: User Endpoint
   - name: Webhook
 servers:
-<<<<<<< HEAD
-  - url: '/api/v1'
-=======
   - url: /api/v1
->>>>>>> f57a8f7c5b4fd349b98a2eb66a57e8aa00902dd9
 paths:
   /users:
     post:
@@ -1265,7 +1261,7 @@ paths:
       tags:
         - Event Organizer Endpoint
     put:
-      summary: Update Event Organizer Details (add allowed users) by id
+      summary: Update Event Organizer Details by id
       operationId: put-eventOrganizers-id
       responses:
         '200':
@@ -1307,20 +1303,12 @@ paths:
                   type: string
                 phone:
                   type: string
-                allowedUsers:
-                  type: array
-                  description: needs at least one user ID
-                  minItems: 1
-                  uniqueItems: true
-                  items:
-                    type: string
-                    minimum: 0
               required:
                 - name
                 - email
                 - address
                 - phone
-                - allowedUsers
+                - profilPicture
       tags:
         - Event Organizer Endpoint
   '/eventOrganizers/terminate/{id}':

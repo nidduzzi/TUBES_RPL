@@ -18,6 +18,7 @@ tags:
   - name: Payment Endpoint
   - name: Registration Endpoint
   - name: Reservation Endpoint
+  - name: Tag Endpoint
   - name: Ticket Endpoint
   - name: User Endpoint
   - name: Webhook
@@ -793,8 +794,6 @@ paths:
                 rsvpDeadline:
                   type: string
                   format: time
-                hasRsvp:
-                  type: boolean
                 tagline:
                   type: string
                 ticketTypes:
@@ -805,13 +804,11 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Tag'
-              required:
-                - name
-                - schedule
-                - description
-                - hasRsvp
-                - ticketTypes
-                - tags
+                status:
+                  type: string
+                  enum:
+                    - ACTIVE
+                    - CANCELED
         description: Details of revised event
       tags:
         - Event Endpoint
@@ -2297,7 +2294,8 @@ paths:
   /tags:
     get:
       summary: Get existing tags
-      tags: []
+      tags:
+        - Tag Endpoint
       responses:
         '200':
           description: OK
@@ -2315,6 +2313,50 @@ paths:
       operationId: get-tags
       description: Get existing tags
     parameters: []
+    post:
+      summary: Post a new tag
+      operationId: post-tags
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: '#/components/schemas/Tag'
+                required:
+                  - tag
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mesage:
+                    type: string
+                required:
+                  - mesage
+      description: Event Organizer post a new Event tag
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+                - description
+      tags:
+        - Tag Endpoint
   '/tags/{id}/events':
     parameters:
       - schema:
@@ -2324,7 +2366,8 @@ paths:
         required: true
     get:
       summary: Get Events with specified tag
-      tags: []
+      tags:
+        - Tag Endpoint
       responses:
         '200':
           description: OK
@@ -2341,6 +2384,48 @@ paths:
                   - events
       operationId: get-tags-id-events
       description: Get Events with specified tag
+  '/eventOrganizers/{id}/allowed-users/{userId}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    put:
+      summary: Put a user to an event organizer
+      operationId: put-eventOrganizers-id-allowed-users-userId
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Put a user to an event organizer
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a user from an event organizer
+      operationId: delete-eventOrganizers-id-allowed-users-userId
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Delete a user from an event organizer
+      security:
+        - bearerAuth: []
 components:
   schemas:
     User:
@@ -2515,21 +2600,21 @@ components:
           type: string
         description:
           type: string
-        start_time:
+        startTime:
           type: string
           format: date-time
-        end_time:
+        endTime:
           type: string
           format: date-time
-        all_day:
+        allDay:
           type: boolean
         place:
           type: string
       required:
         - name
-        - start_time
-        - end_time
-        - all_day
+        - startTime
+        - endTime
+        - allDay
     Reservation:
       title: Reservation
       type: object
@@ -2613,10 +2698,13 @@ components:
           type: integer
         name:
           type: string
-        value:
-          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket-Value'
       required:
         - name
+        - values
     Payment:
       title: Payment
       type: object
@@ -2713,6 +2801,16 @@ components:
       required:
         - id
         - title
+    Ticket-Value:
+      title: Ticket-Value
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          type: string
+      required:
+        - value
   securitySchemes:
     bearerAuth:
       type: http

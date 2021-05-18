@@ -110,16 +110,18 @@ model TicketType {
     description String                @db.Text
     ticket      Ticket[]
     attributes  TicketTypeAttribute[]
-    Event       Event?                @relation(fields: [eventId], references: [id])
-    eventId     Int?
+    price       Int
+    currency    String
+    Event       Event                 @relation(fields: [eventId], references: [id])
+    eventId     Int
 }
 
 model TicketTypeAttribute {
     id           Int                        @id @default(autoincrement())
     name         String
     values       TicketTypeAttributeValue[]
-    ticketType   TicketType?                @relation(fields: [ticketTypeId], references: [id])
-    ticketTypeId Int?
+    ticketType   TicketType                 @relation(fields: [ticketTypeId], references: [id])
+    ticketTypeId Int
 }
 
 model TicketTypeAttributeValue {
@@ -179,9 +181,14 @@ model Notification {
     eventOrganizerId Int?
 }
 
+enum EventStatus {
+    ACTIVE
+    CANCELED
+}
+
 model Event {
     id               Int            @id @default(autoincrement())
-    name             String
+    name             String         @unique
     tagline          String?
     description      String         @db.LongText
     schedule         Schedule[]
@@ -193,16 +200,16 @@ model Event {
     hasRsvp          Boolean
     maxTickets       Int?
     unlimitedTickets Boolean
+    status           EventStatus    @default(ACTIVE)
     reservations     Reservation[]
     eventOrganizerId Int
     eventOrganizer   EventOrganizer @relation(fields: [eventOrganizerId], references: [id])
 }
 
 model EventImage {
-    id      Int     @id @default(autoincrement())
+    id      Int   @id @default(autoincrement())
     image   Bytes
-    name    String?
-    event   Event   @relation(fields: [eventId], references: [id])
+    event   Event @relation(fields: [eventId], references: [id])
     eventId Int
 }
 
@@ -212,7 +219,7 @@ model Schedule {
     description String    @db.MediumText
     startTime   DateTime
     endTime     DateTime?
-    wholeDay    Boolean
+    allDay      Boolean
     place       String
     Event       Event?    @relation(fields: [eventId], references: [id])
     eventId     Int?

@@ -503,7 +503,7 @@ export class Controller {
         })
         .then((user) => {
           if (user) {
-            res.status(200).send({ reservations: user?.reservations });
+            res.status(200).send({ reservations: user.reservations });
           } else {
             res.status(404).send({ message: 'invalid id given' });
           }
@@ -556,11 +556,6 @@ export class Controller {
   putProfilePicture(req: Request, res: Response, next: NextFunction): void {
     if (req.params.id != undefined && req.body) {
       const id = Number.parseInt(req.params.id);
-      let body = req.body;
-
-      if (typeof body == 'string') {
-        body = JSON.parse(body);
-      }
       prisma.user
         .findUnique({ where: { id: id } })
         .then((user) => {

@@ -83,7 +83,7 @@ model Reservation {
     price     Int
     currency  String
     orderDate DateTime          @default(now())
-    status    ReservationStatus
+    status    ReservationStatus @default(WAITING)
     tickets   Ticket[]
     user      User              @relation(fields: [userId], references: [id])
     userId    Int
@@ -194,7 +194,7 @@ model Event {
     schedule         Schedule[]
     ticketTypes      TicketType[]
     tags             Tag[]
-    logo             Bytes?
+    logo             Bytes?         @db.MediumBlob
     images           EventImage[]
     rsvpDeadline     DateTime?
     hasRsvp          Boolean
@@ -208,7 +208,7 @@ model Event {
 
 model EventImage {
     id      Int   @id @default(autoincrement())
-    image   Bytes
+    image   Bytes @db.MediumBlob
     event   Event @relation(fields: [eventId], references: [id])
     eventId Int
 }

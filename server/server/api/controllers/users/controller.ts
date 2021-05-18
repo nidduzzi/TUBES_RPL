@@ -197,7 +197,7 @@ export class Controller {
               })
               .then((u) => {
                 sendVerificationEmail(req, u);
-                res.status(200).send({
+                res.status(201).send({
                   id: u.id,
                   username: u.username,
                   email: u.email,
@@ -565,6 +565,11 @@ export class Controller {
               // convert image to jpeg
               Jimp.read(req.file.buffer)
                 .then((img) => {
+                  img.cover(
+                    256,
+                    256,
+                    Jimp.VERTICAL_ALIGN_MIDDLE | Jimp.HORIZONTAL_ALIGN_CENTER
+                  );
                   img.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
                     if (err) {
                       console.log(err);
@@ -595,7 +600,7 @@ export class Controller {
               res.status(400).send({ message: 'invalid file given' });
             }
           } else {
-            res.send(404).send({ message: 'invalid id given' });
+            res.status(404).send({ message: 'invalid id given' });
           }
         })
         .catch((err) => next(err));
@@ -618,11 +623,11 @@ export class Controller {
                 data: { profilePicture: null },
               })
               .then((_) => {
-                res.send(200).send({ message: 'profile picture deleted' });
+                res.status(200).send({ message: 'profile picture deleted' });
               })
               .catch((err) => next(err));
           } else {
-            res.send(404).send({ message: 'invalid id given' });
+            res.status(404).send({ message: 'invalid id given' });
           }
         })
         .catch((err) => next(err));
@@ -707,7 +712,7 @@ export class Controller {
       } catch (error) {
         next(error);
       }
-      res.send(404).send({ message: 'invalid id given' });
+      res.status(404).send({ message: 'invalid id given' });
       return;
     }
     res.status(400).send({ message: 'invalid request' });
@@ -972,12 +977,12 @@ export class Controller {
               })
               .catch((err) => next(err));
           } else {
-            res.send(404).send({ message: 'invalid id given' });
+            res.status(404).send({ message: 'invalid id given' });
           }
         })
         .catch((err) => next(err));
     } else {
-      res.send(404).send({ message: 'invalid id given' });
+      res.status(404).send({ message: 'invalid id given' });
     }
   }
 }

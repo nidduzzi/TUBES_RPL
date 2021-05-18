@@ -7,6 +7,9 @@ process.on('unhandledRejection', console.log);
 if (!process.env.SESSION_SECRET) {
   process.env.SESSION_SECRET = 'TEMPORARYSECRETTTTT';
 }
+if (process.env.DISABLE_SECURITY_PERMISSIONS) {
+  console.warn('\n######################\nSECURITY IS DISABLED!!\n######################\n');
+}
 
 const port = parseInt(process.env.PORT ?? '9000');
 export default new Server().router(routes).listen(port);

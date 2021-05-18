@@ -17,6 +17,16 @@ export const checkPermissions = (
   expectedScopes: scopeValidator[],
   options?: options
 ): Array<any> => {
+  if (process.env.DISABLE_SECURITY_PERMISSIONS == 'all') {
+    return [];
+  } else if (process.env.DISABLE_SECURITY_PERMISSIONS == 'jwt') {
+    return [
+      expressjwt({
+        secret: process.env.SESSION_SECRET ?? 'TEMPORARYSECRETTTTT',
+        algorithms: ['HS256'],
+      }),
+    ];
+  }
   return [
     expressjwt({
       secret: process.env.SESSION_SECRET ?? 'TEMPORARYSECRETTTTT',
@@ -36,9 +46,10 @@ export const checkPermissions = (
 
         res.append(
           'WWW-Authenticate',
-          `Bearer scope="${expectedScopes
-            .map((sv) => sv.role + sv?.idValidator?.toString)
-            .join(' ') + (req.params['id'] ? ' id:' + req.params['id'] : '')
+          `Bearer scope="${
+            expectedScopes
+              .map((sv) => sv.role + sv?.idValidator?.toString)
+              .join(' ') + (req.params['id'] ? ' id:' + req.params['id'] : '')
           }", error="${err_message}"`
         );
         res.status(403).send({ message: err_message });

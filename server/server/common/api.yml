@@ -203,6 +203,7 @@ paths:
                 profilePicture:
                   type: string
                   format: binary
+                  nullable: true
                 email:
                   type: string
                   format: email
@@ -709,7 +710,12 @@ paths:
                 tags:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Tag'
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                    required:
+                      - name
                 maxTickets:
                   type: integer
                 unlimitedTickets:
@@ -720,7 +726,6 @@ paths:
                 - schedule
                 - hasRsvp
                 - ticketTypes
-                - tags
                 - unlimitedTickets
             examples: {}
         description: Event creation form data.
@@ -791,17 +796,22 @@ paths:
                     $ref: '#/components/schemas/Schedule'
                 description:
                   type: string
+                  nullable: true
                 rsvpDeadline:
                   type: string
                   format: time
+                  nullable: true
                 tagline:
                   type: string
+                  nullable: true
                 ticketTypes:
                   type: array
+                  minItems: 1
                   items:
                     $ref: '#/components/schemas/Ticket-Type'
                 tags:
                   type: array
+                  nullable: true
                   items:
                     $ref: '#/components/schemas/Tag'
                 status:
@@ -809,6 +819,9 @@ paths:
                   enum:
                     - ACTIVE
                     - CANCELED
+                maxTickets:
+                  type: integer
+                  nullable: true
         description: Details of revised event
       tags:
         - Event Endpoint
@@ -914,18 +927,20 @@ paths:
             schema:
               type: object
               properties:
-                id_user:
+                eventId:
                   type: integer
-                id_event:
-                  type: integer
-                tickets:
+                ticketsTypes:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Ticket'
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                    required:
+                      - id
               required:
-                - id_user
-                - id_event
-                - tickets
+                - eventId
+                - ticketsTypes
         description: ''
       tags:
         - Reservation Endpoint
@@ -960,6 +975,35 @@ paths:
       description: Users or Event Organizers retrieve the information of the reservation with the matching reservation ID.
       security:
         - bearerAuth: []
+    put:
+      summary: Put an Update to the Reservation
+      operationId: put-reservations-id
+      responses:
+        '200':
+          description: OK
+      description: User put an Update to the Reservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ticketTypes:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                    required:
+                      - id
+              required:
+                - ticketTypes
+      tags:
+        - Reservation Endpoint
   '/reservations/confirm/{id}':
     parameters:
       - schema:
@@ -1263,7 +1307,7 @@ paths:
       tags:
         - Event Organizer Endpoint
     put:
-      summary: Update Event Organizer Details by id
+      summary: Update Event Organizer Details (add allowed users) by id
       operationId: put-eventOrganizers-id
       responses:
         '200':
@@ -1302,13 +1346,9 @@ paths:
                   type: string
                 phone:
                   type: string
-              required:
-                - name
-                - email
-                - address
-                - phone
-                - password
-                - authorizedUsersId
+                password:
+                  type: string
+                  format: password
         description: ''
       tags:
         - Event Organizer Endpoint
@@ -1344,12 +1384,12 @@ paths:
             schema:
               type: object
               properties:
-                policy_breach:
+                policyBreach:
                   type: string
                 description:
                   type: string
               required:
-                - policy_breach
+                - policyBreach
                 - description
       tags:
         - Admin Endpoint
@@ -2411,6 +2451,8 @@ paths:
       description: Put a user to an event organizer
       security:
         - bearerAuth: []
+      tags:
+        - Event Organizer Endpoint
     delete:
       summary: Delete a user from an event organizer
       operationId: delete-eventOrganizers-id-allowed-users-userId
@@ -2424,6 +2466,43 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
       description: Delete a user from an event organizer
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Organizer Endpoint
+  '/eventOrganizers/{id}/allowed-users':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get list of allowed users for an Event Organizer
+      tags:
+        - Event Organizer Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                required:
+                  - users
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers-id-allowed-users
+      description: Get list of allowed users for an Event Organizer
       security:
         - bearerAuth: []
 components:
@@ -2456,11 +2535,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Notification'
-      required:
-        - id
-        - username
-        - email
-        - emailVerified
     Event:
       title: Event
       type: object
@@ -2508,20 +2582,6 @@ components:
           type: boolean
         numImages:
           type: integer
-      required:
-        - id
-        - name
-        - description
-        - schedule
-        - hasRsvp
-        - eventOrganizerId
-        - tags
-        - maxTickets
-        - unlimitedTickets
-        - reservedTickets
-        - ticketTypes
-        - hasLogo
-        - numImages
     Tag:
       title: Tag
       type: object
@@ -2538,8 +2598,6 @@ components:
           type: string
         description:
           type: string
-      required:
-        - name
     Event-Organizer:
       title: Event-Organizer
       type: object
@@ -2579,16 +2637,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Notification'
-      required:
-        - id
-        - name
-        - email
-        - verified
-        - profilePicture
-        - registrationDate
-        - verificationDate
-        - phone
-        - usersId
     Schedule:
       title: Schedule
       type: object
@@ -2610,11 +2658,6 @@ components:
           type: boolean
         place:
           type: string
-      required:
-        - name
-        - startTime
-        - endTime
-        - allDay
     Reservation:
       title: Reservation
       type: object
@@ -2636,14 +2679,6 @@ components:
         currency:
           type: string
           maxLength: 4
-      required:
-        - id
-        - id_user
-        - tickets
-        - confirmed
-        - numTickets
-        - price
-        - currency
     Ticket:
       title: Ticket
       type: object
@@ -2663,10 +2698,6 @@ components:
           type: string
         id_ticket_type:
           type: integer
-      required:
-        - id
-        - nama
-        - id_ticket_type
     Ticket-Type:
       title: Ticket-Type
       type: object
@@ -2686,10 +2717,6 @@ components:
         currency:
           type: string
           maxLength: 3
-      required:
-        - name
-        - price
-        - currency
     Ticket-Attribute:
       title: Ticket-Attribute
       type: object
@@ -2702,9 +2729,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Ticket-Value'
-      required:
-        - name
-        - values
     Payment:
       title: Payment
       type: object
@@ -2720,12 +2744,6 @@ components:
         completed:
           type: boolean
           default: false
-      required:
-        - id
-        - amount
-        - currency
-        - id_reservation
-        - completed
     Admin:
       title: Admin
       type: object
@@ -2734,9 +2752,6 @@ components:
           type: integer
         username:
           type: string
-      required:
-        - id
-        - username
     Authentification:
       title: Authentification
       type: object
@@ -2746,9 +2761,6 @@ components:
           example: 1
         role:
           type: string
-      required:
-        - id
-        - role
     Termination:
       title: Termination
       type: object
@@ -2761,11 +2773,6 @@ components:
           type: string
         adminId:
           type: integer
-      required:
-        - id
-        - description
-        - policyBreach
-        - adminId
     Suspension:
       title: Suspension
       type: object
@@ -2782,12 +2789,6 @@ components:
           minLength: 2
         adminId:
           type: integer
-      required:
-        - id
-        - policyBreach
-        - description
-        - length
-        - adminId
     Notification:
       title: Notification
       type: object
@@ -2798,9 +2799,6 @@ components:
           type: string
         content:
           type: string
-      required:
-        - id
-        - title
     Ticket-Value:
       title: Ticket-Value
       type: object
@@ -2809,8 +2807,6 @@ components:
           type: integer
         value:
           type: string
-      required:
-        - value
   securitySchemes:
     bearerAuth:
       type: http

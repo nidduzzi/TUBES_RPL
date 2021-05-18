@@ -17,6 +17,16 @@ export const checkPermissions = (
   expectedScopes: scopeValidator[],
   options?: options
 ): Array<any> => {
+  if (process.env.DISABLE_SECURITY_PERMISSIONS == 'all') {
+    return [];
+  } else if (process.env.DISABLE_SECURITY_PERMISSIONS == 'jwt') {
+    return [
+      expressjwt({
+        secret: process.env.SESSION_SECRET ?? 'TEMPORARYSECRETTTTT',
+        algorithms: ['HS256'],
+      }),
+    ];
+  }
   return [
     expressjwt({
       secret: process.env.SESSION_SECRET ?? 'TEMPORARYSECRETTTTT',

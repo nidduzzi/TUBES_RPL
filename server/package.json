@@ -2,12 +2,17 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Tiketin",
+  "license": "MPL-2.0",
+  "repository": {
+    "url": "https://github.com/nidduzzi/TUBES_RPL.git"
+  },
   "main": "dist/index.js",
   "scripts": {
     "setupDB": "npx prisma migrate dev --name init && npm install @prisma/client",
     "start": "node dist/index.js",
     "compile": "ts-node build.ts && tsc",
     "dev": "nodemon server/index.ts | pino-pretty",
+    "serve": "nodemon server/index.ts",
     "dev:debug": "nodemon --exec \"node -r ts-node/register --inspect-brk\" server/index.ts | pino-pretty",
     "lint": "eslint -c .eslintrc.js \"{server, test}/**/*.{js,ts,tsx}\" --quiet",
     "lint:fix": "eslint -c .eslintrc.js \"{server, test}/**/*.{js,ts,tsx}\" --quiet --fix",
@@ -47,6 +52,7 @@
     "@types/bluebird": "^3.5.34",
     "@types/chai": "^4.2.14",
     "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.10",
     "@types/express": "^4.17.11",
     "@types/express-jwt": "^6.0.1",
     "@types/express-pino-logger": "^4.0.2",

@@ -8,30 +8,9 @@ import emailService from '../../services/email.service';
 import { Roles } from '../../interfaces/roles.enum';
 import Jimp from 'jimp';
 import path from 'path';
+import { strToMilis } from '../../services/strToMilis.service';
 
 const prisma = new PrismaClient();
-
-function strToMilis(str: string): number {
-  const t: number = Number.parseInt(str.slice(0, str.length - 2));
-  switch (str.slice(str.length - 2, str.length - 1)) {
-    case 's':
-      return t * 1000;
-    case 'm':
-      return t * 60 * 1000;
-    case 'h':
-      return t * 60 * 60 * 1000;
-    case 'd':
-      return t * 24 * 60 * 60 * 1000;
-    case 'w':
-      return t * 7 * 24 * 60 * 60 * 1000;
-    case 'M':
-      return t * 30 * 24 * 60 * 60 * 1000;
-    case 'y':
-      return t * 365 * 24 * 60 * 60 * 1000;
-    default:
-      throw new Error('wrong string format');
-  }
-}
 
 function generateEmailVerificationToken(eo: EventOrganizer): string {
   return jwt.sign(

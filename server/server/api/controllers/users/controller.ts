@@ -12,29 +12,8 @@ import Jimp from 'jimp';
 import path from 'path';
 import JwtDataStore from '../../interfaces/jwtDataStore.interface';
 import emailService from '../../services/email.service';
+import { strToMilis } from '../../services/strToMilis.service';
 const prisma = new PrismaClient();
-
-function strToMilis(str: string): number {
-  const t: number = Number.parseInt(str.slice(0, str.length - 2));
-  switch (str.slice(str.length - 2, str.length - 1)) {
-    case 's':
-      return t * 1000;
-    case 'm':
-      return t * 60 * 1000;
-    case 'h':
-      return t * 60 * 60 * 1000;
-    case 'd':
-      return t * 24 * 60 * 60 * 1000;
-    case 'w':
-      return t * 7 * 24 * 60 * 60 * 1000;
-    case 'M':
-      return t * 30 * 24 * 60 * 60 * 1000;
-    case 'y':
-      return t * 365 * 24 * 60 * 60 * 1000;
-    default:
-      throw new Error('wrong string format');
-  }
-}
 
 function generateJwtToken(user: User): string {
   const scopes: Array<Scope> = [{ id: user.id, role: Roles.User }];
@@ -574,6 +553,89 @@ export class Controller {
     }
   }
 
+  putProfilePicture(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined && req.body) {
+      const id = Number.parseInt(req.params.id);
+      let body = req.body;
+
+      if (typeof body == 'string') {
+        body = JSON.parse(body);
+      }
+      prisma.user
+        .findUnique({ where: { id: id } })
+        .then((user) => {
+          if (user) {
+            // update profile picture
+            if (req.file != undefined && req.file.buffer != undefined) {
+              // convert image to jpeg
+              Jimp.read(req.file.buffer)
+                .then((img) => {
+                  img.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
+                    if (err) {
+                      console.log(err);
+                      next(err);
+                    } else {
+                      prisma.user
+                        .update({
+                          where: { id: user.id },
+                          data: {
+                            profilePicture: buffer,
+                          },
+                        })
+                        .then((_) => {
+                          res.status(200).send({
+                            message: 'profile picture updated',
+                          });
+                        })
+                        .catch((error) => {
+                          next(error);
+                        });
+                    }
+                  });
+                })
+                .catch((error) => {
+                  next(error);
+                });
+            } else {
+              res.status(400).send({ message: 'invalid file given' });
+            }
+          } else {
+            res.send(404).send({ message: 'invalid id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  deleteProfilePicture(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id) {
+      const id = Number.parseInt(req.params.id);
+      prisma.user
+        .findUnique({ where: { id: id } })
+        .then((user) => {
+          if (user) {
+            // delete profile picture
+            prisma.user
+              .update({
+                where: { id: user.id },
+                data: { profilePicture: null },
+              })
+              .then((_) => {
+                res.send(200).send({ message: 'profile picture deleted' });
+              })
+              .catch((err) => next(err));
+          } else {
+            res.send(404).send({ message: 'invalid id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
   async putUpdateUser(
     req: Request,
     res: Response,
@@ -626,29 +688,6 @@ export class Controller {
               },
             });
           }
-          // update profile picture
-          if (req.file != undefined && req.file.buffer != undefined) {
-            // convert image to jpeg
-            Jimp.read(req.file.buffer)
-              .then((img) => {
-                img.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
-                  if (err) {
-                    console.log(err);
-                    next(err);
-                  } else {
-                    prisma.user.update({
-                      where: { id: user.id },
-                      data: {
-                        profilePicture: buffer,
-                      },
-                    });
-                  }
-                });
-              })
-              .catch((error) => {
-                next(error);
-              });
-          }
           // respond with updated user
           prisma.user
             .findUnique({ where: { id: user.id } })
@@ -661,7 +700,6 @@ export class Controller {
                     email: updatedUser.email,
                     emailVerified: updatedUser.emailVerified,
                     registrationDate: updatedUser.registrationDate.toISOString(),
-                    profilePicture: updatedUser.profilePicture?.toString(),
                   },
                 });
               }

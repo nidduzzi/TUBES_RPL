@@ -5,7 +5,7 @@ import JwtDataStore from '../interfaces/jwtDataStore.interface';
 
 interface scopeValidator {
   role: string;
-  idValidator?: (id: number, roleId: number) => boolean;
+  idValidator?: (id: number, roleId: number) => boolean | Promise<boolean>;
 }
 
 interface options {
@@ -46,18 +46,18 @@ export const checkPermissions = (
       const user = req.user as JwtDataStore;
       // verify user permissions
       let allowed = false;
-      const id = Number.parseInt(req.params.id ?? '-1');
+      const id: number = Number.parseInt(req.params.id);
       if (options && options.checkAllScopes) {
         // check all scopes provided in the request
         allowed = user.scopes.every((scope) =>
           // against scopes expected for the path
           expectedScopes.some(
-            (expectedScope) =>
+            async (expectedScope) =>
               // validate role
               scope.role == expectedScope.role &&
               // validate id if provided with id validator by expected scopes
-              (expectedScope.idValidator != undefined && id != NaN
-                ? expectedScope.idValidator(id, scope.id)
+              (expectedScope.idValidator != undefined
+                ? await expectedScope.idValidator(id, scope.id)
                 : true)
           )
         );
@@ -65,12 +65,12 @@ export const checkPermissions = (
         // check scopes provided in the request if at least one satisfy the expected scopes
         allowed = user.scopes.some((scope) =>
           expectedScopes.some(
-            (expectedScope) =>
+            async (expectedScope) =>
               // validate role
               scope.role == expectedScope.role &&
               // validate id if provided with id validator by expected scopes
               (expectedScope.idValidator != undefined && id != NaN
-                ? expectedScope.idValidator(id, scope.id)
+                ? await expectedScope.idValidator(id, scope.id)
                 : true)
           )
         );

@@ -15,11 +15,7 @@ import emailService from '../../services/email.service';
 import { strToMilis } from '../../services/strToMilis.service';
 const prisma = new PrismaClient();
 
-function generateJwtToken(user: User): string {
-  const scopes: Array<Scope> = [{ id: user.id, role: Roles.User }];
-  if (user.eventOrganizerId != undefined) {
-    scopes.push({ id: user.eventOrganizerId, role: Roles.EventOrganizer });
-  }
+function generateJwtToken(scopes: Array<Scope>): string {
   return jwt.sign(
     { scopes: scopes },
     process.env.SESSION_SECRET ?? 'MySecret',
@@ -230,12 +226,24 @@ export class Controller {
       if (username) {
         user = await prisma.user.findUnique({
           where: { username: username },
-          include: { suspensions: true, termination: true },
+          include: {
+            suspensions: true,
+            termination: true,
+            eventOrganizer: {
+              include: { suspensions: true, termination: true },
+            },
+          },
         });
       } else {
         user = await prisma.user.findUnique({
           where: { email: email },
-          include: { suspensions: true, termination: true },
+          include: {
+            suspensions: true,
+            termination: true,
+            eventOrganizer: {
+              include: { suspensions: true, termination: true },
+            },
+          },
         });
       }
       if (user) {
@@ -260,15 +268,24 @@ export class Controller {
               data: generateRefreshToken(user, req.ip),
             });
             const scopes: Array<Scope> = [{ id: user.id, role: Roles.User }];
-            if (user.eventOrganizerId != undefined) {
-              scopes.push({
-                id: user.eventOrganizerId,
-                role: Roles.EventOrganizer,
-              });
+            if (user.eventOrganizer) {
+              if (
+                !(
+                  user.eventOrganizer?.termination ||
+                  user.eventOrganizer.suspensions.some(
+                    (suspension) => suspension.endDate > new Date()
+                  )
+                )
+              ) {
+                scopes.push({
+                  id: user.eventOrganizer.id,
+                  role: Roles.EventOrganizer,
+                });
+              }
             }
             const body = {
               auth: scopes,
-              jwtToken: generateJwtToken(user),
+              jwtToken: generateJwtToken(scopes),
             };
             res.cookie('refreshToken', refreshToken.token, {
               expires: refreshToken.expires,
@@ -382,16 +399,61 @@ export class Controller {
     if (token) {
       const refreshToken = await prisma.refreshToken.findUnique({
         where: { token: token },
-        include: { user: true },
+        include: {
+          user: {
+            include: {
+              termination: true,
+              suspensions: true,
+              eventOrganizer: {
+                include: { termination: true, suspensions: true },
+              },
+            },
+          },
+        },
       });
+      const user = refreshToken?.user;
       // check if token is a valid refresh token
-      if (refreshToken) {
+      if (refreshToken && user) {
         // check if refresh token is broken ie. doesn't belong to a user
-        if (
-          refreshToken.user == undefined ||
-          refreshToken.userId == undefined
-        ) {
+        if (!user) {
           res.status(500).send({ message: 'database error' });
+        } else if (user.termination) {
+          prisma.refreshToken
+            .update({
+              where: { id: refreshToken.id },
+              data: { revoked: new Date(), revokedByIp: req.ip },
+            })
+            .then((_) =>
+              res
+                .status(403)
+                .clearCookie('refreshToken')
+                .send({ message: 'user terminated' })
+            )
+            .catch((err) => next(err));
+        } else if (
+          user.suspensions.some(
+            (suspension) => suspension.endDate > new Date()
+          ) &&
+          user.suspensions
+        ) {
+          prisma.refreshToken
+            .update({
+              where: { id: refreshToken.id },
+              data: { revoked: new Date(), revokedByIp: req.ip },
+            })
+            .then((_) =>
+              res
+                .status(403)
+                .clearCookie('refreshToken')
+                .send({
+                  message:
+                    'user suspended until ' +
+                    user.suspensions
+                      .find((suspension) => suspension.endDate > new Date())
+                      ?.endDate.toISOString(),
+                })
+            )
+            .catch((err) => next(err));
         }
         // check if refresh token is still valid ie. not expired or revoked
         else if (
@@ -401,7 +463,7 @@ export class Controller {
           try {
             // create a new refresh token for the user
             const newRefreshToken = await prisma.refreshToken.create({
-              data: generateRefreshToken(refreshToken.user, req.ip),
+              data: generateRefreshToken(user, req.ip),
             });
 
             // revoke and update the old refresh token
@@ -415,28 +477,36 @@ export class Controller {
             });
 
             // construct response body
-            const scopes: Array<Scope> = [
-              { id: refreshToken.userId, role: Roles.User },
-            ];
-            if (refreshToken.user.eventOrganizerId != undefined) {
-              scopes.push({
-                id: refreshToken.user.eventOrganizerId,
-                role: Roles.EventOrganizer,
-              });
+            const scopes: Array<Scope> = [{ id: user.id, role: Roles.User }];
+            if (user.eventOrganizer) {
+              if (
+                !(
+                  user.eventOrganizer?.termination ||
+                  user.eventOrganizer.suspensions.some(
+                    (suspension) => suspension.endDate > new Date()
+                  )
+                )
+              ) {
+                scopes.push({
+                  id: user.eventOrganizer.id,
+                  role: Roles.EventOrganizer,
+                });
+              }
             }
 
             // include a newly generated jwtToken
             const body: Authentificated = {
               auth: scopes,
-              jwtToken: generateJwtToken(refreshToken.user),
+              jwtToken: generateJwtToken(scopes),
             };
 
             // send success response
-            res.cookie('refreshToken', newRefreshToken.token, {
-              expires: newRefreshToken.expires,
-            });
-            res.status(200).send(body);
-            return;
+            res
+              .status(200)
+              .cookie('refreshToken', newRefreshToken.token, {
+                expires: newRefreshToken.expires,
+              })
+              .send(body);
           } catch (error) {
             next(error);
           }
@@ -1016,6 +1086,7 @@ export class Controller {
                   },
                 },
               })
+              .then((_) => res.status(200).send({ message: 'warning created' }))
               .catch((err) => next(err));
           } else {
             res.status(404).send({ message: 'invalid id given' });

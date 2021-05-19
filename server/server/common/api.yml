@@ -266,12 +266,12 @@ paths:
             schema:
               type: object
               properties:
-                policy_breach:
+                policyBreach:
                   type: string
                 description:
                   type: string
               required:
-                - policy_breach
+                - policyBreach
                 - description
       tags:
         - Admin Endpoint
@@ -2324,7 +2324,7 @@ paths:
         in: path
         required: true
     get:
-      summary: Replace a specific image of an Event
+      summary: Get a specific image of an Event
       tags:
         - Event Endpoint
       responses:
@@ -2339,7 +2339,7 @@ paths:
       operationId: get-events-id-image-image_number
       description: Get an image for an event
     put:
-      summary: Replace a specific Image of an event
+      summary: Put replace a specific Image of an event
       operationId: put-events-id-image-image_number
       responses:
         '200':
@@ -2365,7 +2365,7 @@ paths:
       tags:
         - Event Endpoint
     delete:
-      summary: Remove a specific image of an Event
+      summary: Delete Remove a specific image of an Event
       operationId: delete-events-id-image-image_number
       responses:
         '200':

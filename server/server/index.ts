@@ -12,6 +12,11 @@ if (process.env.DISABLE_SECURITY_PERMISSIONS) {
     '\n######################\nSECURITY IS DISABLED!!\n######################\n'
   );
 }
+if (process.env.ALLOW_ADMIN_REGISTRATION == 'true') {
+  console.warn(
+    '\n###############################\nADMIN REGISTRATION IS ENABLED!!\n###############################\n'
+  );
+}
 
 const port = parseInt(process.env.PORT ?? '9000');
 export default new Server().router(routes).listen(port);

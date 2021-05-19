@@ -209,10 +209,6 @@ paths:
                   type: string
                   pattern: '^[A-Za-z0-9-_]'
                   minLength: 1
-                profilePicture:
-                  type: string
-                  format: binary
-                  nullable: true
                 email:
                   type: string
                   format: email
@@ -222,6 +218,11 @@ paths:
                   pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
                   format: password
                   example: fFf9@qe!
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                  format: date
             examples:
               Update User Profile Picture:
                 value:
@@ -434,6 +435,7 @@ paths:
                 password:
                   type: string
                   example: fFf9@qe!
+                  format: password
                 email:
                   type: string
                   format: email
@@ -721,6 +723,7 @@ paths:
                     $ref: '#/components/schemas/Schedule'
                 rsvpDeadline:
                   type: string
+                  format: date-time
                 hasRsvp:
                   type: boolean
                 ticketTypes:
@@ -749,7 +752,6 @@ paths:
                 - hasRsvp
                 - ticketTypes
                 - unlimitedTickets
-                - currency
             examples:
               example:
                 value:
@@ -763,12 +765,10 @@ paths:
                       endTime: '2021-06-18T14:16:56.694Z'
                       allDay: false
                       place: string
-                  rsvpDeadline: string
+                  rsvpDeadline: '2021-05-18T14:16:56.694Z'
                   hasRsvp: true
-                  eventOrganizerId: 0
                   tags:
-                    - id: 1
-                      name: string
+                    - name: string
                       description: string
                   maxTickets: 100
                   unlimitedTickets: false
@@ -780,7 +780,7 @@ paths:
                           values:
                             - value: hurray
                       price: 0
-                      currency: str
+                  currency: str
         description: Event creation form data.
       tags:
         - Event Endpoint
@@ -845,14 +845,14 @@ paths:
                   type: string
                 schedule:
                   type: array
+                  minItems: 1
                   items:
                     $ref: '#/components/schemas/Schedule'
                 description:
                   type: string
-                  nullable: true
                 rsvpDeadline:
                   type: string
-                  format: time
+                  format: date-time
                   nullable: true
                 tagline:
                   type: string
@@ -864,9 +864,14 @@ paths:
                     $ref: '#/components/schemas/Ticket-Type'
                 tags:
                   type: array
-                  nullable: true
+                  minItems: 1
                   items:
-                    $ref: '#/components/schemas/Tag'
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                    required:
+                      - name
                 status:
                   type: string
                   enum:
@@ -875,6 +880,37 @@ paths:
                 maxTickets:
                   type: integer
                   nullable: true
+                currency:
+                  type: string
+            examples:
+              example:
+                value:
+                  name: string
+                  tagline: string
+                  description: string
+                  schedule:
+                    - name: string
+                      description: string
+                      startTime: '2021-05-18T14:16:56.694Z'
+                      endTime: '2021-06-18T14:16:56.694Z'
+                      allDay: false
+                      place: string
+                  rsvpDeadline: '2021-05-18T14:16:56.694Z'
+                  hasRsvp: true
+                  tags:
+                    - name: string
+                      description: string
+                  maxTickets: 100
+                  unlimitedTickets: false
+                  ticketTypes:
+                    - name: gold
+                      description: string
+                      attributes:
+                        - name: window
+                          values:
+                            - value: hurray
+                      price: 0
+                  currency: str
         description: Details of revised event
       tags:
         - Event Endpoint
@@ -1084,65 +1120,6 @@ paths:
                       - ticketTypeId
               required:
                 - tickets
-      tags:
-        - Reservation Endpoint
-  '/reservations/confirm/{id}':
-    parameters:
-      - schema:
-          type: string
-        name: id
-        in: path
-        required: true
-    put:
-      summary: Confirm a Reservation by id
-      operationId: put-reservations-confirm-id
-      responses:
-        '201':
-          description: confirmation accepted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reservation:
-                    $ref: '#/components/schemas/Reservation'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-      description: Confirm a reservation
-      security:
-        - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id_payment:
-                  type: integer
-              required:
-                - id_payment
-        description: ''
-      tags:
-        - Reservation Endpoint
-    delete:
-      summary: Remove a Reservation Confirmation by id
-      operationId: delete-reservations-confirm-id
-      responses:
-        '204':
-          description: No Content
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-      description: Admins can remove a reservation from the confirmed list
-      security:
-        - bearerAuth: []
       tags:
         - Reservation Endpoint
   '/reservations/cancel/{id}':
@@ -1690,6 +1667,8 @@ paths:
                   type: string
                 password:
                   type: string
+                  format: password
+                  example: FfA4!wif2
               required:
                 - username
                 - password
@@ -2648,6 +2627,35 @@ paths:
                 - username
                 - password
         description: ''
+      tags:
+        - Admin Endpoint
+        - Registration Endpoint
+  '/tags/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Tag details
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: '#/components/schemas/Tag'
+                required:
+                  - tag
+        '404':
+          $ref: '#/components/responses/UnauthorizedError'
+      operationId: get-tags-id
+      description: Get Tag details
 components:
   schemas:
     User:
@@ -2857,9 +2865,6 @@ components:
             $ref: '#/components/schemas/Ticket-Attribute'
         price:
           type: integer
-        currency:
-          type: string
-          maxLength: 3
     Ticket-Attribute:
       title: Ticket-Attribute
       type: object

@@ -53,37 +53,37 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-        h
+          h
           ? // check if h.select is sent
-          h.select
+            h.select
             ? prisma.eventOrganizer.findMany({
-              where: q,
-              select: h.select ?? undefined,
-              cursor: h.cursor ?? undefined,
-              skip: h.skip ?? h.cursor ? 1 : undefined,
-              distinct: h.distinct ?? undefined,
-              orderBy: h.orderBy ?? undefined,
-              take: h.take ?? undefined,
-            })
+                where: q,
+                select: h.select ?? undefined,
+                cursor: h.cursor ?? undefined,
+                skip: h.skip ?? h.cursor ? 1 : undefined,
+                distinct: h.distinct ?? undefined,
+                orderBy: h.orderBy ?? undefined,
+                take: h.take ?? undefined,
+              })
             : // or if h.include is sent instead
+              prisma.eventOrganizer.findMany({
+                where: q,
+                include: h.include ?? undefined,
+                cursor: h.cursor ?? undefined,
+                skip: h.skip ?? h.cursor ? 1 : undefined,
+                distinct: h.distinct ?? undefined,
+                orderBy: h.orderBy ?? undefined,
+                take: h.take ?? undefined,
+              })
+          : // or if h is not sent
             prisma.eventOrganizer.findMany({
               where: q,
-              include: h.include ?? undefined,
-              cursor: h.cursor ?? undefined,
-              skip: h.skip ?? h.cursor ? 1 : undefined,
-              distinct: h.distinct ?? undefined,
-              orderBy: h.orderBy ?? undefined,
-              take: h.take ?? undefined,
             })
-          : // or if h is not sent
-          prisma.eventOrganizer.findMany({
-            where: q,
-          })
         : // or if q isn't sent and then check if h is sent
         h
-          ? // check if h.select is sent
+        ? // check if h.select is sent
           h.select
-            ? prisma.eventOrganizer.findMany({
+          ? prisma.eventOrganizer.findMany({
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -91,7 +91,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-            : // or if h.include is sent instead
+          : // or if h.include is sent instead
             prisma.eventOrganizer.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -100,7 +100,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h is not sent
+        : // or if h is not sent
           prisma.eventOrganizer.findMany({});
 
     query
@@ -237,7 +237,7 @@ export class Controller {
               res.status(409).send({ message: 'email already taken' });
               return;
             }
-            prisma.eventOrganizer.update({
+            await prisma.eventOrganizer.update({
               where: { id: eo.id },
               data: { email: body.email },
             });
@@ -251,37 +251,13 @@ export class Controller {
               res.status(409).send({ message: 'name already taken' });
               return;
             }
-            prisma.eventOrganizer.update({
+            await prisma.eventOrganizer.update({
               where: { id: eo.id },
               data: { name: body.name },
             });
           }
-
-          // update profile picture
-          if (req.file != undefined && req.file.buffer != undefined) {
-            // convert image to jpeg
-            Jimp.read(req.file.buffer)
-              .then((img) => {
-                img.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
-                  if (err) {
-                    console.log(err);
-                    next(err);
-                  } else {
-                    prisma.eventOrganizer.update({
-                      where: { id: eo.id },
-                      data: {
-                        profilPicture: buffer,
-                      },
-                    });
-                  }
-                });
-              })
-              .catch((error) => {
-                next(error);
-              });
-          }
           // respond with updated user
-          prisma.eventOrganizer
+          await prisma.eventOrganizer
             .findUnique({ where: { id: eo.id } })
             .then((updatedEO) => {
               if (updatedEO) {
@@ -297,18 +273,16 @@ export class Controller {
                 });
               }
             })
-            .catch((error) => {
-              next(error);
-            });
-          return;
+            .catch((error) => next(error));
+        } else {
+          res.status(404).send({ message: 'invalid id given' });
         }
       } catch (error) {
         next(error);
       }
-      res.status(404).send({ message: 'invalid id given' });
-      return;
+    } else {
+      res.status(400).send({ message: 'invalid request' });
     }
-    res.status(400).send({ message: 'invalid request' });
   }
 
   getEvents(req: Request, res: Response, next: NextFunction): void {
@@ -803,7 +777,7 @@ export class Controller {
                       })
                       .catch((err) => next(err));
                   } else {
-                    res.send(400).send({
+                    res.status(400).send({
                       message: 'user already registered as event organizer',
                     });
                   }
@@ -863,7 +837,7 @@ export class Controller {
                       })
                       .catch((err) => next(err));
                   } else {
-                    res.send(400).send({
+                    res.status(400).send({
                       message:
                         'user is not registered as organizer in this or any event organizer',
                     });

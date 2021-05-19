@@ -253,10 +253,9 @@ export class Controller {
                 ?.endDate.toDateString(),
           });
         } else {
+          // validate user password
           if (bcrypt.compareSync(password, user.passwordHash)) {
-            // validate user password
             // create access tokens
-
             const refreshToken = await prisma.refreshToken.create({
               data: generateRefreshToken(user, req.ip),
             });
@@ -274,15 +273,15 @@ export class Controller {
             res.cookie('refreshToken', refreshToken.token, {
               expires: refreshToken.expires,
             });
-            res.status(200).json(body);
+            res.status(200).send(body);
           } else {
             res
               .status(400)
-              .json({ message: 'invalid username/email or password' });
+              .send({ message: 'invalid username/email or password' });
           }
         }
       } else {
-        res.status(400).json({ message: 'invalid username/email or password' });
+        res.status(400).send({ message: 'invalid username/email or password' });
       }
     }
   }
@@ -453,12 +452,17 @@ export class Controller {
             },
           });
         }
+      } else {
+        res.status(400).send({
+          message: 'The refresh token is invalid, revoked or expired',
+        });
       }
+    } else {
+      // send invalid or expired token message if the function hasn't returned
+      res
+        .status(400)
+        .send({ message: 'The refresh token is invalid, revoked or expired' });
     }
-    // send invalid or expired token message if the function hasn't returned
-    res
-      .status(400)
-      .json({ message: 'The refresh token is invalid, revoked or expired' });
   }
 
   postRevokeToken(req: Request, res: Response, next: NextFunction): void {
@@ -490,7 +494,10 @@ export class Controller {
               })
               // send response
               .then((_) =>
-                res.status(200).send({ message: 'refresh token revoked' })
+                res
+                  .status(200)
+                  .clearCookie('refreshToken')
+                  .send({ message: 'refresh token revoked' })
               );
           } else if (!allowed) {
             res
@@ -597,20 +604,16 @@ export class Controller {
                             profilePicture: buffer,
                           },
                         })
-                        .then((_) => {
+                        .then((_) =>
                           res.status(200).send({
                             message: 'profile picture updated',
-                          });
-                        })
-                        .catch((error) => {
-                          next(error);
-                        });
+                          })
+                        )
+                        .catch((error) => next(error));
                     }
                   });
                 })
-                .catch((error) => {
-                  next(error);
-                });
+                .catch((error) => next(error));
             } else {
               res.status(400).send({ message: 'invalid file given' });
             }
@@ -675,7 +678,7 @@ export class Controller {
               res.status(409).send({ message: 'email already taken' });
               return;
             }
-            prisma.user.update({
+            await prisma.user.update({
               where: { id: user.id },
               data: { email: body.email },
             });
@@ -689,22 +692,41 @@ export class Controller {
               res.status(409).send({ message: 'username already taken' });
               return;
             }
-            prisma.user.update({
+            await prisma.user.update({
               where: { id: user.id },
               data: { username: body.username },
             });
           }
           // update password
           if (body.password) {
-            prisma.user.update({
+            await prisma.user.update({
               where: { id: user.id },
               data: {
                 passwordHash: bcrypt.hashSync(body.password, ENCRYPT_ROUNDS),
               },
             });
           }
+          // update address
+          if (body.address) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                address: body.address,
+              },
+            });
+          }
+
+          // update dateOfBirth
+          if (body.address) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                dateOfBirth: new Date(body.dateOfBirth),
+              },
+            });
+          }
           // respond with updated user
-          prisma.user
+          await prisma.user
             .findUnique({ where: { id: user.id } })
             .then((updatedUser) => {
               if (updatedUser) {
@@ -715,22 +737,19 @@ export class Controller {
                     email: updatedUser.email,
                     emailVerified: updatedUser.emailVerified,
                     registrationDate: updatedUser.registrationDate.toISOString(),
+                    dateOfBirth: updatedUser.dateOfBirth,
+                    address: updatedUser.address,
                   },
                 });
               }
-            })
-            .catch((error) => {
-              next(error);
             });
-          return;
         }
       } catch (error) {
         next(error);
       }
-      res.status(404).send({ message: 'invalid id given' });
-      return;
+    } else {
+      res.status(400).send({ message: 'invalid request' });
     }
-    res.status(400).send({ message: 'invalid request' });
   }
 
   getUserRefreshTokens(req: Request, res: Response, next: NextFunction): void {
@@ -740,13 +759,14 @@ export class Controller {
         .findUnique({ where: { id: id }, include: { refreshTokens: true } })
         .then((user) => {
           if (user) {
-            res.status(200).send(user.refreshTokens);
+            res.status(200).send({ refreshTokens: user.refreshTokens });
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
           }
-          res.status(404).send({ message: 'invalid id given' });
         })
-        .catch((error) => {
-          next(error);
-        });
+        .catch((error) => next(error));
+    } else {
+      res.status(400).send({ message: 'invalid id given' });
     }
   }
 
@@ -798,7 +818,10 @@ export class Controller {
                               description: termination.description,
                               adminId: termination.adminId,
                             })
-                          );
+                          )
+                          .catch((err) => next(err));
+                      } else {
+                        res.status(500).send({ message: 'database error' });
                       }
                     })
                     .catch((err) => next(err));
@@ -807,8 +830,12 @@ export class Controller {
                 }
               })
               .catch((err) => next(err));
+          } else {
+            res.status(400).send({ message: 'invalid request body' });
           }
         });
+    } else {
+      res.status(400).send({ message: 'invalid authorization' });
     }
   }
 
@@ -833,11 +860,10 @@ export class Controller {
                     res
                       .status(200)
                       .send({ message: 'user removed from termination list' })
-                  );
+                  )
+                  .catch((err) => next(err));
               })
-              .catch((err) => {
-                next(err);
-              });
+              .catch((err) => next(err));
           } else {
             res.status(404).send({ message: 'invalid id given' });
           }
@@ -896,15 +922,14 @@ export class Controller {
                           description: suspension.description,
                           adminId: suspension.adminId,
                         })
-                      );
+                      )
+                      .catch((err) => next(err));
                   });
               } else {
                 res.status(404).send({ message: 'invalid id given' });
               }
             })
-            .catch((err) => {
-              next(err);
-            });
+            .catch((err) => next(err));
         } else {
           res.status(404).send({ message: 'invalid id given' });
         }
@@ -920,7 +945,9 @@ export class Controller {
       prisma.user
         .findUnique({
           where: { id: id },
-          include: { suspensions: { where: { id: id } } },
+          include: {
+            suspensions: { where: { userId: id }, orderBy: { id: 'desc' } },
+          },
         })
         .then((user) => {
           if (user && user.suspensions[0]) {
@@ -938,11 +965,10 @@ export class Controller {
                     res
                       .status(200)
                       .send({ message: 'user removed from suspension list' })
-                  );
+                  )
+                  .catch((err) => next(err));
               })
-              .catch((err) => {
-                next(err);
-              });
+              .catch((err) => next(err));
           } else {
             res.status(404).send({ message: 'invalid id given' });
           }
@@ -997,7 +1023,7 @@ export class Controller {
         })
         .catch((err) => next(err));
     } else {
-      res.status(404).send({ message: 'invalid id given' });
+      res.status(400).send({ message: 'invalid request' });
     }
   }
 }

@@ -9,14 +9,18 @@ import { Roles } from '../../interfaces/roles.enum';
 import Jimp from 'jimp';
 import path from 'path';
 import { strToMilis } from '../../services/strToMilis.service';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
 export class Controller {
   postCreate(req: Request, res: Response, next: NextFunction): void {
-    if (req.body.eventId && req.body.ticketsTypes) {
+    if (req.body.eventId != undefined && req.body.tickets != undefined && req.body.currency != undefined) {
       const eventId: number = req.body.eventId;
-      const ticketsTypes = req.body.ticketsTypes;
+      const tickets = req.body.tickets;
+      const currency: string = req.body.currency;
+      let totalPrice: number = 0;
+
       prisma.event
         .findUnique({
           where: {
@@ -25,16 +29,82 @@ export class Controller {
         })
         .then((evt) => {
           if (evt) {
-            const user = req.user as JwtDataStore;
-            const userScope = user.scopes.find((scope, _i, _obj) => {
-              return scope.role == Roles.User;
-            });
+            prisma.ticketType
+              .findMany({
+                where: {
+                  eventId: evt.id
+                },
+                select: {
+                  price: true
+                }
+              })
+              .then((ttp) => {
+                if (ttp) {
+                  ttp.forEach((e) => {
+                    totalPrice += e.price;
+                  })
 
-            // prisma.reservation
-            // .create({
+                  const user = req.user as JwtDataStore;
+                  const userScope = user.scopes.find((scope, _i, _obj) => {
+                    return scope.role == Roles.User;
+                  });
 
-            // })
-            
+                  prisma.reservation
+                    .create({
+                      data: {
+                        price: totalPrice,
+                        orderDate: new Date(),
+                        status: 'WAITING',
+                        user: {
+                          connect: {
+                            id: userScope?.id
+                          }
+                        },
+                        Event: {
+                          connect: {
+                            id: evt.id
+                          }
+                        }
+                      }
+                    })
+                    .then((rsv) => {
+                      prisma.ticket
+                        .createMany({
+                          data: tickets.map((t: {
+                            nama: string;
+                            identification: string;
+                            identificationNumber: string;
+                            ticketTypeId: number;
+                          }) => {
+                            return {
+                              nama: t.nama,
+                              identification: t.identification,
+                              identificationNumber: t.identificationNumber,
+                              ticketTypeId: t.ticketTypeId,
+                              reservationId: rsv.id
+                            }
+                          })
+                        })
+                        .then(() => {
+                          res.status(201).send({
+                            reservation: {
+                              id: rsv.id,
+                              id_user: rsv.userId,
+                              uuid: uuidv4(),
+                              tickets: tickets,
+                              confirmed: false,
+                              price: rsv.price,
+                            }
+                          })
+                        })
+                        .catch((err) => next(err));
+                    })
+                    .catch((err) => next(err));
+                } else {
+                  res.status(404).send({ message: 'invalid ticket type id given' });
+                }
+              })
+              .catch((err) => next(err));
           } else {
             res.status(404).send({ message: 'invalid event id given' });
           }
@@ -42,6 +112,29 @@ export class Controller {
         .catch((err) => next(err));
     } else {
       res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  getById(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined) {
+      const id = Number.parseInt(req.params.id);
+      prisma.reservation
+        .findUnique({
+          where: { id: id },
+          include: {
+            tickets: true
+          }
+        })
+        .then((rsv) => {
+          if (rsv) {
+            res.status(200).send({ reservation: rsv });
+          } else {
+            res.status(404).send({ message: 'invalid reservation id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid id given' });
     }
   }
 }

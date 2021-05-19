@@ -20,7 +20,7 @@
     "test:debug": "mocha -r ts-node/register --inspect-brk test/**/*.ts --exit"
   },
   "dependencies": {
-    "@prisma/client": "^2.22.1",
+    "@prisma/client": "^2.23.0",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.5",
@@ -79,7 +79,7 @@
     "nodemon": "^2.0.7",
     "pino-pretty": "^4.3.0",
     "prettier": "^2.2.1",
-    "prisma": "^2.22.1",
+    "prisma": "^2.23.0",
     "shelljs": "^0.8.4",
     "source-map-support": "^0.5.19",
     "supertest": "^6.0.1",

@@ -28,7 +28,7 @@ function sendVerificationEmail(req: Request, eo: EventOrganizer) {
     req.hostname +
     ':' +
     process.env.PORT +
-    '/api/v1/users/verify-email/' +
+    '/api/v1/eventOrganizers/verify-email/' +
     token;
   const emailHtml: string =
     '<h2>Verification Link</h2><br><p>Link: ' +
@@ -53,37 +53,11 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-          h
-          ? // check if h.select is sent
-            h.select
-            ? prisma.eventOrganizer.findMany({
-                where: q,
-                select: h.select ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-            : // or if h.include is sent instead
-              prisma.eventOrganizer.findMany({
-                where: q,
-                include: h.include ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-          : // or if h is not sent
-            prisma.eventOrganizer.findMany({
-              where: q,
-            })
-        : // or if q isn't sent and then check if h is sent
         h
-        ? // check if h.select is sent
+          ? // check if h.select is sent
           h.select
-          ? prisma.eventOrganizer.findMany({
+            ? prisma.eventOrganizer.findMany({
+              where: q,
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -91,7 +65,33 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h.include is sent instead
+            : // or if h.include is sent instead
+            prisma.eventOrganizer.findMany({
+              where: q,
+              include: h.include ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+          : // or if h is not sent
+          prisma.eventOrganizer.findMany({
+            where: q,
+          })
+        : // or if q isn't sent and then check if h is sent
+        h
+          ? // check if h.select is sent
+          h.select
+            ? prisma.eventOrganizer.findMany({
+              select: h.select ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+            : // or if h.include is sent instead
             prisma.eventOrganizer.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -100,7 +100,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-        : // or if h is not sent
+          : // or if h is not sent
           prisma.eventOrganizer.findMany({});
 
     query

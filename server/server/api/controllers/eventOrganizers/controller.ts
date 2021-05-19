@@ -154,7 +154,7 @@ export class Controller {
           })
           .then((eo) => {
             if (eo) {
-              res.status(400).send({ message: 'username or email exists' });
+              res.status(409).send({ message: 'username or email exists' });
             } else {
               prisma.eventOrganizer
                 .create({
@@ -242,7 +242,7 @@ export class Controller {
               data: { email: body.email },
             });
           }
-          // update username
+          // update name
           if (body.name) {
             const name = await prisma.eventOrganizer.findUnique({
               where: { name: body.name },

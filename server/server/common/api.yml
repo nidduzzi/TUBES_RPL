@@ -47,7 +47,16 @@ paths:
         '400':
           description: Missing Required Information
         '409':
-          description: Email Already Taken
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       requestBody:
         content:
           application/json:
@@ -177,7 +186,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
         '409':
-          description: Email already taken
+          description: Conflict
           content:
             application/json:
               schema:
@@ -489,8 +498,8 @@ paths:
         - User Endpoint
   /users/revoke-token:
     post:
-      summary: Revoke a refresh token
-      description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens.'
+      summary: Revoke a refresh token (logout)
+      description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens (logout).'
       operationId: post-users-revokeToken
       security:
         - bearerAuth: []
@@ -680,6 +689,17 @@ paths:
                 properties:
                   event:
                     $ref: '#/components/schemas/Event'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       description: Authorized Event Organizers create a new event.
       security:
         - bearerAuth: []
@@ -959,18 +979,38 @@ paths:
               properties:
                 eventId:
                   type: integer
-                ticketsTypes:
+                tickets:
                   type: array
                   items:
                     type: object
                     properties:
-                      id:
+                      nama:
+                        type: string
+                      identification:
+                        type: string
+                      identificationNumber:
+                        type: string
+                      ticketTypeId:
                         type: integer
                     required:
-                      - id
+                      - nama
+                      - ticketTypeId
+                currency:
+                  type: string
               required:
                 - eventId
-                - ticketsTypes
+                - tickets
+                - currency
+            examples:
+              example-1:
+                value:
+                  eventId: 0
+                  tickets:
+                    - nama: string
+                      identification: string
+                      identificationNumber: string
+                      ticketTypeId: 0
+                  currency: string
         description: ''
       tags:
         - Reservation Endpoint
@@ -1011,6 +1051,12 @@ paths:
       responses:
         '200':
           description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
       description: User put an Update to the Reservation
       security:
         - bearerAuth: []
@@ -1020,18 +1066,25 @@ paths:
             schema:
               type: object
               properties:
-                ticketTypes:
+                tickets:
                   type: array
                   minItems: 1
                   items:
                     type: object
                     properties:
-                      id:
+                      nama:
+                        type: string
+                      identification:
+                        type: string
+                      identificationNumber:
+                        type: string
+                      ticketTypeId:
                         type: integer
                     required:
-                      - id
+                      - nama
+                      - ticketTypeId
               required:
-                - ticketTypes
+                - tickets
       tags:
         - Reservation Endpoint
   '/reservations/confirm/{id}':
@@ -1281,6 +1334,17 @@ paths:
       responses:
         '201':
           description: Created
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       security:
         - bearerAuth: []
       requestBody:
@@ -1355,6 +1419,17 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       description: |-
         Update Event Organizer Details associated to the Event Organizer ID.
         Modify Event Organizer Profile.
@@ -1669,7 +1744,7 @@ paths:
         - Admin Endpoint
   /admins/revoke-token:
     post:
-      summary: Revoke an Admin refresh token
+      summary: Revoke an Admin refresh token (logout)
       description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens.'
       operationId: post-admins-revokeToken
       security:

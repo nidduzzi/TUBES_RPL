@@ -184,7 +184,7 @@ export class Controller {
         })
         .then((user) => {
           if (user) {
-            res.status(400).send({ message: 'username or email exists' });
+            res.status(409).send({ message: 'username or email exists' });
           } else {
             prisma.user
               .create({
@@ -465,14 +465,23 @@ export class Controller {
     const token: string | undefined =
       req.cookies.refreshToken ?? req.params['token'];
     // check if a token is sent with request
-    if (token) {
+    const user = req.user as JwtDataStore;
+    const scope = user.scopes.find((scope, _i, _obj) => {
+      return scope.role == Roles.Admin || scope.role == Roles.User;
+    });
+    if (token && scope) {
       prisma.refreshToken
         .findUnique({
           where: { token: token },
         })
         .then((refreshToken) => {
+          // check if requesting user has role privalages
+          const allowed =
+            scope.role == Roles.Admin
+              ? true
+              : refreshToken?.userId === scope.id;
           // check if token is a valid refresh token
-          if (refreshToken && refreshToken.revoked == undefined) {
+          if (refreshToken && refreshToken.revoked == undefined && allowed) {
             // revoke refresh token
             prisma.refreshToken
               .update({
@@ -483,13 +492,19 @@ export class Controller {
               .then((_) =>
                 res.status(200).send({ message: 'refresh token revoked' })
               );
+          } else if (!allowed) {
+            res
+              .status(403)
+              .send({ message: 'insufficient scope to revoke token' });
           } else {
-            res.status(404).send({ message: 'invalid refresh token given' });
+            res.status(400).send({ message: 'invalid refresh token given' });
           }
         })
         .catch((err) => next(err));
     } else {
-      res.status(400).send({ message: 'invalid refresh token given' });
+      res
+        .status(400)
+        .send({ message: 'invalid refresh token or jwt token given' });
     }
   }
 

@@ -152,6 +152,7 @@ export class Controller {
       req.body.hasRsvp != undefined &&
       req.body.ticketTypes != [] &&
       req.body.tags != [] &&
+      req.body.unlimitedTickets &&
       eoScope?.id != undefined
     ) {
       const tmp = req.body.tags as Array<NoUndefinedField<NewTag>>;
@@ -183,75 +184,91 @@ export class Controller {
               >;
               cleanUp(schedule);
               prisma.event
-                .create({
-                  data: {
-                    name: req.body.name,
-                    description: req.body.description,
-                    hasRsvp: req.body.hasRsvp,
-                    rsvpDeadline: new Date(req.body.rsvpDeadline),
-                    unlimitedTickets: req.body.unlimitedTickets,
-                    schedule: {
-                      create: schedule,
-                    },
-                    eventOrganizer: {
-                      connect: { id: eo.id },
-                    },
-                    maxTickets: req.body.maxTickets,
-                    tagline: req.body.tagline,
-                    tags: {
-                      connect: tagNames,
-                    },
-                    ticketTypes: {
-                      create: newTicketTypes.map((ntt) => {
-                        const r = {
-                          name: ntt.name,
-                          description: ntt.description,
-                          price: ntt.price,
-                          attributes: {
-                            create: ntt.attributes.map((a) => {
+                .findUnique({ where: { name: req.body.name } })
+                .then((_name) => {
+                  if (_name) {
+                    res
+                      .status(409)
+                      .send({ message: 'event name already taken' });
+                  } else {
+                    prisma.event
+                      .create({
+                        data: {
+                          name: req.body.name,
+                          description: req.body.description,
+                          hasRsvp: req.body.hasRsvp,
+                          rsvpDeadline: new Date(req.body.rsvpDeadline),
+                          unlimitedTickets: req.body.unlimitedTickets,
+                          schedule: {
+                            create: schedule,
+                          },
+                          eventOrganizer: {
+                            connect: { id: eo.id },
+                          },
+                          maxTickets: req.body.maxTickets,
+                          tagline: req.body.tagline,
+                          tags: {
+                            connect: tagNames,
+                          },
+                          ticketTypes: {
+                            create: newTicketTypes.map((ntt) => {
                               const r = {
-                                name: a.name,
-                                values: {
-                                  createMany: {
-                                    data: a.values.map((v) => {
-                                      return { value: v.value };
-                                    }),
-                                  },
+                                name: ntt.name,
+                                description: ntt.description,
+                                price: ntt.price,
+                                attributes: {
+                                  create: ntt.attributes.map((a) => {
+                                    const r = {
+                                      name: a.name,
+                                      values: {
+                                        createMany: {
+                                          data: a.values.map((v) => {
+                                            return { value: v.value };
+                                          }),
+                                        },
+                                      },
+                                    };
+                                    cleanUp(r);
+                                    return r;
+                                  }),
                                 },
+                                currency: ntt.currency,
                               };
                               cleanUp(r);
                               return r;
                             }),
                           },
-                          currency: ntt.currency,
-                        };
-                        cleanUp(r);
-                        return r;
-                      }),
-                    },
-                  },
-                })
-                .then((event) => {
-                  if (event) {
-                    // get the event connected to it's ticketType(s)
-                    prisma.event
-                      .findUnique({
-                        where: { id: event.id },
-                        include: {
-                          schedule: true,
-                          tags: true,
-                          reservations: { include: { tickets: true } },
-                          ticketTypes: {
-                            include: {
-                              attributes: { include: { values: true } },
-                            },
-                          },
                         },
                       })
                       .then((event) => {
                         if (event) {
-                          // return event details
-                          res.status(201).send({ event: event });
+                          // get the event connected to it's ticketType(s)
+                          prisma.event
+                            .findUnique({
+                              where: { id: event.id },
+                              include: {
+                                schedule: true,
+                                tags: true,
+                                reservations: { include: { tickets: true } },
+                                ticketTypes: {
+                                  include: {
+                                    attributes: { include: { values: true } },
+                                  },
+                                },
+                              },
+                            })
+                            .then((event) => {
+                              if (event) {
+                                // return event details
+                                res.status(201).send({ event: event });
+                              } else {
+                                // event errored out while creating
+                                res.status(500).send({
+                                  message: "couldn't create event correctly",
+                                });
+                              }
+                            })
+                            .catch((err) => next(err));
                         } else {
                           // event errored out while creating
                           res.status(500).send({
@@ -260,11 +277,6 @@ export class Controller {
                         }
                       })
                       .catch((err) => next(err));
-                  } else {
-                    // event errored out while creating
-                    res.status(500).send({
-                      message: "couldn't create event correctly",
-                    });
                   }
                 })
                 .catch((err) => next(err));
@@ -650,7 +662,7 @@ export class Controller {
                 where: { name: body.name },
               });
               if (name && name.id != event.id) {
-                res.status(409).send({ message: 'name already taken' });
+                res.status(409).send({ message: 'event name already taken' });
                 return;
               }
               await prisma.event.update({

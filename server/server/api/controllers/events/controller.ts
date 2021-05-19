@@ -635,6 +635,35 @@ export class Controller {
     }
   }
 
+  getVerifyTicket(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id && req.params.uuidToken) {
+      const id = Number.parseInt(req.params.id);
+      const uuidToken = req.params.uuidToken;
+      prisma.event
+        .findUnique({
+          where: { id: id },
+          include: {
+            reservations: { include: { tickets: true } },
+          },
+        })
+        .then(async (event) => {
+          if (event) {
+            // respond with verification result
+            res.status(200).send({
+              validTicket: event.reservations.some((e) =>
+                e.tickets.some((t) => t.uuid === uuidToken)
+              ),
+            });
+          } else {
+            res.status(404).send({ message: 'invalid event id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
   putUpdateEvent(req: Request, res: Response, next: NextFunction): void {
     if (req.params.id != undefined && req.body) {
       const id = Number.parseInt(req.params.id);

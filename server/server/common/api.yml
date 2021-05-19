@@ -2161,7 +2161,7 @@ paths:
       security:
         - bearerAuth: []
       description: Event organizers retrieve their notifications
-  '/event/{id}/verify-ticket/{token}':
+  '/events/{id}/verify-ticket/{token}':
     parameters:
       - schema:
           type: string
@@ -2191,7 +2191,13 @@ paths:
                     type: boolean
                 required:
                   - validTicket
-      operationId: get-event-id-verify-ticket-token
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-verify-ticket-token
       description: event organizers verify whether a ticket is valid or not based on the provided token
       security:
         - bearerAuth: []

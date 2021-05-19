@@ -197,4 +197,27 @@ export default express
       },
     ]),
     controller.getReservations
+  )
+  .get(
+    '/:id/verify-ticket/:uuidToken',
+    checkPermissions([
+      {
+        role: Roles.EventOrganizer,
+        idValidator: async (id: number, roleId: number): Promise<boolean> => {
+          const event = await prisma.event.findUnique({
+            where: { id: id },
+            include: { eventOrganizer: true },
+          });
+          if (event) {
+            return (
+              event.eventOrganizerId == roleId && event.eventOrganizer.verified
+            );
+          } else return false;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.getVerifyTicket
   );

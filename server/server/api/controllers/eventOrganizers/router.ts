@@ -39,21 +39,7 @@ export default express
     controller.deleteVerifyEO
   )
   .get('/verify-email/:token', controller.getVerifyEmail)
-  .get(
-    '/:id/profilePicture',
-    checkPermissions([
-      {
-        role: Roles.EventOrganizer,
-        idValidator: (id: number, roleId: number): boolean => {
-          return id == roleId;
-        },
-      },
-      {
-        role: Roles.Admin,
-      },
-    ]),
-    controller.getProfilePicture
-  )
+  .get('/:id/profilePicture', controller.getProfilePicture)
   .get(
     '/:id/notifications',
     checkPermissions([

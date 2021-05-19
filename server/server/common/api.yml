@@ -727,7 +727,37 @@ paths:
                 - hasRsvp
                 - ticketTypes
                 - unlimitedTickets
-            examples: {}
+            examples:
+              example:
+                value:
+                  name: string
+                  tagline: string
+                  description: string
+                  schedule:
+                    - name: string
+                      description: string
+                      startTime: '2021-05-18T14:16:56.694Z'
+                      endTime: '2021-06-18T14:16:56.694Z'
+                      allDay: false
+                      place: string
+                  rsvpDeadline: string
+                  hasRsvp: true
+                  eventOrganizerId: 0
+                  tags:
+                    - id: 1
+                      name: string
+                      description: string
+                  maxTickets: 100
+                  unlimitedTickets: false
+                  ticketTypes:
+                    - name: gold
+                      description: string
+                      attributes:
+                        - name: window
+                          values:
+                            - value: hurray
+                      price: 0
+                      currency: str
         description: Event creation form data.
       tags:
         - Event Endpoint
@@ -1928,7 +1958,7 @@ paths:
               properties:
                 profilePicture:
                   type: string
-                  format: byte
+                  format: binary
       tags:
         - User Endpoint
     delete:
@@ -1992,7 +2022,7 @@ paths:
               properties:
                 profilePicture:
                   type: string
-                  format: byte
+                  format: binary
       tags:
         - Event Organizer Endpoint
     delete:
@@ -2205,9 +2235,7 @@ paths:
               properties:
                 logo:
                   type: string
-                  format: byte
-              required:
-                - logo
+                  format: binary
         description: ''
       tags:
         - Event Endpoint
@@ -2278,7 +2306,7 @@ paths:
               properties:
                 image:
                   type: string
-                  format: byte
+                  format: binary
       tags:
         - Event Endpoint
     delete:
@@ -2328,7 +2356,7 @@ paths:
               properties:
                 images:
                   type: string
-                  format: byte
+                  format: binary
       tags:
         - Event Endpoint
   /tags:

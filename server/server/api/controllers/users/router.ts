@@ -4,7 +4,7 @@ import checkPermissions from '../../middlewares/permissions.handler';
 import { Roles } from '../../interfaces/roles.enum';
 import multer from 'multer';
 
-const upload = multer({ storage: multer.memoryStorage() });
+const uploadProfilePicture = multer({ storage: multer.memoryStorage() });
 
 export default express
   .Router()
@@ -68,7 +68,7 @@ export default express
         role: Roles.Admin,
       },
     ]),
-    upload.single('profilePicture'),
+    uploadProfilePicture.single('profilePicture'),
     controller.putProfilePicture
   )
   .delete(

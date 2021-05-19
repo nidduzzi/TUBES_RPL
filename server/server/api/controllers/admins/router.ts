@@ -9,8 +9,8 @@ export default express
     '/',
     (req: Request, _res: Response, next: NextFunction) => {
       if (
-        req.ip == '127.0.0.1' ||
-        (req.ip == '::1' && process.env.ALLOW_ADMIN_REGISTRATION == 'true')
+        (req.ip == '127.0.0.1' || req.ip == '::1') &&
+        process.env.ALLOW_ADMIN_REGISTRATION == 'true'
       ) {
         next();
       } else {

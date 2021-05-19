@@ -95,6 +95,7 @@ model Reservation {
 model Ticket {
     id                    Int                        @id @default(autoincrement())
     uuid                  String                     @unique @default(uuid())
+    nama                  String
     identification        Identification
     identificationNumber  String
     reservation           Reservation                @relation(fields: [reservationId], references: [id])

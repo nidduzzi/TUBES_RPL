@@ -53,37 +53,11 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-          h
-          ? // check if h.select is sent
-            h.select
-            ? prisma.eventOrganizer.findMany({
-                where: q,
-                select: h.select ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-            : // or if h.include is sent instead
-              prisma.eventOrganizer.findMany({
-                where: q,
-                include: h.include ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-          : // or if h is not sent
-            prisma.eventOrganizer.findMany({
-              where: q,
-            })
-        : // or if q isn't sent and then check if h is sent
         h
-        ? // check if h.select is sent
+          ? // check if h.select is sent
           h.select
-          ? prisma.eventOrganizer.findMany({
+            ? prisma.eventOrganizer.findMany({
+              where: q,
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -91,7 +65,33 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h.include is sent instead
+            : // or if h.include is sent instead
+            prisma.eventOrganizer.findMany({
+              where: q,
+              include: h.include ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+          : // or if h is not sent
+          prisma.eventOrganizer.findMany({
+            where: q,
+          })
+        : // or if q isn't sent and then check if h is sent
+        h
+          ? // check if h.select is sent
+          h.select
+            ? prisma.eventOrganizer.findMany({
+              select: h.select ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+            : // or if h.include is sent instead
             prisma.eventOrganizer.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -100,7 +100,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-        : // or if h is not sent
+          : // or if h is not sent
           prisma.eventOrganizer.findMany({});
 
     query
@@ -761,6 +761,149 @@ export class Controller {
         .catch((err) => next(err));
     } else {
       res.status(404).send({ message: 'invalid id given' });
+    }
+  }
+
+  putAllowedUser(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id && req.params.uid) {
+      const id: number = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({ where: { id: id } })
+        .then((eo) => {
+          if (eo) {
+            const uid: number = Number.parseInt(req.params.uid);
+            prisma.user
+              .findUnique({
+                where: {
+                  id: uid
+                },
+                select: {
+                  id: true,
+                  eventOrganizerId: true
+                }
+              })
+              .then((u) => {
+                if (u) {
+                  if (!u.eventOrganizerId) {
+                    prisma.user
+                      .update({
+                        where: {
+                          id: u.id
+                        },
+                        data: {
+                          eventOrganizer: {
+                            connect: {
+                              id: id
+                            }
+                          }
+                        }
+                      })
+                      .then((u) => {
+                        res.status(200).send({ user: { u } });
+                      })
+                      .catch((err) => next(err));
+                  } else {
+                    res.send(400).send({ message: 'user already registered as event organizer' });
+                  }
+                } else {
+                  res.send(404).send({ message: 'invalid user id given' });
+                }
+              })
+              .catch((err) => next(err));
+          } else {
+            res.send(404).send({ message: 'invalid event organizer id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.send(404).send({ message: 'invalid request' });
+    }
+  }
+
+  deleteAllowedUser(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id && req.params.uid) {
+      const id: number = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({ where: { id: id } })
+        .then((eo) => {
+          if (eo) {
+            const uid: number = Number.parseInt(req.params.uid);
+            prisma.user
+              .findUnique({
+                where: {
+                  id: uid
+                },
+                select: {
+                  id: true,
+                  eventOrganizerId: true
+                }
+              })
+              .then((u) => {
+                if (u) {
+                  if (u.eventOrganizerId == id) {
+                    prisma.user
+                      .update({
+                        where: {
+                          id: u.id
+                        },
+                        data: {
+                          eventOrganizer: {
+                            connect: {
+                              id: undefined
+                            }
+                          }
+                        }
+                      })
+                      .then((u) => {
+                        res.status(200).send({ user: { u } });
+                      })
+                      .catch((err) => next(err));
+                  } else {
+                    res.send(400).send({ message: 'user is not registered as organizer in this or any event organizer' });
+                  }
+                } else {
+                  res.send(404).send({ message: 'invalid user id given' });
+                }
+              })
+              .catch((err) => next(err));
+          } else {
+            res.send(404).send({ message: 'invalid event organizer id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.send(404).send({ message: 'invalid request' });
+    }
+  }
+
+  getAllowedUsers(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id) {
+      const id: number = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({
+          where: {
+            id: id
+          }
+        })
+        .then((eo) => {
+          if (eo) {
+            prisma.user
+              .findMany({
+                where: {
+                  eventOrganizerId: id
+                }
+              })
+              .then((u) => {
+                res.status(200).send({ allowedUsers: { u } });
+              })
+              .catch((err) => next(err));
+          } else {
+            res.status(404).send({ message: 'invalid id given' })
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.send(404).send({ message: 'invalid request' });
     }
   }
 }

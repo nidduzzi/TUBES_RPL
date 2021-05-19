@@ -90,3 +90,8 @@ typings/
 **/package-lock.json
 
 **/dist
+
+
+
+
+server/prisma/migrations/

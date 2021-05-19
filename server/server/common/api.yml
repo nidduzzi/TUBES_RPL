@@ -654,13 +654,13 @@ paths:
       parameters:
         - schema:
             type: string
-            example: '{"startDate":{"operator":">=", "value":"3/5/2021"}}'
+            example: '{"schedule": {"every": { "startTime": { "gte": "2010-10-17T09:55:46.927Z" }}}}'
           in: query
           name: q
           description: query conditions JSON string
         - schema:
             type: string
-            example: '{"limit":5, "orderBy":["reserved_tickets"]}'
+            example: '{"take":5, "orderBy":[{ "unlimitedTickets": "desc" }, { "maxTickets": "asc" }]}'
           in: query
           name: h
           description: query format JSON string

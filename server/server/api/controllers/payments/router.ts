@@ -1,40 +1,45 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import controller from './controller';
 import checkPermissions from '../../middlewares/permissions.handler';
 import { Roles } from '../../interfaces/roles.enum';
+import { PrismaClient } from '.prisma/client';
+const prisma = new PrismaClient();
 
 export default express
   .Router()
-  .post('/',
+  .post(
+    '/',
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, roleId: number): boolean => {
-          return id == roleId;
-        },
       },
     ]),
-    controller.postCreate)
-  .put(':id',
+    controller.postCreate
+  )
+  .put(
+    ':id',
+    checkPermissions([
+      {
+        role: Roles.PaymentProvider,
+      },
+    ]),
+    controller.putUpdate
+  )
+  .get(
+    ':id',
     checkPermissions([
       {
         role: Roles.User,
-        idValidator: (id: number, roleId: number): boolean => {
-          return id == roleId;
-        },
-      },
-    ]),
-    controller.putUpdate)
-  .get(':id',
-    checkPermissions([
-      {
-        role: Roles.User,
-        idValidator: (id: number, roleId: number): boolean => {
-          return id == roleId;
+        idValidator: async (id: number, roleId: number): Promise<boolean> => {
+          const payment = await prisma.payment.findFirst({
+            where: { id: id, reservation: { userId: roleId } },
+          });
+          return payment ? true : false;
         },
       },
       {
-        role: Roles.Admin
-      }
+        role: Roles.Admin,
+      },
     ]),
-    controller.getById);
+    controller.getById
+  );

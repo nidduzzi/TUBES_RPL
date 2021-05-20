@@ -24,7 +24,6 @@ export default express
         role: Roles.Admin,
       },
     ]),
-    upload.single('profilePicture'),
     controller.putUpdateEO
   )
   .get('/:id/events', controller.getEvents)
@@ -40,6 +39,37 @@ export default express
   )
   .get('/verify-email/:token', controller.getVerifyEmail)
   .get('/:id/profilePicture', controller.getProfilePicture)
+  .put(
+    '/:id/profilePicture',
+    checkPermissions([
+      {
+        role: Roles.EventOrganizer,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    upload.single('profilePicture'),
+    controller.getProfilePicture
+  )
+  .delete(
+    '/:id/profilePicture',
+    checkPermissions([
+      {
+        role: Roles.EventOrganizer,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.getProfilePicture
+  )
   .get(
     '/:id/notifications',
     checkPermissions([
@@ -89,4 +119,49 @@ export default express
     '/warn/:id',
     checkPermissions([{ role: Roles.Admin }]),
     controller.postWarn
+  )
+  .get(
+    '/:id/allowed-users',
+    checkPermissions([
+      {
+        role: Roles.EventOrganizer,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.getAllowedUsers
+  )
+  .put(
+    '/:id/allowed-users/:uid',
+    checkPermissions([
+      {
+        role: Roles.EventOrganizer,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.putAllowedUser
+  )
+  .delete(
+    '/:id/allowed-users/:uid',
+    checkPermissions([
+      {
+        role: Roles.EventOrganizer,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.deleteAllowedUser
   );

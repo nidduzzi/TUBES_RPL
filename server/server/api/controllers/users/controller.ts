@@ -627,7 +627,6 @@ export class Controller {
               ).then((def) => {
                 def.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
                   if (err) {
-                    console.log(err);
                     next(err);
                   } else {
                     res.status(200).contentType('image/png').send(buffer);
@@ -664,7 +663,6 @@ export class Controller {
                   );
                   img.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
                     if (err) {
-                      console.log(err);
                       next(err);
                     } else {
                       prisma.user

@@ -268,7 +268,6 @@ export class Controller {
                     email: updatedEO.email,
                     emailVerified: updatedEO.emailVerified,
                     verificationDate: updatedEO.verificationDate?.toISOString(),
-                    profilePicture: updatedEO.profilPicture?.toString(),
                   },
                 });
               }
@@ -293,27 +292,14 @@ export class Controller {
           where: {
             id: id,
           },
+          include: { events: true },
         })
         .then((eo) => {
-          prisma.event
-            .findMany({
-              where: {
-                eventOrganizerId: eo?.id,
-              },
-              select: {
-                id: true,
-                name: true,
-                tagline: true,
-                description: true,
-                logo: true,
-                rsvpDeadline: true,
-                hasRsvp: true,
-                eventOrganizerId: false,
-              },
-            })
-            .then((events) => {
-              res.status(200).send({ events: events });
-            });
+          if (eo) {
+            res.status(200).send({ events: eo.events });
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
         })
         .catch((err) => next(err));
     } else {
@@ -322,9 +308,8 @@ export class Controller {
   }
 
   putVerifyEO(req: Request, res: Response, next: NextFunction): void {
-    const id = Number.parseInt(req.params['id']);
-
-    if (id) {
+    if (req.params.id) {
+      const id = Number.parseInt(req.params.id);
       prisma.eventOrganizer
         .findUnique({
           where: {
@@ -340,7 +325,7 @@ export class Controller {
                 },
                 data: {
                   verified: true,
-                  verificationDate: new Date(Date.now()),
+                  verificationDate: new Date(),
                   status: 'ACTIVE',
                 },
               })
@@ -360,9 +345,8 @@ export class Controller {
   }
 
   deleteVerifyEO(req: Request, res: Response, next: NextFunction): void {
-    const id = Number.parseInt(req.params['id']);
-
-    if (id) {
+    if (req.params.id) {
+      const id = Number.parseInt(req.params.id);
       prisma.eventOrganizer
         .findUnique({
           where: {
@@ -491,13 +475,13 @@ export class Controller {
             id: id,
           },
           select: {
-            profilPicture: true,
+            profilePicture: true,
           },
         })
         .then((eo) => {
           if (eo) {
-            if (eo.profilPicture) {
-              res.status(200).contentType('image/png').send(eo.profilPicture);
+            if (eo.profilePicture) {
+              res.status(200).contentType('image/png').send(eo.profilePicture);
             } else {
               Jimp.read(
                 path.join(
@@ -507,7 +491,6 @@ export class Controller {
               ).then((def) => {
                 def.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
                   if (err) {
-                    console.log(err);
                     next(err);
                   } else {
                     res.status(200).contentType('image/png').send(buffer);
@@ -525,13 +508,91 @@ export class Controller {
     }
   }
 
+  putProfilePicture(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined && req.body) {
+      const id = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({ where: { id: id } })
+        .then((eo) => {
+          if (eo) {
+            // update profile picture
+            if (req.file != undefined && req.file.buffer != undefined) {
+              // convert image to jpeg
+              Jimp.read(req.file.buffer)
+                .then((img) => {
+                  img.cover(
+                    256,
+                    256,
+                    Jimp.VERTICAL_ALIGN_MIDDLE | Jimp.HORIZONTAL_ALIGN_CENTER
+                  );
+                  img.getBuffer(Jimp.MIME_PNG, async (err, buffer) => {
+                    if (err) {
+                      next(err);
+                    } else {
+                      prisma.eventOrganizer
+                        .update({
+                          where: { id: eo.id },
+                          data: {
+                            profilePicture: buffer,
+                          },
+                        })
+                        .then((_) =>
+                          res.status(200).send({
+                            message: 'profile picture updated',
+                          })
+                        )
+                        .catch((error) => next(error));
+                    }
+                  });
+                })
+                .catch((error) => next(error));
+            } else {
+              res.status(400).send({ message: 'invalid file given' });
+            }
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  deleteProfilePicture(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id) {
+      const id = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({ where: { id: id } })
+        .then((eo) => {
+          if (eo) {
+            // delete profile picture
+            prisma.eventOrganizer
+              .update({
+                where: { id: eo.id },
+                data: { profilePicture: null },
+              })
+              .then((_) => {
+                res.status(200).send({ message: 'profile picture deleted' });
+              })
+              .catch((err) => next(err));
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
   getNotification(req: Request, res: Response, next: NextFunction): void {
     if (req.params.id) {
       const id: number = Number.parseInt(req.params.id);
       prisma.eventOrganizer
         .findUnique({
           where: { id: id },
-          include: { notifications: true },
+          select: { notifications: true },
         })
         .then((eo) => {
           if (eo) {
@@ -777,7 +838,7 @@ export class Controller {
                       })
                       .catch((err) => next(err));
                   } else {
-                    res.status(400).send({
+                    res.status(409).send({
                       message: 'user already registered as event organizer',
                     });
                   }
@@ -794,7 +855,7 @@ export class Controller {
         })
         .catch((err) => next(err));
     } else {
-      res.status(404).send({ message: 'invalid request' });
+      res.status(400).send({ message: 'invalid request' });
     }
   }
 
@@ -826,9 +887,7 @@ export class Controller {
                         },
                         data: {
                           eventOrganizer: {
-                            connect: {
-                              id: undefined,
-                            },
+                            disconnect: true,
                           },
                         },
                       })
@@ -867,19 +926,11 @@ export class Controller {
           where: {
             id: id,
           },
+          include: { allowedUsers: true },
         })
         .then((eo) => {
           if (eo) {
-            prisma.user
-              .findMany({
-                where: {
-                  eventOrganizerId: id,
-                },
-              })
-              .then((u) => {
-                res.status(200).send({ allowedUsers: { u } });
-              })
-              .catch((err) => next(err));
+            res.status(200).send({ allowedUsers: eo.allowedUsers });
           } else {
             res.status(404).send({ message: 'invalid id given' });
           }

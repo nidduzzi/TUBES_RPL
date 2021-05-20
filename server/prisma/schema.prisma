@@ -41,7 +41,7 @@ model EventOrganizer {
     id               Int            @id @default(autoincrement())
     name             String         @unique
     email            String         @unique
-    profilPicture    Bytes?
+    profilePicture   Bytes?
     phone            String
     address          String
     status           AccountStatus  @default(INACTIVE)
@@ -52,7 +52,7 @@ model EventOrganizer {
     suspensions      Suspension[]
     termination      Termination?
     notifications    Notification[]
-    Event            Event[]
+    events           Event[]
 }
 
 model Admin {

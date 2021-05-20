@@ -13,7 +13,7 @@ const app = express();
 export default class ExpressServer {
   private routes: (app: Application) => void;
   constructor() {
-    app.use(cors({ credentials: true }));
+    app.use(cors({ credentials: true, origin: ['localhost:3000', '*'] }));
     const root = path.normalize(__dirname + '/../..');
     app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(

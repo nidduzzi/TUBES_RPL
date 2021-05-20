@@ -83,37 +83,37 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-        h
+          h
           ? // check if h.select is sent
-          h.select
+            h.select
             ? prisma.user.findMany({
-              where: q,
-              select: h.select ?? undefined,
-              cursor: h.cursor ?? undefined,
-              skip: h.skip ?? h.cursor ? 1 : undefined,
-              distinct: h.distinct ?? undefined,
-              orderBy: h.orderBy ?? undefined,
-              take: h.take ?? undefined,
-            })
+                where: q,
+                select: h.select ?? undefined,
+                cursor: h.cursor ?? undefined,
+                skip: h.skip ?? h.cursor ? 1 : undefined,
+                distinct: h.distinct ?? undefined,
+                orderBy: h.orderBy ?? undefined,
+                take: h.take ?? undefined,
+              })
             : // or if h.include is sent instead
+              prisma.user.findMany({
+                where: q,
+                include: h.include ?? undefined,
+                cursor: h.cursor ?? undefined,
+                skip: h.skip ?? h.cursor ? 1 : undefined,
+                distinct: h.distinct ?? undefined,
+                orderBy: h.orderBy ?? undefined,
+                take: h.take ?? undefined,
+              })
+          : // or if h is not sent
             prisma.user.findMany({
               where: q,
-              include: h.include ?? undefined,
-              cursor: h.cursor ?? undefined,
-              skip: h.skip ?? h.cursor ? 1 : undefined,
-              distinct: h.distinct ?? undefined,
-              orderBy: h.orderBy ?? undefined,
-              take: h.take ?? undefined,
             })
-          : // or if h is not sent
-          prisma.user.findMany({
-            where: q,
-          })
         : // or if q isn't sent and then check if h is sent
         h
-          ? // check if h.select is sent
+        ? // check if h.select is sent
           h.select
-            ? prisma.user.findMany({
+          ? prisma.user.findMany({
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -121,7 +121,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-            : // or if h.include is sent instead
+          : // or if h.include is sent instead
             prisma.user.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -130,7 +130,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h is not sent
+        : // or if h is not sent
           prisma.user.findMany({});
 
     query
@@ -514,13 +514,18 @@ export class Controller {
         // check if token is expired
         else if (refreshToken.expires < new Date()) {
           // revoke expired token
-          await prisma.refreshToken.update({
-            where: { id: refreshToken.id },
-            data: {
-              revoked: new Date(),
-              revokedByIp: req.ip,
-            },
-          });
+          await prisma.refreshToken
+            .update({
+              where: { id: refreshToken.id },
+              data: {
+                revoked: new Date(),
+                revokedByIp: req.ip,
+              },
+            })
+            .then((_) =>
+              res.status(404).send({ message: 'refesh token is expired' })
+            )
+            .catch((err) => next(err));
         }
       } else {
         res.status(400).send({
@@ -529,9 +534,7 @@ export class Controller {
       }
     } else {
       // send invalid or expired token message if the function hasn't returned
-      res
-        .status(400)
-        .send({ message: 'The refresh token is invalid, revoked or expired' });
+      res.status(400).send({ message: 'The refresh token is invalid' });
     }
   }
 

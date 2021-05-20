@@ -13,7 +13,17 @@ const app = express();
 export default class ExpressServer {
   private routes: (app: Application) => void;
   constructor() {
-    app.use(cors({ credentials: true, origin: ['localhost:3000', '*'] }));
+    app.use(
+      cors({
+        credentials: true,
+        origin: [
+          'http://localhost:3000',
+          'http://tiketin.herokuapp.com',
+          'https://tiketin.herokuapp.com',
+          '*',
+        ],
+      })
+    );
     const root = path.normalize(__dirname + '/../..');
     app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(

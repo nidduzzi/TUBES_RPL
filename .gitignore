@@ -88,3 +88,10 @@ typings/
 .dynamodb/
 
 **/package-lock.json
+
+**/dist
+
+
+
+
+server/prisma/migrations/

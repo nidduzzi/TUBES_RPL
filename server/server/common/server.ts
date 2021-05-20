@@ -18,6 +18,7 @@ export default class ExpressServer {
         credentials: true,
         origin: [
           'http://localhost:3000',
+          'http://localhost:8080',
           'http://tiketin.herokuapp.com',
           'https://tiketin.herokuapp.com',
           '*',

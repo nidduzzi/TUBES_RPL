@@ -48,7 +48,7 @@
 
 <script>
 export default {
-  name: "signupform",
+  name: "signupform"
 };
 </script>
 
@@ -74,7 +74,7 @@ export default {
   color: white;
   border-radius: 1em;
   &:hover {
-      background: darken(#F4743B, 10%);
+    background: darken(#f4743b, 10%);
   }
 }
 

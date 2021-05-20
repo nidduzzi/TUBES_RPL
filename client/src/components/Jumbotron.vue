@@ -6,13 +6,10 @@
         :clickable="false"
         :space="150"
         :perspective="10"
-        :controls-visible="true"
         :autoplay="true"
         :autoplayHoverPause="true"
         :autoplay-timeout="3000"
         :display="5"
-        :controlsNextHtml="'&#8883;'"
-        :controlsPrevHtml="'&#8882;'"
       >
         <slide v-for="(slide, i) in slides" :key="i" :index="i">
           <figure>

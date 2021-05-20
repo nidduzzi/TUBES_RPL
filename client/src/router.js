@@ -3,6 +3,7 @@ import Router from "vue-router";
 import Homepage from "./views/mainapp/Homepage.vue";
 import Reservation from "./views/mainapp/Reservation.vue";
 import Home from "./views/mainapp/Home.vue";
+import Dashboard from "./views/dashboard/Dashboard.vue";
 
 Vue.use(Router);
 
@@ -12,7 +13,6 @@ export default new Router({
   routes: [
     {
       path: "/",
-      name: "home",
       component: Homepage,
       children: [
         {
@@ -64,7 +64,7 @@ export default new Router({
           children: [
               {
                 path: "/order",
-                name: "reservation",
+                name: "order",
                 component: () => import("./components/ReservationForm.vue"),
               },
               {
@@ -80,9 +80,42 @@ export default new Router({
     {
        path: "/:role/dashboard",
        name: "dashboard",
-       component: Home,
+       component: Dashboard,
        props: true,
-       children: [],
+       meta: {
+         requireAuth: true,
+       },
+       children: [
+         {
+           path: "/:role/dashboard/reservation",
+           name: "user-reservation",
+           component: () => import("./views/dashboard/user/Reservation.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/reservation/list",
+           name: "user-reservation-list",
+           component: () => import("./views/dashboard/user/ReservationList.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/reservation/checkorder",
+           name: "user-reservation-checkorder",
+           component: () => import("./views/dashboard/user/ConfirmationOrder.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/profile",
+           name: "user-reservation-profile",
+           component: () => import("./views/dashboard/user/Profile.vue"),
+           props: true,
+         }
+       ],
+    },
+    {
+      path: "*",
+      name: "notfound",
+      component: Home,
     },
   ]
 });

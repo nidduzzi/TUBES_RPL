@@ -5,6 +5,7 @@
       <VueNavigationBar
         :class="[isSticky ? stickyClass : '']"
         :options="navbarOptions"
+        @vnb-item-clicked="logOut"
       />
     </div>
     <router-view />
@@ -14,10 +15,54 @@
 
 <script>
 import VueNavigationBar from "vue-navigation-bar";
+import "vue-navigation-bar/dist/vue-navigation-bar.css";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import "vue-navigation-bar/dist/vue-navigation-bar.css";
 import Footer from "@/components/Footer.vue";
+
+const Daftar = {
+  type: "button",
+  text: "Daftar",
+  path: { name: "signup" },
+  class: "button button-orange",
+  iconRight:
+    '<svg id="i-arrow-right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"> <path d="M22 6 L30 16 22 26 M30 16 L2 16" /> </svg>',
+};
+
+const Logout = {
+  isLinkAction: true,
+  type: "button",
+  text: "Logout",
+  path: { name: "login" },
+  class: "button-logout button",
+  iconLeft: "<i class='fa fa-sign-out' aria-hidden='true'></i>",
+};
+
+const LoginBar = {
+  type: "link",
+  text: "Login",
+  arrowColor: "orange",
+  subMenuOptions: [
+    {
+      type: "link",
+      text: "As Admin",
+      subText: "Login with admin account.",
+      path: { name: "admin" },
+      iconLeft: '<i class="fa fa-desktop fa-fw"></i>',
+    },
+    {
+      type: "hr",
+    },
+    {
+      type: "link",
+      text: "As User",
+      subText: "Login with user account.",
+      path: { name: "login" },
+      iconLeft: '<i class="fa fa-user-o fa-fw"></i>',
+      arrowColor: "#659CC8",
+    },
+  ],
+};
 
 export default {
   components: {
@@ -52,39 +97,6 @@ export default {
             path: { name: "eventorganizer" },
             class: "font-weight-bold",
           },
-          {
-            type: "link",
-            text: "Login",
-            arrowColor: "orange",
-            subMenuOptions: [
-              {
-                type: "link",
-                text: "As Admin",
-                subText: "Login with admin account.",
-                path: { name: "admin" },
-                iconLeft: '<i class="fa fa-desktop fa-fw"></i>',
-              },
-              {
-                type: "hr",
-              },
-              {
-                type: "link",
-                text: "As User",
-                subText: "Login with user account.",
-                path: { name: "login" },
-                iconLeft: '<i class="fa fa-user-o fa-fw"></i>',
-                arrowColor: "#659CC8",
-              },
-            ],
-          },
-          {
-            type: "button",
-            text: "Daftar",
-            path: { name: "signup" },
-            class: "button-orange",
-            iconRight:
-              '<svg id="i-arrow-right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"> <path d="M22 6 L30 16 22 26 M30 16 L2 16" /> </svg>',
-          },
         ],
       },
       isSticky: false,
@@ -92,19 +104,36 @@ export default {
       scrollPosition: 0,
     };
   },
+  computed: {
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
+  },
   created() {
-    window.addEventListener("scroll", this.handleScroll);
+    if (this.loggedIn) {
+      this.navbarOptions.menuOptionsRight.push(Logout);
+    } else {
+      this.navbarOptions.menuOptionsRight.push(LoginBar);
+      this.navbarOptions.menuOptionsRight.push(Daftar);
+    }
+    addEventListener("scroll", this.handleScroll);
   },
   destroyed() {
-    window.removeEventListener("scroll", this.handleScroll);
+    removeEventListener("scroll", this.handleScroll);
   },
   methods: {
     handleScroll() {
-      this.scrollPosition = window.scrollY;
+      this.scrollPosition = scrollY;
       if (this.scrollPosition >= 100) {
         this.isSticky = true;
       } else {
         this.isSticky = false;
+      }
+    },
+    logOut(text) {
+      if(text === 'Logout'){
+        this.$store.dispatch("auth/logout");
+        location.reload();
       }
     },
   },
@@ -129,16 +158,26 @@ export default {
 
 .vnb {
   @media (min-width: 992px) {
-    .button-orange {
-      background: #beee62;
-      &:hover {
-        background: darken(#beee62, 10%);
-      }
+    .button {
       border-radius: 1.5em;
       text-transform: capitalize;
       padding: 5px {
         left: 10px;
         right: 10px;
+      }
+    }
+
+    .button-orange {
+      background: #beee62;
+      &:hover {
+        background: darken(#beee62, 10%);
+      }
+    }
+
+    .button-logout {
+      background: #dd1335;
+      &:hover {
+        background: darken(#dd1335, 10%);
       }
     }
   }

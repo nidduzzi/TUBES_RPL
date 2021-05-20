@@ -2,15 +2,19 @@
   <div class="formlogin">
     <div class="row w-100">
       <div class="offset-lg-3 col-lg-6">
+        <div v-if="message" class="alert alert-danger" role="alert">
+          <p>{{ message.message }}</p>
+        </div>
         <div class="card">
-           <img src="../assets/login.jpg" class="card-img-top" />
+          <img src="../assets/login.jpg" class="card-img-top" />
           <div class="card-body">
-            <form>
+            <form @submit.prevent="handleLogin">
               <div class="form-group">
-                <label for="email">Username/Email</label>
+                <label for="text">Username/Email</label>
                 <input
-                  type="email"
+                  type="text"
                   class="form-control"
+                  v-model="user.username"
                 />
               </div>
               <div class="form-group">
@@ -18,11 +22,20 @@
                 <input
                   type="password"
                   class="form-control"
+                  v-model="user.password"
                 />
               </div>
               <label class="question">Belum punya akun ?</label>
-              <router-link to="/signup" class="question font-weight-bold linked"> Signup here</router-link>
-              <button type="submit" class="btn button-orange btn-block">Login</button>
+              <router-link
+                to="/signup"
+                class="question font-weight-bold linked"
+              >
+                Signup here</router-link
+              >
+              <button type="submit" class="btn button-orange btn-block">
+                <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
+                <div v-else>Login</div>
+              </button>
             </form>
           </div>
         </div>
@@ -32,8 +45,53 @@
 </template>
 
 <script>
+import User from "../model/user";
+
 export default {
   name: "loginform",
+  data() {
+    return {
+      user: new User("", "", ""),
+      loading: false,
+      message: "",
+    };
+  },
+  computed: {
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
+  },
+  created() {
+    if (this.loggedIn) {
+      this.$router.push(`/user/dashboard`);
+    }
+  },
+  methods: {
+    handleLogin() {
+      this.loading = true;
+      this.message = "";
+      if (this.user.username.includes("@")) {
+        this.user.email = this.user.username;
+        this.user.username = "";
+      } else {
+        this.user.email = "default@yahoo.com";
+      }
+      if (this.user.username || (this.user.email && this.user.password)) {
+        this.$store.dispatch("auth/login", this.user).then(
+          () => {
+            this.$router.push("/user/dashboard");
+          },
+          (error) => {
+            this.loading = false;
+            this.message =
+              (error.response && error.response.data) ||
+              error.message ||
+              error.toString();
+          }
+        );
+      }
+    },
+  },
 };
 </script>
 
@@ -42,56 +100,56 @@ export default {
 @import url("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css");
 
 * {
-   box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .formlogin {
-   padding: {
-      top: 10em;
-      bottom:10em;
-   }
-   min-height:100%;
-   margin: 0;
+  padding: {
+    top: 10em;
+    bottom: 10em;
+  }
+  min-height: 100%;
+  margin: 0;
 }
 
 .button-orange {
-   background-color: #F4743B;
-   color:white;
-   border-radius: 2em;
-   &:hover {
-      background: darken(#F4743B, 10%);
-   }
+  background-color: #f4743b;
+  color: white;
+  border-radius: 2em;
+  &:hover {
+    background: darken(#f4743b, 10%);
+  }
 }
 
 .card {
-   padding: .6em 0;
-   margin-top : 0;
-   margin-bottom: 0;
-   flex-direction: row;
-   border-radius: 1em;
-   img {
-      border-radius: 1em 0 0 1em;
-      width: 50%;
-   }
+  padding: 0.6em 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  flex-direction: row;
+  border-radius: 1em;
+  img {
+    border-radius: 1em 0 0 1em;
+    width: 50%;
+  }
 }
 
 .card-body {
-   text-align: left;
+  text-align: left;
 }
 
 label {
-   font-size: .8em;
-   font-weight: bold;
+  font-size: 0.8em;
+  font-weight: bold;
 }
 
 .form-control {
-   border-radius: 25px;
+  border-radius: 25px;
 }
 
 .question {
   font : {
     weight: 400;
-    size: .6em;
+    size: 0.6em;
   }
 }
 
@@ -101,7 +159,7 @@ label {
 
 @media only screen and (max-width: 768px) {
   .card img {
-     display:none;
+    display: none;
   }
   .card-body {
     padding: 0.5em 1.2em;
@@ -110,11 +168,11 @@ label {
     margin: 0em;
   }
   .card {
-     margin: {
-        top:2em;
-        bottom:2em;
-        left:2em;
-     };
+    margin: {
+      top: 2em;
+      bottom: 2em;
+      left: 2em;
+    }
   }
 }
 @media only screen and (max-width: 1200px) {

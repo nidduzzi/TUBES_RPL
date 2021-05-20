@@ -14,7 +14,7 @@ export default {
   name: "home",
   components: {
     Jumbotron,
-    SearchForm
-  }
+    SearchForm,
+  },
 };
 </script>

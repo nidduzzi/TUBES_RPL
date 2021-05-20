@@ -11,6 +11,7 @@
     <div class="container">
       <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut" />
     </div>
+    <h1 class="container text-left mt-4">{{ userProfile.username }}'s Dashboard</h1>
     <router-view :model="userProfile"></router-view>
   </div>
 </template>

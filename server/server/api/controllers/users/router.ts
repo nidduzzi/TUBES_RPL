@@ -165,7 +165,7 @@ export default express
   .post('/refresh-token', controller.postRefreshToken)
   .post(
     '/revoke-token',
-    checkPermissions([{ role: Roles.Admin }]),
+    checkPermissions([{ role: Roles.User }, { role: Roles.Admin }]),
     controller.postRevokeToken
   )
   .get('/verify-email/:token', controller.getVerifyEmail);

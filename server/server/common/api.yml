@@ -47,7 +47,16 @@ paths:
         '400':
           description: Missing Required Information
         '409':
-          description: Email Already Taken
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       requestBody:
         content:
           application/json:
@@ -56,7 +65,7 @@ paths:
               properties:
                 username:
                   type: string
-                  pattern: '^[A-Za-z0-9-_]'
+                  pattern: '^[A-Za-z0-9-_]+$'
                   minLength: 1
                 email:
                   type: string
@@ -177,7 +186,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
         '409':
-          description: Email already taken
+          description: Conflict
           content:
             application/json:
               schema:
@@ -200,10 +209,6 @@ paths:
                   type: string
                   pattern: '^[A-Za-z0-9-_]'
                   minLength: 1
-                profilePicture:
-                  type: string
-                  format: binary
-                  nullable: true
                 email:
                   type: string
                   format: email
@@ -213,6 +218,11 @@ paths:
                   pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
                   format: password
                   example: fFf9@qe!
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                  format: date
             examples:
               Update User Profile Picture:
                 value:
@@ -256,12 +266,12 @@ paths:
             schema:
               type: object
               properties:
-                policy_breach:
+                policyBreach:
                   type: string
                 description:
                   type: string
               required:
-                - policy_breach
+                - policyBreach
                 - description
       tags:
         - Admin Endpoint
@@ -425,6 +435,7 @@ paths:
                 password:
                   type: string
                   example: fFf9@qe!
+                  format: password
                 email:
                   type: string
                   format: email
@@ -489,8 +500,8 @@ paths:
         - User Endpoint
   /users/revoke-token:
     post:
-      summary: Revoke a refresh token
-      description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens.'
+      summary: Revoke a refresh token (logout)
+      description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens (logout).'
       operationId: post-users-revokeToken
       security:
         - bearerAuth: []
@@ -654,13 +665,13 @@ paths:
       parameters:
         - schema:
             type: string
-            example: '{"startDate":{"operator":">=", "value":"3/5/2021"}}'
+            example: '{"schedule": {"every": { "startTime": { "gte": "2010-10-17T09:55:46.927Z" }}}}'
           in: query
           name: q
           description: query conditions JSON string
         - schema:
             type: string
-            example: '{"limit":5, "orderBy":["reserved_tickets"]}'
+            example: '{"take":5, "orderBy":[{ "unlimitedTickets": "desc" }, { "maxTickets": "asc" }]}'
           in: query
           name: h
           description: query format JSON string
@@ -680,6 +691,17 @@ paths:
                 properties:
                   event:
                     $ref: '#/components/schemas/Event'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       description: Authorized Event Organizers create a new event.
       security:
         - bearerAuth: []
@@ -701,6 +723,7 @@ paths:
                     $ref: '#/components/schemas/Schedule'
                 rsvpDeadline:
                   type: string
+                  format: date-time
                 hasRsvp:
                   type: boolean
                 ticketTypes:
@@ -720,6 +743,8 @@ paths:
                   type: integer
                 unlimitedTickets:
                   type: boolean
+                currency:
+                  type: string
               required:
                 - name
                 - description
@@ -740,12 +765,10 @@ paths:
                       endTime: '2021-06-18T14:16:56.694Z'
                       allDay: false
                       place: string
-                  rsvpDeadline: string
+                  rsvpDeadline: '2021-05-18T14:16:56.694Z'
                   hasRsvp: true
-                  eventOrganizerId: 0
                   tags:
-                    - id: 1
-                      name: string
+                    - name: string
                       description: string
                   maxTickets: 100
                   unlimitedTickets: false
@@ -757,7 +780,7 @@ paths:
                           values:
                             - value: hurray
                       price: 0
-                      currency: str
+                  currency: str
         description: Event creation form data.
       tags:
         - Event Endpoint
@@ -822,14 +845,14 @@ paths:
                   type: string
                 schedule:
                   type: array
+                  minItems: 1
                   items:
                     $ref: '#/components/schemas/Schedule'
                 description:
                   type: string
-                  nullable: true
                 rsvpDeadline:
                   type: string
-                  format: time
+                  format: date-time
                   nullable: true
                 tagline:
                   type: string
@@ -841,9 +864,14 @@ paths:
                     $ref: '#/components/schemas/Ticket-Type'
                 tags:
                   type: array
-                  nullable: true
+                  minItems: 1
                   items:
-                    $ref: '#/components/schemas/Tag'
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                    required:
+                      - name
                 status:
                   type: string
                   enum:
@@ -852,6 +880,37 @@ paths:
                 maxTickets:
                   type: integer
                   nullable: true
+                currency:
+                  type: string
+            examples:
+              example:
+                value:
+                  name: string
+                  tagline: string
+                  description: string
+                  schedule:
+                    - name: string
+                      description: string
+                      startTime: '2021-05-18T14:16:56.694Z'
+                      endTime: '2021-06-18T14:16:56.694Z'
+                      allDay: false
+                      place: string
+                  rsvpDeadline: '2021-05-18T14:16:56.694Z'
+                  hasRsvp: true
+                  tags:
+                    - name: string
+                      description: string
+                  maxTickets: 100
+                  unlimitedTickets: false
+                  ticketTypes:
+                    - name: gold
+                      description: string
+                      attributes:
+                        - name: window
+                          values:
+                            - value: hurray
+                      price: 0
+                  currency: str
         description: Details of revised event
       tags:
         - Event Endpoint
@@ -959,18 +1018,34 @@ paths:
               properties:
                 eventId:
                   type: integer
-                ticketsTypes:
+                tickets:
                   type: array
                   items:
                     type: object
                     properties:
-                      id:
+                      nama:
+                        type: string
+                      identification:
+                        type: string
+                      identificationNumber:
+                        type: string
+                      ticketTypeId:
                         type: integer
                     required:
-                      - id
+                      - nama
+                      - ticketTypeId
               required:
                 - eventId
-                - ticketsTypes
+                - tickets
+            examples:
+              example-1:
+                value:
+                  eventId: 0
+                  tickets:
+                    - nama: string
+                      identification: string
+                      identificationNumber: string
+                      ticketTypeId: 0
         description: ''
       tags:
         - Reservation Endpoint
@@ -1011,6 +1086,12 @@ paths:
       responses:
         '200':
           description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
       description: User put an Update to the Reservation
       security:
         - bearerAuth: []
@@ -1020,77 +1101,25 @@ paths:
             schema:
               type: object
               properties:
-                ticketTypes:
+                tickets:
                   type: array
                   minItems: 1
                   items:
                     type: object
                     properties:
-                      id:
+                      nama:
+                        type: string
+                      identification:
+                        type: string
+                      identificationNumber:
+                        type: string
+                      ticketTypeId:
                         type: integer
                     required:
-                      - id
+                      - nama
+                      - ticketTypeId
               required:
-                - ticketTypes
-      tags:
-        - Reservation Endpoint
-  '/reservations/confirm/{id}':
-    parameters:
-      - schema:
-          type: string
-        name: id
-        in: path
-        required: true
-    put:
-      summary: Confirm a Reservation by id
-      operationId: put-reservations-confirm-id
-      responses:
-        '201':
-          description: confirmation accepted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reservation:
-                    $ref: '#/components/schemas/Reservation'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-      description: Confirm a reservation
-      security:
-        - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id_payment:
-                  type: integer
-              required:
-                - id_payment
-        description: ''
-      tags:
-        - Reservation Endpoint
-    delete:
-      summary: Remove a Reservation Confirmation by id
-      operationId: delete-reservations-confirm-id
-      responses:
-        '204':
-          description: No Content
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-      description: Admins can remove a reservation from the confirmed list
-      security:
-        - bearerAuth: []
+                - tickets
       tags:
         - Reservation Endpoint
   '/reservations/cancel/{id}':
@@ -1167,15 +1196,8 @@ paths:
               properties:
                 id_reservation:
                   type: integer
-                total:
-                  type: integer
-                currency:
-                  type: string
-                  maxLength: 4
               required:
                 - id_reservation
-                - total
-                - currency
         description: Details of payment intent
       tags:
         - Payment Endpoint
@@ -1281,6 +1303,17 @@ paths:
       responses:
         '201':
           description: Created
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       security:
         - bearerAuth: []
       requestBody:
@@ -1293,9 +1326,11 @@ paths:
                   type: integer
                 name:
                   type: string
+                  minLength: 1
                 email:
                   type: string
                   description: event organizer email (eg. organization email)
+                  format: email
                 phone:
                   type: string
                 address:
@@ -1355,6 +1390,17 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
       description: |-
         Update Event Organizer Details associated to the Event Organizer ID.
         Modify Event Organizer Profile.
@@ -1614,6 +1660,8 @@ paths:
                   type: string
                 password:
                   type: string
+                  format: password
+                  example: FfA4!wif2
               required:
                 - username
                 - password
@@ -1669,7 +1717,7 @@ paths:
         - Admin Endpoint
   /admins/revoke-token:
     post:
-      summary: Revoke an Admin refresh token
+      summary: Revoke an Admin refresh token (logout)
       description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens.'
       operationId: post-admins-revokeToken
       security:
@@ -2106,7 +2154,7 @@ paths:
       security:
         - bearerAuth: []
       description: Event organizers retrieve their notifications
-  '/event/{id}/verify-ticket/{token}':
+  '/events/{id}/verify-ticket/{token}':
     parameters:
       - schema:
           type: string
@@ -2136,7 +2184,13 @@ paths:
                     type: boolean
                 required:
                   - validTicket
-      operationId: get-event-id-verify-ticket-token
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-verify-ticket-token
       description: event organizers verify whether a ticket is valid or not based on the provided token
       security:
         - bearerAuth: []
@@ -2269,7 +2323,7 @@ paths:
         in: path
         required: true
     get:
-      summary: Replace a specific image of an Event
+      summary: Get a specific image of an Event
       tags:
         - Event Endpoint
       responses:
@@ -2284,7 +2338,7 @@ paths:
       operationId: get-events-id-image-image_number
       description: Get an image for an event
     put:
-      summary: Replace a specific Image of an event
+      summary: Put replace a specific Image of an event
       operationId: put-events-id-image-image_number
       responses:
         '200':
@@ -2310,7 +2364,7 @@ paths:
       tags:
         - Event Endpoint
     delete:
-      summary: Remove a specific image of an Event
+      summary: Delete Remove a specific image of an Event
       operationId: delete-events-id-image-image_number
       responses:
         '200':
@@ -2533,6 +2587,74 @@ paths:
       description: Get list of allowed users for an Event Organizer
       security:
         - bearerAuth: []
+  /admins:
+    post:
+      summary: Post register admin
+      operationId: post-admins
+      responses:
+        '200':
+          description: OK
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: RESTRICTED endpoint available only if specified in .env and request from localhost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  pattern: '^[A-Za-z0-9-_]+$'
+                  minLength: 1
+                password:
+                  type: string
+                  pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+                  minLength: 8
+                  example: FfA4!wif2
+                  format: password
+              required:
+                - username
+                - password
+        description: ''
+      tags:
+        - Admin Endpoint
+        - Registration Endpoint
+  '/tags/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Tag details
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: '#/components/schemas/Tag'
+                required:
+                  - tag
+        '404':
+          $ref: '#/components/responses/UnauthorizedError'
+      operationId: get-tags-id
+      description: Get Tag details
 components:
   schemas:
     User:
@@ -2742,9 +2864,6 @@ components:
             $ref: '#/components/schemas/Ticket-Attribute'
         price:
           type: integer
-        currency:
-          type: string
-          maxLength: 3
     Ticket-Attribute:
       title: Ticket-Attribute
       type: object

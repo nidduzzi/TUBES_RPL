@@ -41,7 +41,7 @@ model EventOrganizer {
     id               Int            @id @default(autoincrement())
     name             String         @unique
     email            String         @unique
-    profilPicture    Bytes?
+    profilePicture   Bytes?
     phone            String
     address          String
     status           AccountStatus  @default(INACTIVE)
@@ -52,12 +52,12 @@ model EventOrganizer {
     suspensions      Suspension[]
     termination      Termination?
     notifications    Notification[]
-    Event            Event[]
+    events           Event[]
 }
 
 model Admin {
     id                 Int            @id @default(autoincrement())
-    username           String
+    username           String         @unique
     passwordHash       String
     suspensionsIssued  Suspension[]
     terminationsIssued Termination[]
@@ -81,7 +81,6 @@ enum ReservationStatus {
 model Reservation {
     id        Int               @id @default(autoincrement())
     price     Int
-    currency  String
     orderDate DateTime          @default(now())
     status    ReservationStatus @default(WAITING)
     tickets   Ticket[]
@@ -112,7 +111,6 @@ model TicketType {
     ticket      Ticket[]
     attributes  TicketTypeAttribute[]
     price       Int
-    currency    String
     Event       Event                 @relation(fields: [eventId], references: [id])
     eventId     Int
 }
@@ -201,6 +199,7 @@ model Event {
     hasRsvp          Boolean
     maxTickets       Int?
     unlimitedTickets Boolean
+    currency         String         @default("IDR")
     status           EventStatus    @default(ACTIVE)
     reservations     Reservation[]
     eventOrganizerId Int

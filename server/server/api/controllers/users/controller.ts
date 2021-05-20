@@ -83,37 +83,11 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-          h
-          ? // check if h.select is sent
-            h.select
-            ? prisma.user.findMany({
-                where: q,
-                select: h.select ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-            : // or if h.include is sent instead
-              prisma.user.findMany({
-                where: q,
-                include: h.include ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-          : // or if h is not sent
-            prisma.user.findMany({
-              where: q,
-            })
-        : // or if q isn't sent and then check if h is sent
         h
-        ? // check if h.select is sent
+          ? // check if h.select is sent
           h.select
-          ? prisma.user.findMany({
+            ? prisma.user.findMany({
+              where: q,
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -121,7 +95,33 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h.include is sent instead
+            : // or if h.include is sent instead
+            prisma.user.findMany({
+              where: q,
+              include: h.include ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+          : // or if h is not sent
+          prisma.user.findMany({
+            where: q,
+          })
+        : // or if q isn't sent and then check if h is sent
+        h
+          ? // check if h.select is sent
+          h.select
+            ? prisma.user.findMany({
+              select: h.select ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+            : // or if h.include is sent instead
             prisma.user.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -130,7 +130,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-        : // or if h is not sent
+          : // or if h is not sent
           prisma.user.findMany({});
 
     query
@@ -588,14 +588,14 @@ export class Controller {
   getReservations(req: Request, res: Response, next: NextFunction): void {
     if (req.params.id != undefined) {
       const id = Number.parseInt(req.params.id);
-      prisma.user
-        .findUnique({
-          where: { id: id },
-          include: { reservations: true },
+      prisma.reservation
+        .findMany({
+          where: { userId: id },
+          include: { tickets: true },
         })
-        .then((user) => {
-          if (user) {
-            res.status(200).send({ reservations: user.reservations });
+        .then((rsv) => {
+          if (rsv) {
+            res.status(200).send({ reservations: rsv });
           } else {
             res.status(404).send({ message: 'invalid id given' });
           }

@@ -1196,15 +1196,8 @@ paths:
               properties:
                 id_reservation:
                   type: integer
-                total:
-                  type: integer
-                currency:
-                  type: string
-                  maxLength: 4
               required:
                 - id_reservation
-                - total
-                - currency
         description: Details of payment intent
       tags:
         - Payment Endpoint

@@ -137,5 +137,146 @@ export class Controller {
       res.status(400).send({ message: 'invalid id given' });
     }
   }
+
+  putUpdate(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined && req.body.tickets != undefined) {
+      const id = Number.parseInt(req.params.id);
+
+      prisma.reservation
+        .findUnique({
+          where: {
+            id: id
+          }
+        })
+        .then((rsv) => {
+          if (rsv) {
+            prisma.ticket
+              .deleteMany({
+                where: {
+                  reservationId: rsv.id
+                }
+              })
+              .then(() => {
+                const tickets = req.body.tickets;
+
+                prisma.ticket
+                  .createMany({
+                    data: tickets
+                  })
+                  .then(() => {
+                    prisma.reservation
+                      .findUnique({
+                        where: {
+                          id: rsv.id
+                        },
+                        include: {
+                          tickets: true
+                        }
+                      })
+                      .then((updatedReservation) => {
+                        res.status(200).send({ reservation: updatedReservation });
+                      })
+                      .catch((err) => next(err));
+                  })
+                  .catch((err) => next(err));
+              })
+              .catch((err) => next(err));
+          } else {
+            res.status(404).send({ message: 'invalid reservation id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  putCancel(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined) {
+      const id = Number.parseInt(req.params.id);
+
+      prisma.reservation
+        .findUnique({
+          where: {
+            id: id
+          },
+          select: {
+            id: true,
+            status: true
+          }
+        })
+        .then((rsv) => {
+          if (rsv) {
+            if (rsv.status == 'CANCELED') {
+              res.status(400).send({ message: 'reservation already canceled' });
+            } else if (rsv.status == 'CONFIRMED') {
+              res.status(400).send({ message: 'reservation already confirmed' });
+            } else {
+              prisma.reservation
+                .update({
+                  where: {
+                    id: rsv.id
+                  },
+                  data: {
+                    status: 'CANCELED'
+                  }
+                })
+                .then((rsv) => {
+                  res.status(200).send({ reservation: rsv });
+                })
+                .catch((err) => next(err));
+            }
+          } else {
+            res.status(404).send({ message: 'invalid reservation id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  deleteCancel(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined) {
+      const id = Number.parseInt(req.params.id);
+
+      prisma.reservation
+        .findUnique({
+          where: {
+            id: id
+          },
+          select: {
+            id: true,
+            status: true
+          }
+        })
+        .then((rsv) => {
+          if (rsv) {
+            if (rsv.status != 'CANCELED') {
+              res.status(400).send({ message: 'reservation has not been canceled' });
+            } else {
+              prisma.reservation
+                .update({
+                  where: {
+                    id: rsv.id
+                  },
+                  data: {
+                    status: 'WAITING'
+                  }
+                })
+                .then((rsv) => {
+                  res.status(200).send({ reservation: rsv });
+                })
+                .catch((err) => next(err));
+            }
+          } else {
+            res.status(404).send({ message: 'invalid reservation id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
 }
 export default new Controller();

@@ -62,76 +62,76 @@ export class Controller {
     }
   }
 
-  postRegister(req: Request, res: Response, next: NextFunction): void {
-    const username: string = req.body.username;
-    const password: string = req.body.password;
-    if (username && password) {
-      prisma.admin
-        .findUnique({
-          where: { username: username },
-        })
-        .then((admin) => {
-          if (admin) {
-            res.status(409).send({ message: 'username already exists' });
-          } else {
-            prisma.admin
-              .create({
-                data: {
-                  username: username,
-                  passwordHash: bcrypt.hashSync(password, ENCRYPT_ROUNDS),
-                },
-              })
-              .then((a) => {
-                res.status(201).send({
-                  id: a.id,
-                  username: a.username,
-                });
-              })
-              .catch((err) => next(err));
-          }
-        })
-        .catch((err) => next(err));
-    } else {
-      res.status(400).send({ message: 'invalid username or password' });
-    }
+  postRegister(_req: Request, _res: Response, _next: NextFunction): void {
+    // const username: string = req.body.username;
+    // const password: string = req.body.password;
+    // if (username && password) {
+    //   prisma.admin
+    //     .findUnique({
+    //       where: { username: username },
+    //     })
+    //     .then((admin) => {
+    //       if (admin) {
+    //         res.status(409).send({ message: 'username already exists' });
+    //       } else {
+    //         prisma.admin
+    //           .create({
+    //             data: {
+    //               username: username,
+    //               passwordHash: bcrypt.hashSync(password, ENCRYPT_ROUNDS),
+    //             },
+    //           })
+    //           .then((a) => {
+    //             res.status(201).send({
+    //               id: a.id,
+    //               username: a.username,
+    //             });
+    //           })
+    //           .catch((err) => next(err));
+    //       }
+    //     })
+    //     .catch((err) => next(err));
+    // } else {
+    //   res.status(400).send({ message: 'invalid username or password' });
+    // }
   }
 
-  postLogin(req: Request, res: Response, next: NextFunction): void {
-    const username = req.body.username;
-    const password = req.body.password;
-    if (username && password) {
-      prisma.admin
-        .findUnique({ where: { username: username } })
-        .then(async (admin) => {
-          if (admin) {
-            if (bcrypt.compareSync(password, admin.passwordHash)) {
-              // validate user password
-              // create access tokens
-              const refreshToken = await prisma.refreshToken.create({
-                data: generateRefreshToken(admin, req.ip),
-              });
-              const scopes: Array<Scope> = [
-                { id: admin.id, role: Roles.Admin },
-              ];
-              const body = {
-                auth: scopes,
-                jwtToken: generateJwtToken(admin),
-              };
-              res.cookie('refreshToken', refreshToken.token, {
-                expires: refreshToken.expires,
-              });
-              res.status(200).json(body);
-            } else {
-              res.status(400).send({ message: 'wrong username or password' });
-            }
-          } else {
-            res.status(400).send({ message: 'invalid username or password' });
-          }
-        })
-        .catch((err) => next(err));
-    } else {
-      res.status(400).send({ message: 'no username or password' });
-    }
+  postLogin(_req: Request, _res: Response, _next: NextFunction): void {
+    // const username = req.body.username;
+    // const password = req.body.password;
+    // if (username && password) {
+    //   prisma.admin
+    //     .findUnique({ where: { username: username } })
+    //     .then(async (admin) => {
+    //       if (admin) {
+    //         if (bcrypt.compareSync(password, admin.passwordHash)) {
+    //           // validate user password
+    //           // create access tokens
+    //           const refreshToken = await prisma.refreshToken.create({
+    //             data: generateRefreshToken(admin, req.ip),
+    //           });
+    //           const scopes: Array<Scope> = [
+    //             { id: admin.id, role: Roles.Admin },
+    //           ];
+    //           const body = {
+    //             auth: scopes,
+    //             jwtToken: generateJwtToken(admin),
+    //           };
+    //           res.cookie('refreshToken', refreshToken.token, {
+    //             expires: refreshToken.expires,
+    //           });
+    //           res.status(200).json(body);
+    //         } else {
+    //           res.status(400).send({ message: 'wrong username or password' });
+    //         }
+    //       } else {
+    //         res.status(400).send({ message: 'invalid username or password' });
+    //       }
+    //     })
+    //     .catch((err) => next(err));
+    // } else {
+    //   res.status(400).send({ message: 'no username or password' });
+    // }
   }
 
   async postRefreshToken(

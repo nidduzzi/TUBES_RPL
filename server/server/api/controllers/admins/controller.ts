@@ -200,20 +200,23 @@ export class Controller {
         // check if token is expired
         else if (refreshToken.expires < new Date()) {
           // revoke expired token
-          await prisma.refreshToken.update({
-            where: { id: refreshToken.id },
-            data: {
-              revoked: new Date(),
-              revokedByIp: req.ip,
-            },
-          });
+          await prisma.refreshToken
+            .update({
+              where: { id: refreshToken.id },
+              data: {
+                revoked: new Date(),
+                revokedByIp: req.ip,
+              },
+            })
+            .then((_) =>
+              res.status(404).send({ message: 'refesh token is expired' })
+            )
+            .catch((err) => next(err));
         }
       }
     } else {
       // send invalid or expired token message if the function hasn't returned
-      res
-        .status(400)
-        .send({ message: 'The refresh token is invalid, revoked or expired' });
+      res.status(400).send({ message: 'The refresh token is invalid' });
     }
   }
 

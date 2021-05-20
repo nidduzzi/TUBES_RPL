@@ -70,6 +70,7 @@ model Payment {
     currency      String
     reservation   Reservation @relation(fields: [reservationId], references: [id])
     reservationId Int
+    completed     Boolean     @default(false)
 }
 
 enum ReservationStatus {

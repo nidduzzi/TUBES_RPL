@@ -25,37 +25,11 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-          h
-          ? // check if h.select is sent
-            h.select
-            ? prisma.event.findMany({
-                where: q,
-                select: h.select ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-            : // or if h.include is sent instead
-              prisma.event.findMany({
-                where: q,
-                include: h.include ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-          : // or if h is not sent
-            prisma.event.findMany({
-              where: q,
-            })
-        : // or if q isn't sent and then check if h is sent
         h
-        ? // check if h.select is sent
+          ? // check if h.select is sent
           h.select
-          ? prisma.event.findMany({
+            ? prisma.event.findMany({
+              where: q,
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -63,7 +37,33 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h.include is sent instead
+            : // or if h.include is sent instead
+            prisma.event.findMany({
+              where: q,
+              include: h.include ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+          : // or if h is not sent
+          prisma.event.findMany({
+            where: q,
+          })
+        : // or if q isn't sent and then check if h is sent
+        h
+          ? // check if h.select is sent
+          h.select
+            ? prisma.event.findMany({
+              select: h.select ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+            : // or if h.include is sent instead
             prisma.event.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -72,7 +72,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-        : // or if h is not sent
+          : // or if h is not sent
           prisma.event.findMany();
 
     query
@@ -142,6 +142,7 @@ export class Controller {
     const eoScope = user.scopes.find(
       (scope) => scope.role == Roles.EventOrganizer
     );
+
     if (typeof req.body == 'string') {
       req.body = JSON.parse(req.body);
     }
@@ -152,7 +153,7 @@ export class Controller {
       req.body.hasRsvp != undefined &&
       req.body.ticketTypes != [] &&
       req.body.tags != [] &&
-      req.body.unlimitedTickets &&
+      req.body.unlimitedTickets != undefined &&
       eoScope?.id != undefined
     ) {
       const tmp = req.body.tags as Array<NoUndefinedField<NewTag>>;
@@ -589,7 +590,7 @@ export class Controller {
                           512,
                           512,
                           Jimp.VERTICAL_ALIGN_MIDDLE |
-                            Jimp.HORIZONTAL_ALIGN_CENTER
+                          Jimp.HORIZONTAL_ALIGN_CENTER
                         )
                         .getBuffer(Jimp.MIME_PNG, (err, buffer) => {
                           if (err) {

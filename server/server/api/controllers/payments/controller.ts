@@ -93,7 +93,10 @@ export class Controller {
         prisma.payment
           .update({
             where: { id: id },
-            data: { reservation: { update: { status: 'CONFIRMED' } } },
+            data: {
+              completed: true,
+              reservation: { update: { status: 'CONFIRMED' } },
+            },
           })
           .then((_) => res.status(204).send())
           .catch((err) => next(err));

@@ -11,6 +11,23 @@ import { NewSchedule } from '../../interfaces/newSchedule.interface';
 import { cleanUp } from '../../services/objectCleanup.service';
 const prisma = new PrismaClient();
 
+function checkNested(o: any, searchKeys: Array<string>): boolean {
+  //Early return
+  if (Object.keys(o).some((key) => searchKeys.includes(key))) {
+    return true;
+  }
+  let result, p;
+  for (p in o) {
+    if (o.hasOwnProperty(p) && typeof o[p] === 'object') {
+      result = checkNested(o[p], searchKeys);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return false;
+}
+
 export class Controller {
   getAll(req: Request, res: Response, next: NextFunction): void {
     let q = undefined;
@@ -21,41 +38,89 @@ export class Controller {
     if (req.query.h) {
       h = JSON.parse(req.query.h as string);
     }
+    if (h.include) {
+      if (
+        checkNested(h.include, [
+          'admin',
+          'passwordHash',
+          'allowedUsers',
+          'notifications',
+          'suspensions',
+          'reservations',
+          'tickets',
+          'notification',
+          'payment',
+          'refreshToken',
+          'reservation',
+          'suspension',
+          'termination',
+          'ticket',
+          'user',
+        ])
+      ) {
+        res.status(403).send({ message: 'forbidden include in query' });
+        return;
+      }
+    }
+    if (h.select) {
+      if (
+        checkNested(h.select, [
+          'admin',
+          'passwordHash',
+          'allowedUsers',
+          'notifications',
+          'suspensions',
+          'reservations',
+          'tickets',
+          'notification',
+          'payment',
+          'refreshToken',
+          'reservation',
+          'suspension',
+          'termination',
+          'ticket',
+          'user',
+        ])
+      ) {
+        res.status(403).send({ message: 'forbidden select in query' });
+        return;
+      }
+    }
     const query =
       // check if q is sent
       q
         ? // check if h is sent
-        h
+          h
           ? // check if h.select is sent
-          h.select
+            h.select
             ? prisma.event.findMany({
-              where: q,
-              select: h.select ?? undefined,
-              cursor: h.cursor ?? undefined,
-              skip: h.skip ?? h.cursor ? 1 : undefined,
-              distinct: h.distinct ?? undefined,
-              orderBy: h.orderBy ?? undefined,
-              take: h.take ?? undefined,
-            })
+                where: q,
+                select: h.select ?? undefined,
+                cursor: h.cursor ?? undefined,
+                skip: h.skip ?? h.cursor ? 1 : undefined,
+                distinct: h.distinct ?? undefined,
+                orderBy: h.orderBy ?? undefined,
+                take: h.take ?? undefined,
+              })
             : // or if h.include is sent instead
+              prisma.event.findMany({
+                where: q,
+                include: h.include ?? undefined,
+                cursor: h.cursor ?? undefined,
+                skip: h.skip ?? h.cursor ? 1 : undefined,
+                distinct: h.distinct ?? undefined,
+                orderBy: h.orderBy ?? undefined,
+                take: h.take ?? undefined,
+              })
+          : // or if h is not sent
             prisma.event.findMany({
               where: q,
-              include: h.include ?? undefined,
-              cursor: h.cursor ?? undefined,
-              skip: h.skip ?? h.cursor ? 1 : undefined,
-              distinct: h.distinct ?? undefined,
-              orderBy: h.orderBy ?? undefined,
-              take: h.take ?? undefined,
             })
-          : // or if h is not sent
-          prisma.event.findMany({
-            where: q,
-          })
         : // or if q isn't sent and then check if h is sent
         h
-          ? // check if h.select is sent
+        ? // check if h.select is sent
           h.select
-            ? prisma.event.findMany({
+          ? prisma.event.findMany({
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -63,7 +128,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-            : // or if h.include is sent instead
+          : // or if h.include is sent instead
             prisma.event.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -72,7 +137,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h is not sent
+        : // or if h is not sent
           prisma.event.findMany();
 
     query
@@ -590,7 +655,7 @@ export class Controller {
                           512,
                           512,
                           Jimp.VERTICAL_ALIGN_MIDDLE |
-                          Jimp.HORIZONTAL_ALIGN_CENTER
+                            Jimp.HORIZONTAL_ALIGN_CENTER
                         )
                         .getBuffer(Jimp.MIME_PNG, (err, buffer) => {
                           if (err) {

@@ -60,8 +60,8 @@ class UserService {
     return axios.put(API_USER + "/" + id + "/profilePicture", {headers: authHeader(), ...config});
   }
 
-  removeProfilePicture(id, config){
-    return axios.delete(API_USER + "/" + id + "/profilePicture", {headers: authHeader(), ...config});
+  removeProfilePicture(id){
+    return axios.delete(API_USER + "/" + id + "/profilePicture", { headers: authHeader() });
   }
 
   // user notification

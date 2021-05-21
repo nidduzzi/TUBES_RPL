@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import User from "../model/user";
+import User from "../model/userCredential";
 
 export default {
   name: "loginform",
@@ -76,10 +76,9 @@ export default {
       } else {
         this.user.email = "default@yahoo.com";
       }
-      if (this.user.username || (this.user.email && this.user.password)) {
-        this.$store
-          .dispatch("auth/login", this.user)
-          .then(() => {
+      if ((this.user.username || this.user.email) && this.user.password) {
+        this.$store.dispatch("auth/login", this.user).then(
+          () => {
             this.$router.push("/user/dashboard");
           })
           .catch((error) => {

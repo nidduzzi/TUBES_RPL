@@ -1,6 +1,6 @@
 <template>
   <div class="user-reservation container p-5">
-    <h4 class="text-left"><i class="fa fa-th-list" aria-hidden="true"></i> Reservasi</h4>
+    <h4 class="text-left"><i class="fa fa-history" aria-hidden="true"></i> Riwayat Reservasi</h4>
     <table class="table mt-4">
       <thead>
         <tr>
@@ -24,7 +24,7 @@
               id=""
               class="btn btn-orange btn-md"
             >
-            <img src="../../../assets/logotiket.png">
+              <img src="../../../assets/logotiket.png" />
             </button>
           </td>
         </tr>

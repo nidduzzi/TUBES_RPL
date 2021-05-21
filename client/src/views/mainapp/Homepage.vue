@@ -10,6 +10,7 @@
     </div>
     <router-view />
     <Footer />
+    
   </div>
 </template>
 
@@ -64,6 +65,13 @@ const LoginBar = {
   ],
 };
 
+const DashboardUser = {
+  type: "link",
+  text: "Dashboard",
+  path: { name: "dashboard" },
+  class: "button-logout button",
+  iconLeft: "<i class='fa fa-paper-plane' aria-hidden='true'></i>",
+};
 export default {
   components: {
     VueNavigationBar,
@@ -111,6 +119,7 @@ export default {
   },
   created() {
     if (this.loggedIn) {
+      this.navbarOptions.menuOptionsRight.push(DashboardUser);
       this.navbarOptions.menuOptionsRight.push(Logout);
     } else {
       this.navbarOptions.menuOptionsRight.push(LoginBar);

@@ -45,23 +45,6 @@
         validation-name="Confirmation"
       />
     </div>
-    <!-- <FormulateInput
-      type="date"
-      name="birth"
-      label="Date of Birth"
-      placeholder="Sample date placeholder"
-      help="Tanggal Lahir"
-      validation="required|before:2021-05-02"
-      min="1900-01-01"
-      max="2021-05-02"
-      error-behavior="live"
-    />
-    <FormulateInput
-      type="textarea"
-      label="Address"
-      validation="required|max:100,length"
-      error-behavior="live"
-    /> -->
     <FormulateInput
       class="text-center py-0"
       type="button"
@@ -108,7 +91,7 @@ export default {
       this.processData();
       this.loader = true;
       try {
-        await axios.post(
+        const res = await axios.post(
           `${process.env.VUE_APP_BASE_API}/users`,
           this.postBody,
           {
@@ -117,11 +100,13 @@ export default {
             },
           }
         );
+        if (res.status == 200) {
+          this.$router.push("/login");
+        }
       } catch (e) {
         this.errors = e;
       } finally {
         this.loader = false;
-        this.$router.push("/login");
       }
     },
   },

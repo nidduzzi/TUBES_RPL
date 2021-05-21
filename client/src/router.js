@@ -109,6 +109,12 @@ export default new Router({
            name: "user-reservation-profile",
            component: () => import("./views/dashboard/user/Profile.vue"),
            props: true,
+         },
+         {
+           path: "/:role/dashboard/reservation/history",
+           name: "user-reservation-history",
+           component: () => import("./views/dashboard/user/RiwayatReservasi.vue"),
+           props: true,
          }
        ],
     },

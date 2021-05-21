@@ -3,7 +3,7 @@
     <div class="row w-100">
       <div class="offset-lg-3 col-lg-6">
         <div v-if="message" class="alert alert-danger" role="alert">
-          <p>{{ message.message }}</p>
+          <p>{{ message }}</p>
         </div>
         <div class="card">
           <img src="../assets/login.jpg" class="card-img-top" />
@@ -77,18 +77,15 @@ export default {
         this.user.email = "default@yahoo.com";
       }
       if (this.user.username || (this.user.email && this.user.password)) {
-        this.$store.dispatch("auth/login", this.user).then(
-          () => {
+        this.$store
+          .dispatch("auth/login", this.user)
+          .then(() => {
             this.$router.push("/user/dashboard");
-          },
-          (error) => {
+          })
+          .catch((error) => {
             this.loading = false;
-            this.message =
-              (error.response && error.response.data) ||
-              error.message ||
-              error.toString();
-          }
-        );
+            this.message = error.response.data.message;
+          });
       }
     },
   },

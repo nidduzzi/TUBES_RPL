@@ -34,12 +34,7 @@ export default {
     return {
       currUser: this.$store.state.auth.user,
       userProfile: {
-        id: 0,
         username: "",
-        email: "",
-        emailVerified: Boolean,
-        ragistrationDate: "",
-        profilePicture: "",
       },
       navbarOptions: {
         elementId: "main-navbar",

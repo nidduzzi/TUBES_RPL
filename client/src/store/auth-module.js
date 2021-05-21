@@ -24,6 +24,14 @@ export const auth = {
     logout({ commit }) {
       AuthService.logout();
       commit('logout');
+    },
+    refresh({ commit }) {
+      AuthService.refreshToken().then(
+        user => {
+          commit('refresh', user);
+          return Promise.resolve(user);
+        }
+      );
     }
   },
   mutations: {
@@ -38,6 +46,10 @@ export const auth = {
     logout(state) {
       state.status.loggedIn = false;
       state.user = null;
+    },
+    refresh(state, user){
+      state.status.loggedIn = true;
+      state.user = user;
     }
   }
 };

@@ -67,7 +67,10 @@ export class Controller {
       h = JSON.parse(req.query.h as string);
     }
     const user = req.user as JwtDataStore;
-    if (!user.scopes.some((s) => s.role == Roles.Admin)) {
+    if (
+      !user ||
+      (user && user.scopes && !user.scopes.some((s) => s.role == Roles.Admin))
+    ) {
       if (h.include) {
         if (
           checkNested(h.include, [

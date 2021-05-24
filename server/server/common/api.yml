@@ -1332,8 +1332,6 @@ paths:
             schema:
               type: object
               properties:
-                id_user:
-                  type: integer
                 name:
                   type: string
                   minLength: 1
@@ -1346,7 +1344,6 @@ paths:
                 address:
                   type: string
               required:
-                - id_user
                 - name
                 - email
       description: Create a new event organizer to be verified by admin.

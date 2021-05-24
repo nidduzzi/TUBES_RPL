@@ -9,7 +9,7 @@ export const auth = {
   namespaced: true,
   state: initialState,
   actions: {
-    login({ commit }, user) {
+    login({ commit,}, user) {
       return AuthService.login(user).then(
         user => {
           commit('loginSuccess', user);
@@ -21,15 +21,31 @@ export const auth = {
         }
       );
     },
+    adminlogin({ commit,}, admin) {
+      return AuthService.adminLogin(admin).then(
+        admin => {
+          commit('loginSuccess', admin);
+          return Promise.resolve(admin);
+        },
+        error => {
+          commit('loginFailure');
+          return Promise.reject(error);
+        }
+      );
+    },
     logout({ commit }) {
       AuthService.logout();
       commit('logout');
     },
-    refresh({ commit }) {
-      AuthService.refreshToken().then(
+    refresh({ commit, state }) {
+      AuthService.refreshToken(state.user.auth[0].role).then(
         user => {
           commit('refresh', user);
           return Promise.resolve(user);
+        },
+        error => {
+          commit('refreshFailure');
+          return Promise.reject(error);
         }
       );
     }
@@ -50,6 +66,10 @@ export const auth = {
     refresh(state, user){
       state.status.loggedIn = true;
       state.user = user;
+    },
+    refreshFailure(state) {
+      state.status.loggedIn = false;
+      state.user = null;
     }
   }
 };

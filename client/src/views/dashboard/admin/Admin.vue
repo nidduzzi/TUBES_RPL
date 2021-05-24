@@ -1,7 +1,6 @@
 <template>
-   <div class="user-reservation">
-      <div class="container">
-      </div>
+   <div class="admin-page">
+      Admin Page
    </div>
 </template>
 

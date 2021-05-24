@@ -1,15 +1,23 @@
 <template>
   <div class="user-reservation container my-5">
-    <div class="card">
+    <div class="card card-style border-radius2">
       <div class="card-body text-left">
         <div class="row pl-3 mt-4">
           <h4>Profile</h4>
         </div>
+        <hr />
         <div class="row p-lg-5">
           <div class="col-lg-6">
+            <div
+              v-if="message"
+              :class="['alert', error ? 'alert-danger' : 'alert-success']"
+              role="alert"
+            >
+              <p>{{ message }}</p>
+            </div>
             <FormulateForm
               @submit.prevent="updateProfile"
-              v-model="userProfile"
+              v-model="userUpdateProfile"
             >
               <FormulateInput
                 name="email"
@@ -46,13 +54,13 @@
               <FormulateInput
                 type="textarea"
                 label="Alamat"
-                name="alamat"
+                name="address"
                 validation="bail|required|max:100,length"
                 error-behavior="live"
               />
               <FormulateInput
                 type="date"
-                name="birth"
+                name="dateOfBirth"
                 label="Tanggal Lahir"
                 placeholder=""
                 validation="bail|required|before:2021-05-21"
@@ -60,10 +68,22 @@
                 max="2021-05-02"
                 error-behavior="live"
               />
-              <button @click="updateProfile" class="btn btn-tag w-75">
+              <FormulateInput
+                class="text-center"
+                type="button"
+                label="Perbarui"
+                @click="updateProfile"
+              >
+                <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
+              </FormulateInput>
+              <!-- <button
+                type="submit"
+                @click="updateProfile"
+                class="btn btn-tag w-75"
+              >
                 <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
                 <div v-else>Perbarui</div>
-              </button>
+              </button> -->
             </FormulateForm>
           </div>
           <div
@@ -78,9 +98,9 @@
                 alt="profilePicture"
               />
             </div>
-            <button type="button" class="btn btn-beli mt-3 f3-light">
-              Verifikasi Event Organizer
-            </button>
+            <router-link to="/user/dashboard/eoregister" class="btn btn-beli mt-3 font-1">
+              Register as Event Organizer
+            </router-link>
           </div>
         </div>
       </div>
@@ -90,43 +110,66 @@
 
 <script>
 import UserService from "../../../services/user.service";
+const FormData = require("form-data");
 
 export default {
   data() {
     return {
       currUser: this.$store.state.auth.user,
       loading: false,
-      userProfile: {
+      error: false,
+      userUpdateProfile: {
         email: "",
         username: "",
         password: "",
-        alamat: "",
-        birth: "",
+        address: "",
+        dateOfBirth: "",
       },
+      message: "",
     };
   },
   methods: {
+    processForm() {
+      const form = new FormData();
+      form.append("username", this.userUpdateProfile.username);
+      form.append("email", this.userUpdateProfile.email);
+      form.append("password", this.userUpdateProfile.password);
+      form.append("address", this.userUpdateProfile.address);
+      form.append("dateOfBirth", this.userUpdateProfile.dateOfBirth);
+      return form;
+    },
     async updateProfile() {
-      await this.$store.dispatch("auth/refresh").then(
-          ({status, headers, data}) => {
-            if(status === 200 || status === 204){
-              console.log('success-referesh');
-              // jwt token
-              localStorage.user = JSON.stringify(data);
-              // acccess token
-              document.cookie = headers['set-cookie'];
-            }
-          })
-          .catch(error => {
-            console.log(error);
-          })
-      // console.log(this.userProfile);
+      this.message = "";
+      const data = this.processForm();
+      try {
+        this.loading = true;
+        const res = await UserService.updateUser(
+          this.$store.state.auth.user.auth[0].id,
+          data,
+          {
+            "Content-Type": 'multipart/form-data',
+          }
+        );
+        if (res.status != 200) {
+          this.error = true;
+          this.message = res.data.errors.message;
+        } else {
+          this.message = "Data berhasil diperbarui.";
+        }
+      } catch (error) {
+        this.error = true;
+        this.message = error;
+      } finally {
+        this.loading = false;
+      }
     },
   },
   mounted() {
     UserService.getUser(this.currUser.auth[0].id).then(
       (res) => {
         this.userProfile = res.data.user;
+        this.userUpdateProfile.email = this.userProfile.email;
+        this.userUpdateProfile.username = this.userProfile.username;
       },
       (error) => {
         this.userProfile =
@@ -159,5 +202,9 @@ export default {
   color: white;
   font-size: 1.1em;
   font-weight: 600;
+}
+
+.font-1 {
+  font-size: .8em;
 }
 </style>

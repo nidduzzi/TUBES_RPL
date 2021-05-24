@@ -11,7 +11,9 @@
     <div class="container">
       <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut" />
     </div>
-    <h1 class="container text-left mt-4">{{ userProfile.username }}'s Dashboard</h1>
+    <h1 class="container text-left mt-4">
+      {{ userProfile.username }}'s Dashboard
+    </h1>
     <router-view :model="userProfile"></router-view>
   </div>
 </template>
@@ -23,7 +25,6 @@ import VueNavigationBar from "vue-navigation-bar";
 import "vue-navigation-bar/dist/vue-navigation-bar.css";
 import UserService from "../../services/user.service";
 
-let role = "user";
 export default {
   name: "dashboard",
   components: {
@@ -53,7 +54,7 @@ export default {
           {
             type: "link",
             text: "Event Organizer",
-            path: { name: "eventorganizer" },
+            path: "/user/dashboard/eoregister",
             class: "font-weight-bold",
           },
           {
@@ -77,31 +78,31 @@ export default {
       menu: [
         {
           header: true,
-          title: "User Dashboard",
+          title: `${this.$store.state.auth.user.auth[0].role[0].toUpperCase() + this.$store.state.auth.user.auth[0].role.slice(1)} Dashboard`,
           hiddenOnCollapse: true,
         },
         {
-          href: { path: `/${role}/dashboard/profile` },
+          href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/profile` },
           title: "Profil",
           icon: "fa fa-user",
         },
         {
-          href: { path: `/${role}/dashboard/reservation` },
+          href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list` },
           title: "Reservasi",
           icon: "fa fa-paperclip",
           child: [
             {
-              href: { path: `/${role}/dashboard/reservation/list` },
+              href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list` },
               title: "Data Reservasi",
               icon: "fa fa-th-list",
             },
             {
-              href: { path: `/${role}/dashboard/reservation/checkorder` },
+              href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/checkorder` },
               title: "Konfirmasi Reservasi",
               icon: "fa  fa-check-square-o ",
             },
             {
-              href: { path: `/${role}/dashboard/reservation/history` },
+              href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/history` },
               title: "Riwayat Reservasi",
               icon: "fa fa-history",
             },
@@ -110,9 +111,9 @@ export default {
       ],
     };
   },
-  methods : {
+  methods: {
     logOut(text) {
-      if(text === 'Logout'){
+      if (text === "Logout") {
         this.$store.dispatch("auth/logout");
         location.reload();
       }

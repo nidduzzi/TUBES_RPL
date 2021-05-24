@@ -20,6 +20,7 @@ import "vue-navigation-bar/dist/vue-navigation-bar.css";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import Footer from "@/components/Footer.vue";
+import store from '../../store';
 
 const Daftar = {
   type: "button",
@@ -64,14 +65,14 @@ const LoginBar = {
     },
   ],
 };
-
 const DashboardUser = {
   type: "link",
   text: "Dashboard",
-  path: { name: "dashboard" },
+  path: `${store.state.auth.user ? store.state.auth.user.auth[0].role : ''}/dashboard`,
   class: "button-logout button",
-  iconLeft: "<i class='fa fa-paper-plane' aria-hidden='true'></i>",
+  iconLeft: "<i class='fa fa-address-card-o' aria-hidden='true'></i>",
 };
+
 export default {
   components: {
     VueNavigationBar,

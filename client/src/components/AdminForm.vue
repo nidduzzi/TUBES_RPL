@@ -2,18 +2,22 @@
   <div class="formlogin">
     <div class="row w-100">
       <div class="offset-lg-3 col-lg-6">
+        <div v-if="message" class="alert alert-danger" role="alert">
+          <p>{{ message }}</p>
+        </div>
         <div class="card">
           <img src="../assets/admin.jpg" class="card-img-top p-4" />
           <div class="card-body">
             <h2 class="text-center">Admin</h2>
             <hr class="w-75" />
             <hr class="w-50" />
-            <form>
+            <form @submit.prevent="handleLogin">
               <div class="form-group">
-                <label for="email">Username</label>
+                <label for="text">Username</label>
                 <input
-                  type="email"
+                  type="text"
                   class="form-control"
+                  v-model="admin.username"
                 />
               </div>
               <div class="form-group">
@@ -21,9 +25,13 @@
                 <input
                   type="password"
                   class="form-control"
+                  v-model="admin.password"
                 />
               </div>
-              <button type="submit" class="btn button-orange btn-block">Login</button>
+              <button type="submit" class="btn button-orange btn-block">
+                <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
+                <div v-else>Login</div>
+              </button>
             </form>
           </div>
         </div>
@@ -33,8 +41,43 @@
 </template>
 
 <script>
+import Admin from "../model/adminCredential";
+
 export default {
   name: "adminform",
+  data() {
+    return {
+      admin: new Admin("", ""),
+      loading: false,
+      message: ""
+    }
+  },
+  computed: {
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
+  },
+  created() {
+    if (this.loggedIn) {
+      this.$router.push(`/admin/dashboard`);
+    }
+  },
+  methods: {
+     handleLogin() {
+      this.loading = true;
+      this.message = "";
+      if (this.admin.username && this.admin.password) {
+        this.$store.dispatch("auth/adminlogin", this.admin).then(
+          () => {
+            this.$router.push("/admin/dashboard");
+          })
+          .catch((error) => {
+            this.loading = false;
+            this.message = error.response.data.message;
+          });
+      }
+    },
+  }
 };
 </script>
 

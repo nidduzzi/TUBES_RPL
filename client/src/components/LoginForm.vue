@@ -2,7 +2,11 @@
   <div class="formlogin">
     <div class="row w-100">
       <div class="offset-lg-3 col-lg-6">
-        <div v-if="message" class="alert alert-danger" role="alert">
+        <div
+          v-if="message"
+          class="alert alert-danger font-weight-bold text-center"
+          role="alert"
+        >
           <p>{{ message }}</p>
         </div>
         <div class="card">
@@ -77,13 +81,22 @@ export default {
         this.user.email = "default@yahoo.com";
       }
       if ((this.user.username || this.user.email) && this.user.password) {
-        this.$store.dispatch("auth/login", this.user).then(
-          () => {
-            this.$router.push("/user/dashboard");
-          })
+        this.$store
+          .dispatch("auth/login", this.user)
+          .then(
+            () => {
+              this.$router.push("/user/dashboard");
+            },
+            (err) => {
+              this.loading = false;
+              this.message = err.response.data.message.toUpperCase();
+            }
+          )
           .catch((error) => {
             this.loading = false;
-            this.message = error.response.data.message;
+            if (error) {
+              this.message = error;
+            }
           });
       }
     },

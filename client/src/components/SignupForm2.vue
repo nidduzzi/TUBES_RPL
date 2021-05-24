@@ -3,9 +3,16 @@
     <h2 class="form-title">Sign Up</h2>
     <hr class="w-75" />
     <hr class="w-50" />
-    <ul v-if="errors">
-      <p>{{ errors }}</p>
-    </ul>
+    <div v-if="errors">
+      <div
+        v-for="(error, index) in errors"
+        :key="index"
+        class="alert alert-danger"
+        role="alert"
+      >
+        {{ error.message }}
+      </div>
+    </div>
     <FormulateInput
       name="username"
       type="text"
@@ -57,7 +64,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import UserService from "../services/user.service";
 
 export default {
   name: "signupform",
@@ -65,7 +72,7 @@ export default {
     return {
       formValues: {},
       postBody: "",
-      errors: "",
+      errors: [],
       loader: false,
     };
   },
@@ -84,23 +91,17 @@ export default {
       const { username, email, password } = this.formValues;
       this.formValues = {};
       const data = { username, email, password };
-      this.postBody = JSON.stringify(data);
+      this.postBody = data;
     },
     async Register() {
       this.errors = "";
       this.processData();
       this.loader = true;
       try {
-        const res = await axios.post(
-          `${process.env.VUE_APP_BASE_API}/users`,
-          this.postBody,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (res.status == 200) {
+        const res = await UserService.registerUser(this.postBody);
+        if (res.status != 201) {
+          this.errors = [...res.data.errors];
+        } else {
           this.$router.push("/login");
         }
       } catch (e) {

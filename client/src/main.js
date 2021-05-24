@@ -3,11 +3,9 @@ import App from "./App.vue";
 import router from "./router";
 import store from './store';
 import NProgress from 'nprogress';
-import VueFormulate from '@braid/vue-formulate'
-import dotenv from 'dotenv'
-import axios from "axios";
+import VueFormulate from '@braid/vue-formulate';
+import interceptorRun from './helpers/interceptor';
 
-dotenv.config();
 Vue.config.productionTip = false;
 
 router.beforeResolve((to, from,next) => {
@@ -18,8 +16,36 @@ router.beforeResolve((to, from,next) => {
 })
 
 router.beforeEach((to,from,next) => {
-  if(to.matched.some(record => record.meta.requireAuth)) {
-    if (store.state.auth.status.loggedIn) {
+  // admin guard
+  if(store.state.auth.user) {
+    if(to.matched.some(record => record.meta.notAdmin)){
+      if(!(store.state.auth.user.auth[0].role == 'admin')){
+        next()
+        return
+      }
+      next('/admin/dashboard')
+    } 
+  }
+
+  // dashboard admin guard
+  if(to.matched.some(record => record.meta.requireAdmin)) {
+    if (store.state.auth.status.loggedIn && store.state.auth.user.auth[0].role == 'admin') {
+      next()
+      return
+    }
+    if(store.state.auth.status.loggedIn && store.state.auth.user.auth[0].role == 'user'){
+      next('/user/dashboard')
+    } else {
+      next('/admin')
+    }
+    
+  } else {
+    next()
+  }
+
+  // user guard
+  if(to.matched.some(record => record.meta.requireUser)) {
+    if (store.state.auth.status.loggedIn && store.state.auth.user.auth[0].role == 'user') {
       next()
       return
     }
@@ -35,32 +61,7 @@ router.afterEach(() => {
 
 Vue.use(VueFormulate);
 
-let isRefreshing = false;
-axios.interceptors.response.use(
-  response => {
-    return response;
-  },
-  async err => {
-    const {
-      response: {status}
-    } = err;
-    if (status === 401) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        await store.dispatch("auth/refresh").then(
-          ({status, headers, data}) => {
-            if(status === 200 || status === 204){
-              isRefreshing = false;
-              localStorage.user = JSON.stringify(data);
-              document.cookie = headers['set-cookie'];
-            }
-          })
-      }
-    }else {
-      return Promise.reject(err);
-    }
-  }
-)
+interceptorRun();
 
 new Vue({
   router,

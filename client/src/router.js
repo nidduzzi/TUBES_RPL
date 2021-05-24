@@ -3,7 +3,8 @@ import Router from "vue-router";
 import Homepage from "./views/mainapp/Homepage.vue";
 import Reservation from "./views/mainapp/Reservation.vue";
 import Home from "./views/mainapp/Home.vue";
-import Dashboard from "./views/dashboard/Dashboard.vue";
+import userDashboard from "./views/dashboard/userDashboard.vue";
+import adminDashboard from "./views/dashboard/adminDashboard.vue";
 
 Vue.use(Router);
 
@@ -14,6 +15,9 @@ export default new Router({
     {
       path: "/",
       component: Homepage,
+      meta: {
+        notAdmin: true,
+      },
       children: [
         {
           path: "",
@@ -78,20 +82,13 @@ export default new Router({
     },
     // belum config routes dashboard
     {
-       path: "/:role/dashboard",
-       name: "dashboard",
-       component: Dashboard,
-       props: true,
+       path: "/user/dashboard",
+       name: "user-dashboard",
+       component: userDashboard,
        meta: {
-         requireAuth: true,
+         requireUser: true,
        },
        children: [
-         {
-           path: "/:role/dashboard/reservation",
-           name: "user-reservation",
-           component: () => import("./views/dashboard/user/Reservation.vue"),
-           props: true,
-         },
          {
            path: "/:role/dashboard/reservation/list",
            name: "user-reservation-list",
@@ -105,8 +102,8 @@ export default new Router({
            props: true,
          },
          {
-           path: "/:role/dashboard/profile",
-           name: "user-reservation-profile",
+           path: "/user/dashboard/profile",
+           name: "user-profile",
            component: () => import("./views/dashboard/user/Profile.vue"),
            props: true,
          },
@@ -114,6 +111,46 @@ export default new Router({
            path: "/:role/dashboard/reservation/history",
            name: "user-reservation-history",
            component: () => import("./views/dashboard/user/RiwayatReservasi.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/eoregister",
+           name: "user-eo-registration",
+           component: () => import("./views/dashboard/user/RegisterEO.vue"),
+           props: true,
+         },
+       ],
+    },
+    {
+      path: "/admin/dashboard",
+      name: "admin-dashboard",
+      component: adminDashboard,
+      meta: {
+        requireAdmin: true,
+      },
+      children: [
+         {
+           path: "/admin/dashboard/profile",
+           name: "admin-profile",
+           component: () => import("./views/dashboard/admin/Profile.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/event",
+           name: "admin-event",
+           component: () => import("./views/dashboard/admin/EOManage.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/userlist",
+           name: "admin-userlist",
+           component: () => import("./views/dashboard/admin/UserManage.vue"),
+           props: true,
+         },
+         {
+           path: "/:role/dashboard/report",
+           name: "admin-report",
+           component: () => import("./views/dashboard/admin/Laporan.vue"),
            props: true,
          }
        ],

@@ -384,35 +384,39 @@ export class Controller {
   putVerifyEO(req: Request, res: Response, next: NextFunction): void {
     if (req.params.id) {
       const id = Number.parseInt(req.params.id);
-      prisma.eventOrganizer
-        .findUnique({
-          where: {
-            id: id,
-          },
-        })
-        .then((eo) => {
-          if (!eo?.verified) {
-            prisma.eventOrganizer
-              .update({
-                where: {
-                  id: eo?.id,
-                },
-                data: {
-                  verified: true,
-                  verificationDate: new Date(),
-                  status: 'ACTIVE',
-                },
-              })
-              .then((eo) => {
-                res.status(204).send({ eventOrganizer: eo });
-              });
-          } else {
-            res
-              .status(400)
-              .send({ message: 'event organizer already verified' });
-          }
-        })
-        .catch((err) => next(err));
+      if (id != NaN) {
+        prisma.eventOrganizer
+          .findUnique({
+            where: {
+              id: id,
+            },
+          })
+          .then((eo) => {
+            if (!eo?.verified) {
+              prisma.eventOrganizer
+                .update({
+                  where: {
+                    id: eo?.id,
+                  },
+                  data: {
+                    verified: true,
+                    verificationDate: new Date(),
+                    status: 'ACTIVE',
+                  },
+                })
+                .then((eo) => {
+                  res.status(204).send({ eventOrganizer: eo });
+                });
+            } else {
+              res
+                .status(400)
+                .send({ message: 'event organizer already verified' });
+            }
+          })
+          .catch((err) => next(err));
+      } else {
+        res.status(400).send({ message: 'invalid request id' });
+      }
     } else {
       res.status(400).send({ message: 'invalid request' });
     }

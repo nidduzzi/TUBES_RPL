@@ -1,5 +1,5 @@
 {
-  "name": "mevn-starter",
+  "name": "tiketin-client",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,9 +9,21 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "@braid/vue-formulate": "^2.5.2",
+    "axios": "^0.21.1",
     "core-js": "^2.6.5",
+    "dotenv": "^9.0.2",
+    "fecha": "^4.2.1",
+    "form-data": "^4.0.0",
+    "nprogress": "^0.2.0",
     "vue": "^2.6.10",
-    "vue-router": "^3.0.3"
+    "vue-carousel-3d": "^1.0.1",
+    "vue-date-pick": "^1.4.1",
+    "vue-loading-overlay": "^4.0.2",
+    "vue-navigation-bar": "^4.1.0",
+    "vue-router": "^3.0.3",
+    "vue-sidebar-menu": "^4.7.4",
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.8.0",
@@ -25,6 +37,8 @@
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
     "lint-staged": "^8.1.5",
+    "node-sass": "^5.0.0",
+    "sass-loader": "^10.0.1",
     "vue-template-compiler": "^2.6.10"
   },
   "gitHooks": {

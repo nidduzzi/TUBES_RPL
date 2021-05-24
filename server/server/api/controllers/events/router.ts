@@ -10,7 +10,11 @@ const prisma = new PrismaClient();
 
 export default express
   .Router()
-  .get('/', controller.getAll)
+  .get(
+    '/',
+    checkPermissions([], { credentialsRequired: false }),
+    controller.getAll
+  )
   .post(
     '/',
     checkPermissions([

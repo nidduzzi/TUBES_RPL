@@ -9,7 +9,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 export default express
   .Router()
   .post('/', checkPermissions([{ role: Roles.User }]), controller.postRegister)
-  .get('/', checkPermissions([{ role: Roles.Admin }]), controller.getAll)
+  .get(
+    '/',
+    checkPermissions([], { credentialsRequired: false }),
+    controller.getAll
+  )
   .get('/:id', controller.getById)
   .put(
     '/:id',

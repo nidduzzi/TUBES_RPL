@@ -39,6 +39,23 @@ function sendVerificationEmail(req: Request, eo: EventOrganizer) {
   emailService(eo.email, 'Ticketin Email Verification', emailHtml);
 }
 
+function checkNested(o: any, searchKeys: Array<string>): boolean {
+  //Early return
+  if (Object.keys(o).some((key) => searchKeys.includes(key))) {
+    return true;
+  }
+  let result, p;
+  for (p in o) {
+    if (o.hasOwnProperty(p) && typeof o[p] === 'object') {
+      result = checkNested(o[p], searchKeys);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return false;
+}
+
 export class Controller {
   getAll(req: Request, res: Response, next: NextFunction): void {
     let q = undefined;
@@ -48,6 +65,63 @@ export class Controller {
     let h = undefined;
     if (req.query.h) {
       h = JSON.parse(req.query.h as string);
+    }
+    const user = req.user as JwtDataStore;
+    if (
+      h &&
+      (!user ||
+        (user &&
+          user.scopes &&
+          !user.scopes.some((s) => s.role == Roles.Admin)))
+    ) {
+      if (h.include) {
+        if (
+          checkNested(h.include, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden include in query' });
+          return;
+        }
+      }
+      if (h.select) {
+        if (
+          checkNested(h.select, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden select in query' });
+          return;
+        }
+      }
     }
     const query =
       // check if q is sent

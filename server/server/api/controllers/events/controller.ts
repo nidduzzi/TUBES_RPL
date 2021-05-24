@@ -38,52 +38,61 @@ export class Controller {
     if (req.query.h) {
       h = JSON.parse(req.query.h as string);
     }
-    if (h.include) {
-      if (
-        checkNested(h.include, [
-          'admin',
-          'passwordHash',
-          'allowedUsers',
-          'notifications',
-          'suspensions',
-          'reservations',
-          'tickets',
-          'notification',
-          'payment',
-          'refreshToken',
-          'reservation',
-          'suspension',
-          'termination',
-          'ticket',
-          'user',
-        ])
-      ) {
-        res.status(403).send({ message: 'forbidden include in query' });
-        return;
+    const user = req.user as JwtDataStore;
+    if (
+      h &&
+      (!user ||
+        (user &&
+          user.scopes &&
+          !user.scopes.some((s) => s.role == Roles.Admin)))
+    ) {
+      if (h.include) {
+        if (
+          checkNested(h.include, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden include in query' });
+          return;
+        }
       }
-    }
-    if (h.select) {
-      if (
-        checkNested(h.select, [
-          'admin',
-          'passwordHash',
-          'allowedUsers',
-          'notifications',
-          'suspensions',
-          'reservations',
-          'tickets',
-          'notification',
-          'payment',
-          'refreshToken',
-          'reservation',
-          'suspension',
-          'termination',
-          'ticket',
-          'user',
-        ])
-      ) {
-        res.status(403).send({ message: 'forbidden select in query' });
-        return;
+      if (h.select) {
+        if (
+          checkNested(h.select, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden select in query' });
+          return;
+        }
       }
     }
     const query =

@@ -40,8 +40,11 @@ export class Controller {
     }
     const user = req.user as JwtDataStore;
     if (
-      !user ||
-      (user && user.scopes && !user.scopes.some((s) => s.role == Roles.Admin))
+      h &&
+      (!user ||
+        (user &&
+          user.scopes &&
+          !user.scopes.some((s) => s.role == Roles.Admin)))
     ) {
       if (h.include) {
         if (

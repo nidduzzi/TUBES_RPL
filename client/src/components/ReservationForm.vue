@@ -6,7 +6,7 @@
         <hr />
 
         <!-- jenis Tiket component -->
-        <JenisTiket class="w-50"/>
+        <TicketTypeTable class="w-50" />
 
         <h4>Tickets</h4>
         <div class="card card-style card-tickets">
@@ -29,8 +29,13 @@
                         class="custom-select bg-success text-white"
                         id="inputGroupSelect01"
                       >
-                        <option value="Silver">Silver</option>
-                        <option selected value="VIP">VIP</option>
+                        <option
+                          v-for="(ticketType, i) in event.ticketTypes"
+                          :key="i"
+                          :value="ticketType.id"
+                        >
+                          {{ ticketType.name }}
+                        </option>
                       </select>
                     </th>
                     <td>2000000 IDR</td>
@@ -107,24 +112,34 @@
 </template>
 
 <script>
-import JenisTiket from "@/components/JenisTiket.vue";
+import TicketTypeTable from "@/components/TicketTypeTable.vue";
 
 export default {
   name: "reservation",
   components: {
-    JenisTiket,
+    TicketTypeTable,
   },
   data() {
-    JenisTiket;
     return {
-      tempForm: {},
+      userId: null,
+      formModel: {
+        eventId: this.event.id,
+        tickets: [{ nama: "", identification: "", ticketTypeId: this.event.ticketType }],
+      },
     };
+  },
+  props: ["event"],
+  created(){
+    this.userId = JSON.parse(localStorage.getItem("user")).auth.find(a => a.role === "user").id;
+    this.formModel.eventId = this.event.id;
+    this.formModel.tickets = this.event.ticketType;
   },
   methods: {
     updateForm() {
-      this.$emit("submitReserv", this.tempForm);
+      this.$emit("submitReserv", this.formModel);
       this.$router.push("/checkout");
     },
+    addTicket() {},
   },
 };
 </script>

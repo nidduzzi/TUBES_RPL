@@ -70,6 +70,7 @@ export default new Router({
                 path: "/order",
                 name: "order",
                 component: () => import("./components/ReservationForm.vue"),
+                props: route => ({ event: route.query.event })
               },
               {
                 path: "/checkout",

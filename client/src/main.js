@@ -5,7 +5,7 @@ import store from './store';
 import NProgress from 'nprogress';
 import VueFormulate from '@braid/vue-formulate';
 import interceptorRun from './helpers/interceptor';
-
+import AsyncComputed from 'vue-async-computed';
 Vue.config.productionTip = false;
 
 router.beforeResolve((to, from,next) => {
@@ -58,7 +58,7 @@ router.beforeEach((to,from,next) => {
 router.afterEach(() => {
   NProgress.done()
 })
-
+Vue.use(AsyncComputed);
 Vue.use(VueFormulate);
 
 interceptorRun();

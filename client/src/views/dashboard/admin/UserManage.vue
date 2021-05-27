@@ -95,7 +95,8 @@
         <div class="row mb-3">
           <div class="offset-md-4 col-md-4">
             <img
-              src="../../../assets/slider.jpg"
+              v-if="userDetail[0].imageUrl"
+              :src="userDetail[0].imageUrl"
               width="150px"
               class="img-fluid rounded-circle"
               alt="profile-picture"
@@ -355,11 +356,23 @@ export default {
   methods: {
     showInfo(id) {
       this.userDetail = this.userList.filter((user) => user.id === id);
+      this.openFoto(this.userDetail[0].id);
       this.$refs.modal.open();
     },
     editInfo(id) {
       this.userDetail = this.userList.filter((user) => user.id === id);
       this.$refs.editModal.open("tab1");
+    },
+    openFoto(id){
+      UserService.getProfilePicture(id)
+      .then((res) => res.data)
+      .then((data) => {
+        this.userDetail[0].imageUrl = URL.createObjectURL(data);
+        this.$forceUpdate();
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === "production") process.env.console.log(err);
+      });
     },
     async terminateUser(id) {
       this.userDetail = this.userList.filter((user) => user.id === id);
@@ -470,14 +483,8 @@ export default {
       const doc = new jsPDF();
       const data = this.userList.map((el) => {
         const date = moment(el.registrationDate).format("DD MMMM YYYY");
-        return [
-          el.username,
-          el.email,
-          date,
-          el.status,
-          el.dateOfBirth,
-          el.address
-        ];
+        const lahir = moment(el.dateOfBirth).format("DD MMMM YYYY");
+        return [el.username, el.email, date, el.status, lahir, el.address];
       });
 
       doc.autoTable({
@@ -494,7 +501,7 @@ export default {
         body: data
       });
 
-      doc.save('user-report.pdf')
+      doc.save("user-report.pdf");
     }
   }
 };

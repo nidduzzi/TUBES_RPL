@@ -176,7 +176,8 @@ class UserService {
     return axios.get(
       API_USER + "/" + id + "/profilePicture",
       { 
-        headers: authHeader()
+        headers: authHeader(),
+        responseType: "blob"
       })
       .then(response => {
         return response;
@@ -186,8 +187,9 @@ class UserService {
       });
   }
 
-  updateProfilePicture(id, config){
+  updateProfilePicture(id, body, config){
     return axios.put(API_USER + "/" + id + "/profilePicture",
+      body,
       {
         headers: 
         {

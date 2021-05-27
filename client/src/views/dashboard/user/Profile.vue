@@ -3,7 +3,19 @@
     <div class="card card-style border-radius2">
       <div class="card-body text-left">
         <div class="row pl-3 mt-4">
-          <h4>Profile</h4>
+          <div class="col-md-2 p-3">
+            <h4>Profile</h4>
+          </div>
+          <div class="offset-md-7 col-md-3">
+            <div class="text-right pb-3">
+              <router-link
+                to="/user/dashboard/eoregister"
+                class="btn btn-beli mt-3 font-1 text-white"
+              >
+                Register as Event Organizer
+              </router-link>
+            </div>
+          </div>
         </div>
         <hr />
         <div class="row p-lg-5">
@@ -77,7 +89,7 @@
                 @click="updateProfile"
                 :disabled="hasErrors"
               >
-                <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
+                <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
               </FormulateInput>
             </FormulateForm>
           </div>
@@ -88,46 +100,96 @@
               <img
                 width="200px"
                 height="200px"
-                src="../../../assets/slider.jpg"
+                v-if="userUpdateProfile.imageUrl"
+                :src="userUpdateProfile.imageUrl"
                 class="rounded-circle"
                 alt="profilePicture"
               />
             </div>
-            <router-link
-              to="/user/dashboard/eoregister"
-              class="btn btn-beli mt-3 font-1"
-            >
-              Register as Event Organizer
-            </router-link>
+            <FormulateInput
+              type="image"
+              v-model="fotoProfil.files"
+              label="Select an image to upload"
+              help="Select a png, jpg or gif to upload."
+              validation="mime:image/jpeg,image/png,image/gif"
+              @change="fotoChange"
+            />
+            <div class="d-flex">
+              <button type="button" class="btn btn-danger mr-2">
+                <i class="fa fa-trash-o" aria-hidden="true"></i>
+              </button>
+              <FormulateInput
+                type="button"
+                label="Upload Foto"
+                @click="uploadFoto"
+              >
+                <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+              </FormulateInput>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <notifications group="successUpdate" position="bottom right" />
+    <notifications group="successUpdateFoto" position="bottom right" />
   </div>
 </template>
 
 <script>
 import UserService from "../../../services/user.service";
+import moment from "moment";
+
 const FormData = require("form-data");
 
 export default {
   data() {
     return {
+      file: "",
+      fotoProfil: {},
       currUser: this.$store.state.auth.user,
-      loading: false,
+      loader: false,
       error: false,
       userUpdateProfile: {
         email: "",
         username: "",
         password: "",
         address: "",
-        dateOfBirth: ""
+        dateOfBirth: "",
+        imageUrl: ""
       },
       message: ""
     };
   },
   methods: {
+    uploadFoto() {
+      const form = new FormData();
+      const config = {
+        "Content-Type": "multipart/form-data"
+      };
+      form.append("profilePicture", this.file);
+      this.loader = true;
+      UserService.updateProfilePicture(this.userProfile.id, form, config)
+        .then((res) => {
+          // simple
+          this.$notify({
+            group: "successUpdateFoto",
+            title: "Update berhasil!",
+            text: "Update foto profile berhasil",
+            type: "success"
+          });
+          this.fotoProfil.files = [];
+          this.loader=false;
+          this.$forceUpdate();
+          return res.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    fotoChange(e) {
+      this.file = e.target.files[0];
+      this.userUpdateProfile.imageUrl = URL.createObjectURL(this.file);
+    },
     processForm() {
       const form = new FormData();
       form.append("username", this.userUpdateProfile.username);
@@ -141,7 +203,7 @@ export default {
       this.message = "";
       const data = this.processForm();
       try {
-        this.loading = true;
+        this.loader = true;
         const res = await UserService.updateUser(
           this.$store.state.auth.user.auth[0].id,
           data,
@@ -166,7 +228,7 @@ export default {
         this.error = true;
         this.message = error;
       } finally {
-        this.loading = false;
+        this.loader = false;
       }
     }
   },
@@ -176,6 +238,10 @@ export default {
         this.userProfile = res.data.user;
         this.userUpdateProfile.email = this.userProfile.email;
         this.userUpdateProfile.username = this.userProfile.username;
+        this.userUpdateProfile.address = this.userProfile.address;
+        this.userUpdateProfile.dateOfBirth = moment(
+          this.userProfile.dateOfBirth
+        ).format("YYYY-MM-DD");
       },
       (error) => {
         this.userProfile =
@@ -184,6 +250,17 @@ export default {
           error.toString();
       }
     );
+
+    // get foto profile
+    UserService.getProfilePicture(this.currUser.auth[0].id)
+      .then((res) => res.data)
+      .then((data) => {
+        this.userUpdateProfile.imageUrl = URL.createObjectURL(data);
+        this.$forceUpdate();
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === "production") process.env.console.log(err);
+      });
   }
 };
 </script>

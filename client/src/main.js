@@ -9,6 +9,7 @@ import Notifications from 'vue-notification'
 import moment from 'moment';
 Vue.prototype.moment = moment;
 
+import AsyncComputed from 'vue-async-computed';
 Vue.config.productionTip = false;
 
 router.beforeResolve((to, from,next) => {
@@ -83,7 +84,7 @@ router.beforeEach((to,from,next) => {
 router.afterEach(() => {
   NProgress.done()
 })
-
+Vue.use(AsyncComputed);
 Vue.use(VueFormulate);
 Vue.use(Notifications);
 

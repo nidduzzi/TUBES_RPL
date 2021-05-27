@@ -19,6 +19,7 @@
     "nprogress": "^0.2.0",
     "sweet-modal-vue": "^2.0.0",
     "vue": "^2.6.10",
+    "vue-async-computed": "^3.9.0",
     "vue-carousel-3d": "^1.0.1",
     "vue-date-pick": "^1.4.1",
     "vue-loading-overlay": "^4.0.2",

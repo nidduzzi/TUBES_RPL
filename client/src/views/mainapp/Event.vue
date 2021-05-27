@@ -10,7 +10,12 @@ export default {
   components: {
     Event,
   },
-  props: ['id', 'event']
+  props: ["id"],
+  computed: {
+    event: function () {
+      return {};
+    },
+  },
 };
 </script>
 

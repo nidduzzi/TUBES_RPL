@@ -3,40 +3,60 @@
     <div class="offset-md-1 col-md-10">
       <div class="card card-style border-radius2 text-left">
         <img
-          src="../assets/slider.jpg"
+          v-if="imageUrl != null"
+          v-bind:src="imageUrl"
+          class="card-img-top border-radius2"
+          alt=""
+        />
+        <img
+          v-else-if="logoUrl != null"
+          v-bind:src="logoUrl"
+          class="card-img-top border-radius2"
+          alt=""
+        />
+        <img
+          v-else
+          src="../assets/logo.png"
           class="card-img-top border-radius2"
           alt=""
         />
         <div class="card-body px-5">
           <div class="row">
             <div class="col-md-6">
-              <h3 class="font-weight-bold">Webinar Something</h3>
-              <h5 class="font-weight-light">Universitas Something</h5>
-              <p class="font-weight-bold">Selasa, 14 Juli 2021</p>
-              <p class="card-text">
-                Vivamus lectus malesuada pellentesque auctor ac. Mauris leo ut
-                et massa ornare. Consequat a vulputate sit odio vitae lectus.
-                Rhoncus aenean scelerisque interdum magna egestas. Volutpat
-                neque aenean adipiscing sed. Imperdiet convallis a velit at leo
-                nisl eget sagittis, bibendum. Quam cras at lobortis ut nulla
-                magna massa, maecenas. Et sed a ipsum sociis. Massa dictum
-                varius amet quam ipsum nunc, non. Purus sodales tristique
-                facilisi eget consequat consequat morbi lacus integer. Ipsum
-                cras ac quis mauris.
+              <h3 class="font-weight-bold">{{ event.name }}</h3>
+              <h5 class="font-weight-light" v-if="event.tagline != undefined">
+                {{ event.tagline }}
+              </h5>
+              <p v-if="startdate != null" class="font-weight-bold">
+                {{ startDate }}
               </p>
-              <p class="btn btn-tag py-0 mx-1">Academic</p>
-              <p class="btn btn-tag py-0 mx-1">Management</p>
+              <p class="card-text">
+                {{ event.description }}
+              </p>
+              <p
+                v-for="(tag, i) in event.tags"
+                :key="i"
+                class="btn btn-tag py-0 mx-1"
+              >
+                {{ tag.name }}
+              </p>
             </div>
             <div class="col-md-6">
               <div class="row text-right">
                 <div class="col-md-12">
-                  <router-link to="/order" class="btn btn-beli">Beli Tiket</router-link>
+                  <router-link to="/order" class="btn btn-beli"
+                    >Beli Tiket</router-link
+                  >
                 </div>
               </div>
               <div class="row pt-5">
                 <div class="offset-md-2 col-md-8">
+                  <ScheduleTable :schedule="event.schedule" />
+                </div>
+                <br />
+                <div class="offset-md-2 col-md-8">
                   <!-- jenis Tiket component -->
-                  <JenisTiket />
+                  <TicketTypeTable :ticketTypes="event.ticketTypes" />
                 </div>
               </div>
             </div>
@@ -47,16 +67,42 @@
   </div>
 </template>
 
-
 <script>
-import JenisTiket from "@/components/JenisTiket.vue";
+import TicketTypeTable from "@/components/TicketTypeTable.vue";
+import ScheduleTable from "@/components/ScheduleTable.vue";
 
 export default {
   name: "EventCard",
   components: {
-    JenisTiket,
+    TicketTypeTable,
+    ScheduleTable
   },
   props: ["id", "event"],
+  computed: {
+    imageUrl: function () {
+      if (this.event.numImages && this.event.numImages > 0) {
+        return (
+          process.env.VUE_APP_BASE_API + "/events/" + this.id + "/images/0"
+        );
+      } else {
+        return null;
+      }
+    },
+    logoUrl: function () {
+      if (this.event.numImages && this.event.numImages > 0) {
+        return process.env.VUE_APP_BASE_API + "/events/" + this.id + "/logo";
+      } else {
+        return null;
+      }
+    },
+    startDate: function () {
+      if (this.event.schedule[0]) {
+        return new Date(this.event.schedule[0].startTime).toString();
+      } else {
+        return null;
+      }
+    }
+  }
 };
 </script>
 

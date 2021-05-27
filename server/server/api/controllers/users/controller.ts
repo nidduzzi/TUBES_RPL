@@ -159,7 +159,7 @@ export class Controller {
                 emailVerified: user.emailVerified,
                 registrationDate: user.registrationDate,
                 address: user.address,
-                notifications: user.notifications,
+                eventOrganizerId: user.eventOrganizerId,
               },
             });
           } else {
@@ -736,7 +736,6 @@ export class Controller {
     if (req.params.id != undefined && req.body) {
       const id = Number.parseInt(req.params.id);
       let body = req.body;
-      console.log(req);
       if (typeof body === 'string') {
         body = JSON.parse(body);
       }

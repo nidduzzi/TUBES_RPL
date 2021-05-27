@@ -759,15 +759,15 @@ export class Controller {
                 where: { id: eo.termination.id },
               })
               .then((_termination) => {
-                prisma.user
+                prisma.eventOrganizer
                   .update({
                     where: { id: eo.id },
                     data: { status: 'ACTIVE' },
                   })
                   .then((_) =>
-                    res
-                      .status(200)
-                      .send({ message: 'user removed from termination list' })
+                    res.status(200).send({
+                      message: 'event organizer removed from termination list',
+                    })
                   );
               })
               .catch((err) => {
@@ -819,7 +819,7 @@ export class Controller {
                     },
                   })
                   .then((suspension) => {
-                    prisma.user
+                    prisma.eventOrganizer
                       .update({
                         where: { id: eo.id },
                         data: { status: 'SUSPENDED' },
@@ -844,6 +844,45 @@ export class Controller {
           res.status(404).send({ message: 'invalid id given' });
         }
       });
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  deleteSuspension(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id) {
+      const id: number = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({
+          where: { id: id },
+          include: {
+            suspensions: { orderBy: { id: 'desc' } },
+          },
+        })
+        .then((eo) => {
+          if (eo && eo.suspensions[0]) {
+            prisma.suspension
+              .delete({
+                where: { id: eo.suspensions[0].id },
+              })
+              .then((_suspension) => {
+                prisma.eventOrganizer
+                  .update({
+                    where: { id: eo.id },
+                    data: { status: 'ACTIVE' },
+                  })
+                  .then((_) =>
+                    res.status(200).send({
+                      message: 'event organizer removed from suspension list',
+                    })
+                  )
+                  .catch((err) => next(err));
+              })
+              .catch((err) => next(err));
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
+        });
     } else {
       res.status(400).send({ message: 'invalid request' });
     }

@@ -119,6 +119,11 @@ export default express
     checkPermissions([{ role: Roles.Admin }]),
     controller.putSuspension
   )
+  .delete(
+    '/suspend/:id',
+    checkPermissions([{ role: Roles.Admin }]),
+    controller.deleteSuspension
+  )
   .post(
     '/warn/:id',
     checkPermissions([{ role: Roles.Admin }]),

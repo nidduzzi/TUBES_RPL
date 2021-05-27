@@ -1017,7 +1017,7 @@ export class Controller {
         .findUnique({
           where: { id: id },
           include: {
-            suspensions: { where: { userId: id }, orderBy: { id: 'desc' } },
+            suspensions: { orderBy: { id: 'desc' } },
           },
         })
         .then((user) => {

@@ -733,15 +733,15 @@ export class Controller {
     if (req.params.id != undefined && req.body) {
       const id = Number.parseInt(req.params.id);
       let body = req.body;
-
-      if (typeof body == 'string') {
+      console.log(req);
+      if (typeof body === 'string') {
         body = JSON.parse(body);
       }
       try {
         const user = await prisma.user.findUnique({ where: { id: id } });
         if (user) {
           // update email
-          if (body.email) {
+          if (body.email != undefined) {
             const email = await prisma.user.findUnique({
               where: { email: body.email },
             });
@@ -755,7 +755,7 @@ export class Controller {
             });
           }
           // update username
-          if (body.username) {
+          if (body.username != undefined) {
             const username = await prisma.user.findUnique({
               where: { username: body.username },
             });
@@ -769,7 +769,7 @@ export class Controller {
             });
           }
           // update password
-          if (body.password) {
+          if (body.password != undefined) {
             await prisma.user.update({
               where: { id: user.id },
               data: {
@@ -778,7 +778,7 @@ export class Controller {
             });
           }
           // update address
-          if (body.address) {
+          if (body.address != undefined) {
             await prisma.user.update({
               where: { id: user.id },
               data: {
@@ -788,7 +788,7 @@ export class Controller {
           }
 
           // update dateOfBirth
-          if (body.address) {
+          if (body.dateOfBirth) {
             await prisma.user.update({
               where: { id: user.id },
               data: {
@@ -808,12 +808,14 @@ export class Controller {
                     email: updatedUser.email,
                     emailVerified: updatedUser.emailVerified,
                     registrationDate: updatedUser.registrationDate.toISOString(),
-                    dateOfBirth: updatedUser.dateOfBirth,
+                    dateOfBirth: updatedUser.dateOfBirth?.toISOString(),
                     address: updatedUser.address,
                   },
                 });
               }
             });
+        } else {
+          res.status(404).send({ message: 'invalid id given' });
         }
       } catch (error) {
         next(error);

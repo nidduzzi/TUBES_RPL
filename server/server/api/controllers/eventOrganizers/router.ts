@@ -28,6 +28,7 @@ export default express
         role: Roles.Admin,
       },
     ]),
+    upload.none(),
     controller.putUpdateEO
   )
   .get('/:id/events', controller.getEvents)

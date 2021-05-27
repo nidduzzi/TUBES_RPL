@@ -57,6 +57,7 @@ export default express
         role: Roles.Admin,
       },
     ]),
+    upload.none(),
     controller.putUpdateEvent
   )
   .get('/:id/logo', controller.getLogo)

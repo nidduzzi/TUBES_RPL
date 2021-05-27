@@ -92,7 +92,7 @@ export default new Router({
        },
        children: [
          {
-           path: "/:role/dashboard/notifications",
+           path: "/user/dashboard/notifications",
            name: "user-notications",
            component: () => import("./views/dashboard/user/Notifications.vue"),
            props: true,
@@ -122,7 +122,7 @@ export default new Router({
            props: true,
          },
          {
-           path: "/:role/dashboard/eoregister",
+           path: "/user/dashboard/eoregister",
            name: "user-eo-registration",
            component: () => import("./views/dashboard/user/RegisterEO.vue"),
            meta: {
@@ -174,6 +174,12 @@ export default new Router({
          requireEO: true,
        },
        children: [
+         {
+           path: "/eo/dashboard/notifications",
+           name: "user-notications",
+           component: () => import("./views/dashboard/EO/Notifications.vue"),
+           props: true,
+         },
          {
            path: "/eo/dashboard/welcome",
            name: "eo-welcome",

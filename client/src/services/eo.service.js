@@ -277,7 +277,7 @@ class EOService {
   }
 
   // suspend
-  suspendUser(id, optBody){
+  suspendEO(id, optBody){
     return axios.put(
       API_EO + "/suspend/" + id,
       optBody,
@@ -292,7 +292,7 @@ class EOService {
       });
   }
 
-  unsuspendUser(id){
+  unsuspendEO(id){
     return axios.delete(
       API_EO + "/suspend/" + id,
       {
@@ -307,7 +307,7 @@ class EOService {
   }
 
   // warn
-  warnUser(id, optBody){
+  warnEO(id, optBody){
     return axios.post(
       API_EO + "/warn/" + id,
       optBody,

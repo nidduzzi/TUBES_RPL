@@ -65,6 +65,12 @@ export default {
             path: { name: "dashboard" },
             subMenuOptions: [
               {
+                type: "link",
+                text: "Pemberitahuan",
+                path: "/eo/dashboard/notifications",
+                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>",
+              },
+              {
                 isLinkAction: true,
                 type: "link",
                 text: "Logout",

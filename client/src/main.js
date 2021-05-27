@@ -33,11 +33,18 @@ router.beforeEach((to,from,next) => {
 
   // register eo guard
   if(to.matched.some(record => record.meta.notEO)) {
-    if (!(store.state.auth.user.auth[1].role == 'eo')) {
-      next()
-      return
+    if(store.state.auth.user != null){
+      if(store.state.auth.user.auth.length > 1) {
+        if (!(store.state.auth.user.auth[1].role == 'eo')) {
+          next()
+          return
+        }
+      } else {
+        next()
+        return
+      }
+      next('/eo/dashboard/welcome')
     }
-    next('/eo/dashboard/welcome')
   } else {
     next()
   }
@@ -75,7 +82,7 @@ router.beforeEach((to,from,next) => {
       next()
       return
     }
-    next('/signup')
+    next('/eventorganizer')
   } else {
     next()
   }

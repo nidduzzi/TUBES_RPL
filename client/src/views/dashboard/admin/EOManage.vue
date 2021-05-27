@@ -112,7 +112,7 @@
                           </button>
                         </span>
                       </div>
-                      <div class="col-md-1">
+                      <div class="col-md-1 py-2">
                         <button
                           type="button"
                           @click="terminateEO(verifeEO.id)"
@@ -121,7 +121,7 @@
                           <i class="fa fa-trash-o" aria-hidden="true"></i>
                         </button>
                       </div>
-                      <div class="col-md-1">
+                      <div class="col-md-1 py-2">
                         <button
                           type="button"
                           @click="editInfo(verifeEO.id)"
@@ -261,6 +261,131 @@
         </div>
       </div>
     </SweetModal>
+
+    <!-- Edit Status Modal -->
+    <SweetModal ref="editModal">
+      <template slot="title">
+        <h3 class="text-left font-weight-bold mt-3">
+          <h4>Change Status Event Organizer</h4>
+        </h3>
+      </template>
+      <SweetModalTab title="Suspend" id="tab1">
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <button
+              v-if="EODetail[0].status !== 'SUSPENDED'"
+              type="button"
+              @click="suspendShow(EODetail[0].id)"
+              class="mr-3 text-white btn btn-sm btn-warning"
+            >
+              <i class="fa fa-warning" aria-hidden="true"></i>
+              Suspend EO
+            </button>
+            <button
+              v-if="EODetail[0].status === 'SUSPENDED'"
+              type="button"
+              @click="unsuspendEO()"
+              class="text-white btn btn-sm btn-success"
+            >
+              <i class="fa fa-check" aria-hidden="true"></i>
+              Unsuspend EO
+            </button>
+          </div>
+        </div>
+      </SweetModalTab>
+      <SweetModalTab title="Terminate" id="tab2">
+        <div class="row">
+          <div class="col-md-12">
+            <button
+              v-if="EODetail[0].status !== 'TERMINATED'"
+              type="button"
+              @click="terminateEO(EODetail[0].id)"
+              class="mr-3 text-white btn btn-sm btn-danger"
+            >
+              <i class="fa fa-close" aria-hidden="true"></i>
+              Terminate EO
+            </button>
+            <button
+              v-if="EODetail[0].status === 'TERMINATED'"
+              type="button"
+              @click="unterminateEO()"
+              class="text-white btn btn-sm btn-success"
+            >
+              <i class="fa fa-check" aria-hidden="true"></i>
+              Unterminate EO
+            </button>
+          </div>
+        </div>
+      </SweetModalTab>
+      <SweetModalTab title="Warn" id="tab3">
+        <div class="row">
+          <div class="col-md-12">
+            <button
+              type="button"
+              @click="warnShow(EODetail[0].id)"
+              class="mr-3 text-white btn btn-sm btn-warning"
+            >
+              <i class="fa fa-warning" aria-hidden="true"></i>
+              Warn EO
+            </button>
+          </div>
+        </div>
+      </SweetModalTab>
+    </SweetModal>
+
+    <!-- Suspend Modal -->
+    <SweetModal ref="suspendModal">
+      <FormulateForm class="formreject text-left">
+        <FormulateInput
+          type="text"
+          v-model="suspendData.policyBreach"
+          label="Bentuk Pelanggaran"
+        />
+        <FormulateInput
+          type="textarea"
+          v-model="suspendData.description"
+          label="Deskripsi"
+        />
+        <FormulateInput
+          type="number"
+          v-model="suspendData.length"
+          label="Durasi (day)"
+          validation="bail|required|number"
+        />
+        <FormulateInput
+          type="button"
+          @click="suspendEO()"
+          label="Suspend"
+          class="text-center"
+        >
+          <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+        </FormulateInput>
+      </FormulateForm>
+    </SweetModal>
+
+    <!-- Warn Modal -->
+    <SweetModal ref="warnModal">
+      <FormulateForm class="formreject text-left">
+        <FormulateInput
+          type="text"
+          v-model="warnData.policyBreach"
+          label="Peringatan"
+        />
+        <FormulateInput
+          type="textarea"
+          v-model="warnData.description"
+          label="Deskripsi Peringatan"
+        />
+        <FormulateInput
+          type="button"
+          @click="warnEO"
+          label="Warn"
+          class="text-center"
+        >
+          <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+        </FormulateInput>
+      </FormulateForm>
+    </SweetModal>
     <notifications group="failVerify" position="bottom right" />
     <notifications group="successTerminate" position="bottom right" />
     <notifications group="successunTerminate" position="bottom right" />
@@ -269,12 +394,13 @@
 
 <script>
 import EOService from "../../../services/eo.service";
-import { SweetModal } from "sweet-modal-vue";
+import { SweetModal, SweetModalTab } from "sweet-modal-vue";
 
 export default {
   name: "eomanage",
   components: {
     SweetModal,
+    SweetModalTab
   },
   data() {
     return {
@@ -298,6 +424,15 @@ export default {
           name: "",
         },
       ],
+      suspendData: {
+        policyBreach: "Ethical conduct",
+        description: "User conducted unethical acts",
+        length: "",
+      },
+      warnData: {
+        policyBreach: "Peringatan",
+        description: "Deskripsi Peringatan",
+      },
       message: "",
       loader: false,
     };
@@ -374,6 +509,111 @@ export default {
         this.loader = false;
       }
     },
+    async terminateEO(id) {
+      this.EODetail = this.EOVerified.filter((user) => user.id === id);
+      const body = {
+        policyBreach: "Melanggar Aturan Tiketin",
+        description: "Membuat banyak kegaduhan mengenai tiketin di sosial media",
+      };
+      try {
+        const res = await EOService.terminateEO(id, body);
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successTerminate",
+            title: "Terminate Berhasil",
+            text: `Terminate akun ${this.EODetail[0].name} berhasil!`,
+            type: "success",
+          });
+          location.reload();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async unterminateEO() {
+      try {
+        const res = await EOService.unterminateEO(this.EODetail[0].id);
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successunTerminate",
+            title: "Unterminate berhasil",
+            text: `akun ${this.EODetail[0].name} berhasil di Unterminate!`,
+            type: "success",
+          });
+          location.reload();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    suspendShow(id) {
+      this.EODetail = this.EOVerified.filter((user) => user.id === id);
+      this.$refs.suspendModal.open();
+    },
+    async suspendEO() {
+      const body = this.suspendData;
+      if (!body.length.includes("d")) {
+        body.length += "d";
+      }
+      this.loader = true;
+      try {
+        const res = await EOService.suspendEO(this.EODetail[0].id, body);
+        this.loader = false;
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successSuspend",
+            title: "Suspend berhasil",
+            text: `akun ${this.EODetail[0].name} berhasil di suspend selama ${res.data.length} hari`,
+            type: "success",
+          });
+          location.reload();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async unsuspendEO() {
+      try {
+        const res = await EOService.unsuspendEO(this.EODetail[0].id);
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successunSuspend",
+            title: "Unsuspend berhasil",
+            text: `akun ${this.EODetail[0].name} berhasil di Unsuspend!`,
+            type: "success",
+          });
+          location.reload();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    warnShow(id) {
+      this.EODetail = this.EOVerified.filter((user) => user.id === id);
+      this.$refs.warnModal.open();
+    },
+    async warnEO() {
+      const body = this.warnData;
+      try {
+        const res = await EOService.warnEO(this.EODetail[0].id, body);
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successWarn",
+            title: "Peringatan user berhasil",
+            text: `akun ${this.EODetail[0].username} berhasil diberi Peringatan!`,
+            type: "success",
+          });
+          location.reload();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 };
 </script>
@@ -387,6 +627,8 @@ export default {
   background-color: #f4743b;
   border-radius: 2em;
 }
+
+
 .row-data {
   background-color: #efefef;
   border-radius: 2em;

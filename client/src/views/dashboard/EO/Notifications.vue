@@ -29,10 +29,10 @@
 </template>
 
 <script>
-import UserService from "../../../services/user.service";
+import EOService from "../../../services/eo.service";
 
 export default {
-  name: "usernotif",
+  name: "eonotif",
   data() {
     return {
       notifList: []
@@ -40,9 +40,9 @@ export default {
   },
   mounted() {
     // notif list
-    UserService.getNotif(this.$store.state.auth.user.auth[0].id)
+    EOService.getEONotif(this.$store.state.auth.user.auth[0].id)
       .then((res) => {
-        this.notifList = res.data.notifications;
+        this.notifList = res.notifications;
       })
       .catch((error) => {
         console.log(error);

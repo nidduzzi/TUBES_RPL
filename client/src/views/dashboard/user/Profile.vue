@@ -19,6 +19,7 @@
               @submit.prevent="updateProfile"
               v-model="userUpdateProfile"
               class="formprofile"
+              #default="{ hasErrors }"
             >
               <FormulateInput
                 name="email"
@@ -43,12 +44,12 @@
                 :validation="[
                   [
                     'matches',
-                    /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z@$!%*?&]{8}$/,
-                  ],
+                    /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z@$!%*?&]{8}$/
+                  ]
                 ]"
                 :validation-messages="{
                   matches:
-                    'Password must contain 8 character contain symbol (@$!%*?&), capital, number',
+                    'Password must contain 8 character contain symbol (@$!%*?&), capital, number'
                 }"
                 help="Take attention to password requirement"
               />
@@ -74,17 +75,10 @@
                 type="button"
                 label="Perbarui"
                 @click="updateProfile"
+                :disabled="hasErrors"
               >
                 <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
               </FormulateInput>
-              <!-- <button
-                type="submit"
-                @click="updateProfile"
-                class="btn btn-tag w-75"
-              >
-                <div v-if="loading"><i class="fa fa-spinner fa-spin"></i></div>
-                <div v-else>Perbarui</div>
-              </button> -->
             </FormulateForm>
           </div>
           <div
@@ -99,13 +93,17 @@
                 alt="profilePicture"
               />
             </div>
-            <router-link to="/user/dashboard/eoregister" class="btn btn-beli mt-3 font-1">
+            <router-link
+              to="/user/dashboard/eoregister"
+              class="btn btn-beli mt-3 font-1"
+            >
               Register as Event Organizer
             </router-link>
           </div>
         </div>
       </div>
     </div>
+    <notifications group="successUpdate" position="bottom right" />
   </div>
 </template>
 
@@ -124,9 +122,9 @@ export default {
         username: "",
         password: "",
         address: "",
-        dateOfBirth: "",
+        dateOfBirth: ""
       },
-      message: "",
+      message: ""
     };
   },
   methods: {
@@ -148,13 +146,20 @@ export default {
           this.$store.state.auth.user.auth[0].id,
           data,
           {
-            "Content-Type": 'multipart/form-data',
+            "Content-Type": "multipart/form-data"
           }
         );
         if (res.status != 200) {
           this.error = true;
           this.message = res.data.errors.message;
         } else {
+          // simple
+          this.$notify({
+            group: "successUpdate",
+            title: "Update user berhasil!",
+            text: "Update profile berhasil",
+            type: "success"
+          });
           this.message = "Data berhasil diperbarui.";
         }
       } catch (error) {
@@ -163,7 +168,7 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
+    }
   },
   mounted() {
     UserService.getUser(this.currUser.auth[0].id).then(
@@ -179,13 +184,18 @@ export default {
           error.toString();
       }
     );
-  },
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .formprofile::v-deep .formulate-input .formulate-input-element {
   max-width: none;
+}
+
+.formprofile::v-deep .formulate-input .formulate-input-element--button {
+  background-color: #f4743b;
+  border-radius: 2em;
 }
 
 .btn-tag {
@@ -210,6 +220,6 @@ export default {
 }
 
 .font-1 {
-  font-size: .8em;
+  font-size: 0.8em;
 }
 </style>

@@ -57,6 +57,7 @@ export default {
             text: "",
             arrowColor: "orange",
             path: { name: "dashboard" },
+            iconRight: "<i class='fa fa-user-circle' aria-hidden='true'></i>",
             class: "username",
             subMenuOptions: [
               {

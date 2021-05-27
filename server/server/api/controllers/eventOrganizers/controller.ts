@@ -194,7 +194,19 @@ export class Controller {
         })
         .then((eo) => {
           if (eo) {
-            res.status(200).send({ eventOrganizer: eo });
+            res.status(200).send({
+              eventOrganizer: {
+                address: eo.address,
+                email: eo.email,
+                emailVerified: eo.emailVerified,
+                id: eo.id,
+                name: eo.name,
+                phone: eo.phone,
+                status: eo.status,
+                verificationDate: eo.verificationDate,
+                verified: eo.verified,
+              },
+            });
           } else {
             res.status(404).send({ message: 'id not found' });
           }

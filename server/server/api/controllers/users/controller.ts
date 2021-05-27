@@ -147,18 +147,21 @@ export class Controller {
       prisma.user
         .findUnique({
           where: { id: id },
+          include: { notifications: true },
         })
         .then((user) => {
           if (user) {
-            const body = {
-              id: id,
-              username: user.username,
-              email: user.email,
-              emailVerified: user.emailVerified,
-              registrationDate: user.registrationDate,
-              profilePicture: user.profilePicture,
-            };
-            res.status(200).send({ user: body });
+            res.status(200).send({
+              user: {
+                id: id,
+                username: user.username,
+                email: user.email,
+                emailVerified: user.emailVerified,
+                registrationDate: user.registrationDate,
+                address: user.address,
+                notifications: user.notifications,
+              },
+            });
           } else {
             res.status(404).send({ message: 'id not found' });
           }

@@ -53,6 +53,7 @@
         </FormulateForm>
       </div>
     </div>
+    <notifications group="successRegisterEO" position="top right" />
   </div>
 </template>
 
@@ -79,15 +80,31 @@ export default {
     async RegisterEO(data) {
       this.message = "";
       this.loading = true;
-      // try {
-      const res = await EOService.registerEO(data);
-      if (res.status == 200) {
-        this.message = "Berhasil Mendaftar Sebagai EO";
-      } else {
+      try {
+        const res = await EOService.registerEO(data);
+        if (res) {
+          if (res.status) {
+            this.error = true;
+            this.message = res.data.message;
+          } else {
+            this.$notify({
+              group: "successRegisterEO",
+              title: "Pendaftaran EO Berhasil",
+              text: "Akun Event Organizer anda berhasil dibuat",
+              type: "success",
+            });
+          }
+        } else {
+          console.log("masuk status tidak 200");
+          this.error = true;
+          this.message = res.data;
+        }
+      } catch (err) {
         this.error = true;
-        this.message = res.data.errors.message;
-      }
+        this.message = err.message;
+      } finally {
         this.loading = false;
+      }
     },
   },
   mounted() {

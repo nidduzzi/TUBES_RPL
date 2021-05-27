@@ -13,8 +13,25 @@
     </div>
     <h1 class="container text-left mt-4">
       {{ userProfile.username }}'s Dashboard
+      <div class="text-left">
+        <button
+          v-if="!verified"
+          type="button"
+          class="text-white btn btn-resend mt-3 font-1"
+          @click="resendEmail"
+        >
+          <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+          <div v-else>
+            <i class="fa fa-envelope-o mr-2" aria-hidden="true"></i
+            ><span class="font-1">Resend Verification Email</span>
+          </div>
+        </button>
+      </div>
     </h1>
     <router-view :model="userProfile"></router-view>
+    <notifications group="successLogin" position="bottom right" />
+    <notifications group="verifyEmail" position="bottom right" />
+    <notifications group="succesVerify" position="bottom right" />
   </div>
 </template>
 
@@ -37,6 +54,8 @@ export default {
       userProfile: {
         username: "",
       },
+      loader: false,
+      verified: false,
       navbarOptions: {
         elementId: "main-navbar",
         isUsingVueRouter: true,
@@ -65,6 +84,12 @@ export default {
             class: "username",
             subMenuOptions: [
               {
+                type: "link",
+                text: "Pemberitahuan",
+                path: "/user/dashboard/notifications",
+                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>",
+              },
+              {
                 isLinkAction: true,
                 type: "link",
                 text: "Logout",
@@ -78,31 +103,44 @@ export default {
       menu: [
         {
           header: true,
-          title: `${this.$store.state.auth.user.auth[0].role[0].toUpperCase() + this.$store.state.auth.user.auth[0].role.slice(1)} Dashboard`,
+          title: `${
+            this.$store.state.auth.user.auth[0].role[0].toUpperCase() +
+            this.$store.state.auth.user.auth[0].role.slice(1)
+          } Dashboard`,
           hiddenOnCollapse: true,
         },
         {
-          href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/profile` },
+          href: {
+            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/profile`,
+          },
           title: "Profil",
           icon: "fa fa-user",
         },
         {
-          href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list` },
+          href: {
+            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list`,
+          },
           title: "Reservasi",
           icon: "fa fa-paperclip",
           child: [
             {
-              href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list` },
+              href: {
+                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list`,
+              },
               title: "Data Reservasi",
               icon: "fa fa-th-list",
             },
             {
-              href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/checkorder` },
+              href: {
+                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/checkorder`,
+              },
               title: "Konfirmasi Reservasi",
               icon: "fa  fa-check-square-o ",
             },
             {
-              href: { path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/history` },
+              href: {
+                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/history`,
+              },
               title: "Riwayat Reservasi",
               icon: "fa fa-history",
             },
@@ -118,11 +156,37 @@ export default {
         location.reload();
       }
     },
+    async resendEmail() {
+      this.loader = true;
+      try {
+        const res = await UserService.resendVerifyEmail(this.userProfile.id);
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successVerify",
+            title: "Verifikasi Email berhasil",
+            text: `Verifikasi akun berhasil!`,
+            type: "success",
+          });
+
+          this.loader = false;
+          location.reload();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
   mounted() {
     UserService.getUser(this.currUser.auth[0].id).then(
       (res) => {
         this.userProfile = res.data.user;
+        this.$notify({
+          group: "successLogin",
+          title: `${this.userProfile.username}!, User Dashboard`,
+          text: "Selamat Datang!",
+          type: "success",
+        });
         this.navbarOptions.menuOptionsRight[1].text = this.userProfile.username;
       },
       (error) => {
@@ -132,6 +196,14 @@ export default {
           error.toString();
       }
     );
+    if (!this.userProfile.emailVerified) {
+      this.$notify({
+        group: "verifyEmail",
+        title: `Verikasi Email`,
+        text: "Verifikasi email anda segera untuk menikmati fitur di Tiketin",
+        type: "warn",
+      });
+    }
   },
 };
 </script>
@@ -144,6 +216,14 @@ export default {
       font-size: 4em;
     }
   }
+}
+
+.btn-resend {
+  background-color: #f4743b;
+}
+
+.font-1 {
+  font-size: 0.9rem;
 }
 </style>
 

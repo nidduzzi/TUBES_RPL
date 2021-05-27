@@ -103,6 +103,12 @@ export default {
           this.errors = [...res.data.errors];
         } else {
           this.$router.push("/login");
+          this.$notify({
+            group: "successSignup",
+            title: `${this.postBody.username}!, Pendaftaran Berhasil`,
+            text: "Silahkan login untuk melanjutkan",
+            type: "success",
+          });
         }
       } catch (e) {
         this.errors = e;

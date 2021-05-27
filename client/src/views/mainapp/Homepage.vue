@@ -10,7 +10,7 @@
     </div>
     <router-view />
     <Footer />
-    
+    <notifications group="successSignup" position="top right" />
   </div>
 </template>
 

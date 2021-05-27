@@ -18,6 +18,7 @@
             <FormulateForm
               @submit.prevent="updateProfile"
               v-model="userUpdateProfile"
+              class="formprofile"
             >
               <FormulateInput
                 name="email"
@@ -183,6 +184,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.formprofile::v-deep .formulate-input .formulate-input-element {
+  max-width: none;
+}
+
 .btn-tag {
   background-color: #beee62;
   &:hover {

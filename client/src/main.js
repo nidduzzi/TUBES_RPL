@@ -5,6 +5,9 @@ import store from './store';
 import NProgress from 'nprogress';
 import VueFormulate from '@braid/vue-formulate';
 import interceptorRun from './helpers/interceptor';
+import Notifications from 'vue-notification'
+import moment from 'moment';
+Vue.prototype.moment = moment;
 
 Vue.config.productionTip = false;
 
@@ -25,6 +28,17 @@ router.beforeEach((to,from,next) => {
       }
       next('/admin/dashboard')
     } 
+  }
+
+  // register eo guard
+  if(to.matched.some(record => record.meta.notEO)) {
+    if (!(store.state.auth.user.auth[1].role == 'eo')) {
+      next()
+      return
+    }
+    next('/eo/dashboard/welcome')
+  } else {
+    next()
   }
 
   // dashboard admin guard
@@ -53,6 +67,17 @@ router.beforeEach((to,from,next) => {
   } else {
     next()
   }
+
+  // eo guard
+  if(to.matched.some(record => record.meta.requireEO)) {
+    if (store.state.auth.status.loggedIn && store.state.auth.user.auth[1].role == 'eo') {
+      next()
+      return
+    }
+    next('/signup')
+  } else {
+    next()
+  }
 })
 
 router.afterEach(() => {
@@ -60,6 +85,7 @@ router.afterEach(() => {
 })
 
 Vue.use(VueFormulate);
+Vue.use(Notifications);
 
 interceptorRun();
 

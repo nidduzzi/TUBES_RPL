@@ -5,6 +5,7 @@ import Reservation from "./views/mainapp/Reservation.vue";
 import Home from "./views/mainapp/Home.vue";
 import userDashboard from "./views/dashboard/userDashboard.vue";
 import adminDashboard from "./views/dashboard/adminDashboard.vue";
+import EODashboard from "./views/dashboard/EODashboard.vue";
 
 Vue.use(Router);
 
@@ -90,6 +91,12 @@ export default new Router({
        },
        children: [
          {
+           path: "/:role/dashboard/notifications",
+           name: "user-notications",
+           component: () => import("./views/dashboard/user/Notifications.vue"),
+           props: true,
+         },
+         {
            path: "/:role/dashboard/reservation/list",
            name: "user-reservation-list",
            component: () => import("./views/dashboard/user/ReservationList.vue"),
@@ -117,6 +124,9 @@ export default new Router({
            path: "/:role/dashboard/eoregister",
            name: "user-eo-registration",
            component: () => import("./views/dashboard/user/RegisterEO.vue"),
+           meta: {
+             notEO : true,
+           },
            props: true,
          },
        ],
@@ -136,7 +146,7 @@ export default new Router({
            props: true,
          },
          {
-           path: "/:role/dashboard/event",
+           path: "/admin/dashboard/event",
            name: "admin-event",
            component: () => import("./views/dashboard/admin/EOManage.vue"),
            props: true,
@@ -151,6 +161,40 @@ export default new Router({
            path: "/:role/dashboard/report",
            name: "admin-report",
            component: () => import("./views/dashboard/admin/Laporan.vue"),
+           props: true,
+         }
+       ],
+    },
+    {
+      path: "/eo/dashboard/",
+       name: "eo-dashboard",
+       component: EODashboard,
+       meta: {
+         requireEO: true,
+       },
+       children: [
+         {
+           path: "/eo/dashboard/welcome",
+           name: "eo-welcome",
+           component: () => import("./views/dashboard/eo/Welcome.vue"),
+           props: true,
+         },
+         {
+           path: "/eo/dashboard/profile",
+           name: "eo-profile",
+           component: () => import("./views/dashboard/eo/Profile.vue"),
+           props: true,
+         },
+         {
+           path: "/eo/dashboard/event",
+           name: "eo-event",
+           component: () => import("./views/dashboard/eo/EventManage.vue"),
+           props: true,
+         },
+         {
+           path: "/eo/dashboard/event/create",
+           name: "eo-event-create",
+           component: () => import("./views/dashboard/eo/CreateEvent.vue"),
            props: true,
          }
        ],

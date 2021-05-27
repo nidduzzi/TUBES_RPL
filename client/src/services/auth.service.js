@@ -64,6 +64,7 @@ class AuthService {
         if (response.data.jwtToken) {
           localStorage.setItem('user', JSON.stringify(response.data));
           document.cookie = response.headers['set-cookie'];
+          location.reload();
         }
         return response.data;
       });

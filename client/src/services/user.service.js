@@ -73,9 +73,9 @@ class UserService {
   terminateUser(id, optBody){
     return axios.put(
       API_USER + "/terminate/" + id,
+      optBody,
       {
         headers: authHeader(),
-        body : optBody
       })
       .then(response => {
         return response;
@@ -103,9 +103,9 @@ class UserService {
   suspendUser(id, optBody){
     return axios.put(
       API_USER + "/suspend/" + id,
+      optBody,
       {
         headers: authHeader(),
-        body : optBody
       })
       .then(response => {
         return response;
@@ -133,9 +133,9 @@ class UserService {
   warnUser(id, optBody){
     return axios.post(
       API_USER + "/warn/" + id,
+      optBody,
       {
         headers: authHeader(),
-        body: optBody
       })
       .then(response => {
         return response;

@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="eo-dashboard">
     <sidebar-menu :menu="menu" :collapsed="true">
       <span slot="toggle-icon"
         ><i class="fa fa-arrows-h" aria-hidden="true"></i
@@ -11,11 +11,10 @@
     <div class="container">
       <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut" />
     </div>
-    <h1 class="container text-left mt-4">
-      {{ userProfile.username }}'s Dashboard
-    </h1>
-    <router-view></router-view>
-    <notifications group="successLogin" position="bottom right" />
+    <div class="container">
+      <router-view></router-view>
+    </div>
+    <notifications group="successLoginEO" position="bottom right" />
   </div>
 </template>
 
@@ -24,10 +23,11 @@ import { SidebarMenu } from "vue-sidebar-menu";
 import "vue-sidebar-menu/dist/vue-sidebar-menu.css";
 import VueNavigationBar from "vue-navigation-bar";
 import "vue-navigation-bar/dist/vue-navigation-bar.css";
-import AdminService from "../../services/admin.service";
+import EOService from "../../services/eo.service";
+import UserService from "../../services/user.service";
 
 export default {
-  name: "dashboard",
+  name: "eo-dashboard",
   components: {
     VueNavigationBar,
     SidebarMenu,
@@ -35,8 +35,8 @@ export default {
   data() {
     return {
       currUser: this.$store.state.auth.user,
-      userProfile: {
-        username: "",
+      eoProfile: {
+        name: "",
       },
       navbarOptions: {
         elementId: "main-navbar",
@@ -54,10 +54,15 @@ export default {
         menuOptionsRight: [
           {
             type: "link",
+            text: "User",
+            path: "/user/dashboard",
+            class: "font-weight-bold",
+          },
+          {
+            type: "link",
             text: "",
             arrowColor: "orange",
             path: { name: "dashboard" },
-            class: "username",
             subMenuOptions: [
               {
                 isLinkAction: true,
@@ -73,43 +78,36 @@ export default {
       menu: [
         {
           header: true,
-          title: `${this.$store.state.auth.user.auth[0].role} Dashboard`,
+          title: `${this.$store.state.auth.user.auth[1].role} Dashboard`,
           hiddenOnCollapse: true,
         },
         {
           href: {
-            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/profile`,
+            path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/profile`,
           },
           title: "Profil",
           icon: "fa fa-user",
         },
         {
           href: {
-            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/event`,
+            path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event`,
           },
-          title: "Pengelolaan",
-          icon: "fa fa-wrench",
+          title: "Acara",
+          icon: "fa fa-calendar-o",
           child: [
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/event`,
+                path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event/`,
               },
-              title: "Event Organizer",
-              icon: "fa fa-building-o",
+              title: "Daftar Acara",
+              icon: "fa fa-th-list",
             },
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/userlist`,
+                path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event/create`,
               },
-              title: "User",
-              icon: "fa fa-user-circle",
-            },
-            {
-              href: {
-                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/report`,
-              },
-              title: "Laporan",
-              icon: "fa fa-list-alt",
+              title: "Acara Baru",
+              icon: "fa fa-calendar-plus-o",
             },
           ],
         },
@@ -125,33 +123,35 @@ export default {
     },
   },
   mounted() {
-    AdminService.getAdmin(this.currUser.auth[0].id)
+    EOService.getEO(this.currUser.auth[1].id)
       .then((res) => {
-        if (res.data) {
-          this.userProfile = res.data.admin;
-          this.$notify({
-            group: "successLogin",
-            title: `${this.userProfile.username}!, Admin Dashboard`,
-            text: "Selamat Datang!",
-            type: "success",
-          });
-          this.navbarOptions.menuOptionsRight[0].text = this.userProfile.username;
+        if (res) {
+          this.eoProfile = res.eventOrganizer;
+          this.navbarOptions.menuOptionsRight[1].text = this.eoProfile.name;
         }
       })
       .catch((error) => {
         console.log(error);
       });
+
+    UserService.getUser(this.currUser.auth[0].id).then(
+      (res) => {
+        this.userProfile = res.data.user;
+      },
+      (error) => {
+        this.userProfile =
+          (error.response && error.response.data) ||
+          error.message ||
+          error.toString();
+      }
+    );
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .vnb {
   @media (min-width: 992px) {
-    .username {
-      color: #ce1e1e;
-      font-size: 4em;
-    }
   }
 }
 </style>

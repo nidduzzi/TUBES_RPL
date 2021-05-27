@@ -16,9 +16,7 @@ export default {
     return {
       currUser: this.$store.state.auth.user,
       loading: false,
-      userProfile: {
-        username: ""
-      },
+      userProfile: {},
     };
   },
   mounted() {

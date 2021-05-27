@@ -14,10 +14,12 @@ export default function interceptorRun(){
             // store.dispatch('auth/logout');
             if (!isRefreshing) {
                isRefreshing = true;
-               const res = await store.dispatch("auth/refresh", store.state.auth.user.auth[0].role);
-                  if(res){
-                     console.log(res);
-                  }
+               const res = await store.dispatch("auth/refresh", store.state.auth.user.auth[0].role).
+               then(()=>{
+               })
+               if(res){
+                  console.log(res);
+               }
             }
          } else {
             return Promise.reject(err);

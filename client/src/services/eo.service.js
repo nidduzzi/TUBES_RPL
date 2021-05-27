@@ -20,10 +20,18 @@ class EOService {
   }
 
   getEOQuery(q,h) {
+    const params = new URLSearchParams();
+    if (q) {
+      params.append("q", JSON.stringify(q));
+    }
+    if (h) {
+      params.append("h", JSON.stringify(h));
+    }
     return axios.get(
-      API_EO + "?q=" + q + "&h=" + h, 
+      API_EO, 
       { 
-        headers: authHeader()
+        headers: authHeader(),
+        params
       })
       .then(response => {
         return response.data;
@@ -83,6 +91,7 @@ class EOService {
   verifyEO(id){
     return axios.put(
       API_EO + "/verify/" + id, 
+      {},
       {
         headers: authHeader()
       })
@@ -231,6 +240,82 @@ class EOService {
       })
       .then(response => {
         return response.data;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+// terminate
+  terminateEO(id, optBody){
+    return axios.put(
+      API_EO + "/terminate/" + id,
+      optBody,
+      {
+        headers: authHeader(),
+      })
+      .then(response => {
+        return response;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+  unterminateEO(id){
+    return axios.delete(
+      API_EO + "/terminate/" + id,
+      {
+        headers: authHeader()
+      })
+      .then(response => {
+        return response;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+  // suspend
+  suspendUser(id, optBody){
+    return axios.put(
+      API_EO + "/suspend/" + id,
+      optBody,
+      {
+        headers: authHeader(),
+      })
+      .then(response => {
+        return response;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+  unsuspendUser(id){
+    return axios.delete(
+      API_EO + "/suspend/" + id,
+      {
+        headers: authHeader()
+      })
+      .then(response => {
+        return response;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+  // warn
+  warnUser(id, optBody){
+    return axios.post(
+      API_EO + "/warn/" + id,
+      optBody,
+      {
+        headers: authHeader(),
+      })
+      .then(response => {
+        return response;
       })
       .catch(err => {
         return err.response;

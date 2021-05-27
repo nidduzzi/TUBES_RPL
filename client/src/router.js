@@ -176,7 +176,7 @@ export default new Router({
        children: [
          {
            path: "/eo/dashboard/notifications",
-           name: "user-notications",
+           name: "eo-notications",
            component: () => import("./views/dashboard/EO/Notifications.vue"),
            props: true,
          },

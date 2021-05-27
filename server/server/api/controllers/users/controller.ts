@@ -153,13 +153,15 @@ export class Controller {
           if (user) {
             res.status(200).send({
               user: {
-                id: id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 emailVerified: user.emailVerified,
                 registrationDate: user.registrationDate,
                 address: user.address,
                 eventOrganizerId: user.eventOrganizerId,
+                dateOfBirth: user.dateOfBirth,
+                status: user.status,
               },
             });
           } else {

@@ -177,25 +177,25 @@ export default new Router({
          {
            path: "/eo/dashboard/welcome",
            name: "eo-welcome",
-           component: () => import("./views/dashboard/eo/Welcome.vue"),
+           component: () => import("./views/dashboard/EO/Welcome.vue"),
            props: true,
          },
          {
            path: "/eo/dashboard/profile",
            name: "eo-profile",
-           component: () => import("./views/dashboard/eo/Profile.vue"),
+           component: () => import("./views/dashboard/EO/Profile.vue"),
            props: true,
          },
          {
            path: "/eo/dashboard/event",
            name: "eo-event",
-           component: () => import("./views/dashboard/eo/EventManage.vue"),
+           component: () => import("./views/dashboard/EO/EventManage.vue"),
            props: true,
          },
          {
            path: "/eo/dashboard/event/create",
            name: "eo-event-create",
-           component: () => import("./views/dashboard/eo/CreateEvent.vue"),
+           component: () => import("./views/dashboard/EO/CreateEvent.vue"),
            props: true,
          }
        ],

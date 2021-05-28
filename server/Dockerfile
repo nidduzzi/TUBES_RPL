@@ -1,8 +1,12 @@
-FROM node:12.16.0-buster
+FROM node:14-alpine
+LABEL Author Carmine DiMascio <cdimascio@gmail.com>
 
-WORKDIR /app
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY . /usr/src/app
+RUN npm install && npm run compile
 
-COPY . .
+EXPOSE 3000
 
+CMD [ "npm", "start" ]

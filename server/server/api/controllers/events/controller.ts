@@ -199,6 +199,7 @@ export class Controller {
               ticketTypes: event.ticketTypes,
               hasLogo: event.logo ? true : false,
               numImages: event.images.length,
+              currency: event.currency,
             };
             res.status(200).send({ event: body });
           } else {

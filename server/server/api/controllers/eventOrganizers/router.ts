@@ -73,7 +73,7 @@ export default express
         role: Roles.Admin,
       },
     ]),
-    controller.getProfilePicture
+    controller.deleteProfilePicture
   )
   .get(
     '/:id/notifications',

@@ -10,7 +10,7 @@ Yudi Prasetyo (1905348)
 
 ## Setup Database
 
-Create a database named `tiketin` or modify /server/.env DATABASE_URL property to suit your usercase.  
+Create a database named `tiketin` or modify `/server/.env` `DATABASE_URL` property to suit your database url address, eg. "mysql://root:@localhost:3306/tiketin?socket_timeout=30".  
 
 Then go inside /server:  
 
@@ -65,6 +65,8 @@ npm start
 ```
 
 ## Run Frontend
+
+Configure `/client/.env` parameters such that `VUE_APP_BASE_API` points to the running backend server's public address and `VUE_APP_BASE_URL` points to the client's public address.
 
 Go inside /client:  
 

@@ -1,6 +1,6 @@
 # TUBES_RPL
 
-REPO: [Github](https://github.com/nidduzzi)  
+REPO: [Github](https://github.com/nidduzzi/TUBES_RPL)  
 
 Created by:  
 Ahmad Izzuddin (1908918)  

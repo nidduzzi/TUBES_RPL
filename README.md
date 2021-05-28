@@ -1,5 +1,13 @@
 # TUBES_RPL
 
+REPO: [Github](https://github.com/nidduzzi)  
+
+Created by:  
+Ahmad Izzuddin (1908918)  
+Fajar Zuliansyah Trihutama (1905394)  
+Nenden Citra Softwatul Ningrum (1908589)  
+Yudi Prasetyo (1905348)  
+
 ## Setup Database
 
 Create a database named `tiketin` or modify /server/.env DATABASE_URL property to suit your usercase.  

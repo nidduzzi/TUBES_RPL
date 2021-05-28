@@ -58,7 +58,7 @@ export default express
       },
     ]),
     upload.single('profilePicture'),
-    controller.getProfilePicture
+    controller.putProfilePicture
   )
   .delete(
     '/:id/profilePicture',

@@ -143,77 +143,82 @@ export class Controller {
       req.body.refreshToken ?? req.cookies.refreshToken;
     // check if a token is sent
     if (token) {
-      const refreshToken = await prisma.refreshToken.findUnique({
-        where: { token: token },
-        include: { admin: true },
-      });
-      // check if token is a valid refresh token
-      if (refreshToken) {
-        // check if refresh token is broken ie. doesn't belong to a user
-        if (
-          refreshToken.admin == undefined ||
-          refreshToken.adminId == undefined
-        ) {
-          res.status(500).send({ message: 'database error' });
-        }
-        // check if refresh token is still valid ie. not expired or revoked
-        else if (
-          refreshToken.expires >= new Date() &&
-          refreshToken.revoked == undefined
-        ) {
-          try {
-            // create a new refresh token for the user
-            const newRefreshToken = await prisma.refreshToken.create({
-              data: generateRefreshToken(refreshToken.admin, req.ip),
-            });
+      prisma.refreshToken
+        .findUnique({
+          where: { token: token },
+          include: { admin: true },
+        })
+        .then((refreshToken) => {
+          // check if token is a valid refresh token
+          if (refreshToken && refreshToken.admin) {
+            // check if refresh token is broken ie. doesn't belong to a user
+            if (
+              refreshToken.expires >= new Date() &&
+              refreshToken.revoked == undefined
+            ) {
+              // create a new refresh token for the user
+              prisma.refreshToken
+                .create({
+                  data: generateRefreshToken(refreshToken.admin, req.ip),
+                })
+                .then((newRefreshToken) => {
+                  // revoke and update the old refresh token
+                  prisma.refreshToken
+                    .update({
+                      where: { id: refreshToken.id },
+                      data: {
+                        revoked: new Date(),
+                        revokedByIp: req.ip,
+                        replacedByToken: newRefreshToken.token,
+                      },
+                    })
+                    .then((_) => {
+                      if (refreshToken.admin && refreshToken.adminId) {
+                        // construct response body
+                        const scopes: Array<Scope> = [
+                          { id: refreshToken.adminId, role: Roles.Admin },
+                        ];
 
-            // revoke and update the old refresh token
-            await prisma.refreshToken.update({
-              where: { id: refreshToken.id },
-              data: {
-                revoked: new Date(),
-                revokedByIp: req.ip,
-                replacedByToken: newRefreshToken.token,
-              },
-            });
+                        // include a newly generated jwtToken
+                        const body: Authentificated = {
+                          auth: scopes,
+                          jwtToken: generateJwtToken(refreshToken.admin),
+                        };
 
-            // construct response body
-            const scopes: Array<Scope> = [
-              { id: refreshToken.adminId, role: Roles.Admin },
-            ];
-
-            // include a newly generated jwtToken
-            const body: Authentificated = {
-              auth: scopes,
-              jwtToken: generateJwtToken(refreshToken.admin),
-            };
-
-            // send success response
-            res.cookie('refreshToken', newRefreshToken.token, {
-              expires: newRefreshToken.expires,
-            });
-            res.status(200).send(body);
-          } catch (error) {
-            next(error);
+                        // send success response
+                        res.cookie('refreshToken', newRefreshToken.token, {
+                          expires: newRefreshToken.expires,
+                        });
+                        res.status(200).send(body);
+                      }
+                    })
+                    .catch((err) => next(err));
+                })
+                .catch((err) => next(err));
+            }
+            // check if token is expired
+            else if (refreshToken.expires < new Date()) {
+              // revoke expired token
+              prisma.refreshToken
+                .update({
+                  where: { id: refreshToken.id },
+                  data: {
+                    revoked: new Date(),
+                    revokedByIp: req.ip,
+                  },
+                })
+                .then((_) =>
+                  res.status(404).send({ message: 'refesh token is expired' })
+                )
+                .catch((err) => next(err));
+            } else {
+              res.status(404).send({ message: 'refesh token is revoked' });
+            }
+          } else {
+            res.status(400).send({ message: 'The refresh token is invalid' });
           }
-        }
-        // check if token is expired
-        else if (refreshToken.expires < new Date()) {
-          // revoke expired token
-          await prisma.refreshToken
-            .update({
-              where: { id: refreshToken.id },
-              data: {
-                revoked: new Date(),
-                revokedByIp: req.ip,
-              },
-            })
-            .then((_) =>
-              res.status(404).send({ message: 'refesh token is expired' })
-            )
-            .catch((err) => next(err));
-        }
-      }
+        })
+        .catch((err) => next(err));
     } else {
       // send invalid or expired token message if the function hasn't returned
       res.status(400).send({ message: 'The refresh token is invalid' });

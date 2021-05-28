@@ -402,141 +402,153 @@ export class Controller {
       req.body.refreshToken ?? req.cookies.refreshToken;
     // check if a token is sent
     if (token) {
-      const refreshToken = await prisma.refreshToken.findUnique({
-        where: { token: token },
-        include: {
-          user: {
-            include: {
-              termination: true,
-              suspensions: true,
-              eventOrganizer: {
-                include: { termination: true, suspensions: true },
+      prisma.refreshToken
+        .findUnique({
+          where: { token: token },
+          include: {
+            user: {
+              include: {
+                termination: true,
+                suspensions: { orderBy: { endDate: 'desc' } },
+                eventOrganizer: {
+                  include: { termination: true, suspensions: true },
+                },
               },
             },
           },
-        },
-      });
-      const user = refreshToken?.user;
-      // check if token is a valid refresh token
-      if (refreshToken && user) {
-        // check if refresh token is broken ie. doesn't belong to a user
-        if (!user) {
-          res.status(500).send({ message: 'database error' });
-        } else if (user.termination) {
-          prisma.refreshToken
-            .update({
-              where: { id: refreshToken.id },
-              data: { revoked: new Date(), revokedByIp: req.ip },
-            })
-            .then((_) =>
-              res
-                .status(403)
-                .clearCookie('refreshToken')
-                .send({ message: 'user terminated' })
-            )
-            .catch((err) => next(err));
-        } else if (
-          user.suspensions.some(
-            (suspension) => suspension.endDate > new Date()
-          ) &&
-          user.suspensions
-        ) {
-          prisma.refreshToken
-            .update({
-              where: { id: refreshToken.id },
-              data: { revoked: new Date(), revokedByIp: req.ip },
-            })
-            .then((_) =>
-              res
-                .status(403)
-                .clearCookie('refreshToken')
-                .send({
-                  message:
-                    'user suspended until ' +
-                    user.suspensions
-                      .find((suspension) => suspension.endDate > new Date())
-                      ?.endDate.toISOString(),
+        })
+        .then((refreshToken) => {
+          // check if token is a valid refresh token
+          if (
+            refreshToken &&
+            refreshToken.revoked == null &&
+            refreshToken.user
+          ) {
+            // check if refresh token is broken ie. doesn't belong to a user
+            if (refreshToken.user.termination) {
+              prisma.refreshToken
+                .update({
+                  where: { id: refreshToken.id },
+                  data: { revoked: new Date(), revokedByIp: req.ip },
                 })
-            )
-            .catch((err) => next(err));
-        }
-        // check if refresh token is still valid ie. not expired or revoked
-        else if (
-          refreshToken.expires >= new Date() &&
-          refreshToken.revoked == undefined
-        ) {
-          try {
-            // create a new refresh token for the user
-            const newRefreshToken = await prisma.refreshToken.create({
-              data: generateRefreshToken(user, req.ip),
-            });
-
-            // revoke and update the old refresh token
-            await prisma.refreshToken.update({
-              where: { id: refreshToken.id },
-              data: {
-                revoked: new Date(),
-                revokedByIp: req.ip,
-                replacedByToken: newRefreshToken.token,
-              },
-            });
-
-            // construct response body
-            const scopes: Array<Scope> = [{ id: user.id, role: Roles.User }];
-            if (user.eventOrganizer) {
-              if (
-                !(
-                  user.eventOrganizer?.termination ||
-                  user.eventOrganizer.suspensions.some(
-                    (suspension) => suspension.endDate > new Date()
-                  )
+                .then((_) =>
+                  res
+                    .status(403)
+                    .clearCookie('refreshToken')
+                    .send({ message: 'user terminated' })
                 )
-              ) {
-                scopes.push({
-                  id: user.eventOrganizer.id,
-                  role: Roles.EventOrganizer,
-                });
-              }
+                .catch((err) => next(err));
+            } else if (
+              refreshToken.user.suspensions.some(
+                (suspension) => suspension.endDate > new Date()
+              ) &&
+              refreshToken.user.suspensions
+            ) {
+              prisma.refreshToken
+                .update({
+                  where: { id: refreshToken.id },
+                  data: { revoked: new Date(), revokedByIp: req.ip },
+                })
+                .then((_) => {
+                  if (refreshToken.user)
+                    res
+                      .status(403)
+                      .clearCookie('refreshToken')
+                      .send({
+                        message:
+                          'user suspended until ' +
+                          refreshToken.user.suspensions[0].endDate.toISOString(),
+                      });
+                })
+                .catch((err) => next(err));
             }
+            // check if refresh token is still valid ie. not expired or revoked
+            else if (
+              refreshToken.expires >= new Date() &&
+              refreshToken.revoked == undefined
+            ) {
+              // create a new refresh token for the user
+              prisma.refreshToken
+                .create({
+                  data: generateRefreshToken(refreshToken.user, req.ip),
+                })
+                .then((newRefreshToken) => {
+                  // revoke and update the old refresh token
+                  prisma.refreshToken
+                    .update({
+                      where: { id: refreshToken.id },
+                      data: {
+                        revoked: new Date(),
+                        revokedByIp: req.ip,
+                        replacedByToken: newRefreshToken.token,
+                      },
+                    })
+                    .then((_) => {
+                      if (refreshToken.user) {
+                        // construct response body
+                        const scopes: Array<Scope> = [
+                          { id: refreshToken.user.id, role: Roles.User },
+                        ];
+                        if (refreshToken.user.eventOrganizer) {
+                          if (
+                            !(
+                              refreshToken.user.eventOrganizer?.termination ||
+                              refreshToken.user.eventOrganizer.suspensions.some(
+                                (suspension) => suspension.endDate > new Date()
+                              )
+                            )
+                          ) {
+                            scopes.push({
+                              id: refreshToken.user.eventOrganizer.id,
+                              role: Roles.EventOrganizer,
+                            });
+                          }
+                        }
 
-            // include a newly generated jwtToken
-            const body: Authentificated = {
-              auth: scopes,
-              jwtToken: generateJwtToken(scopes),
-            };
+                        // include a newly generated jwtToken
+                        const body: Authentificated = {
+                          auth: scopes,
+                          jwtToken: generateJwtToken(scopes),
+                        };
 
-            // send success response
-            res
-              .status(200)
-              .cookie('refreshToken', newRefreshToken.token, {
-                expires: newRefreshToken.expires,
-              })
-              .send(body);
-          } catch (error) {
-            next(error);
+                        // send success response
+                        res
+                          .status(200)
+                          .cookie('refreshToken', newRefreshToken.token, {
+                            expires: newRefreshToken.expires,
+                          })
+                          .send(body);
+                      }
+                    })
+                    .catch((err) => next(err));
+                })
+                .catch((err) => next(err));
+            }
+            // check if token is expired
+            else if (refreshToken.expires < new Date()) {
+              // revoke expired token
+              prisma.refreshToken
+                .update({
+                  where: { id: refreshToken.id },
+                  data: {
+                    revoked: new Date(),
+                    revokedByIp: req.ip,
+                  },
+                })
+                .then((_) =>
+                  res.status(404).send({ message: 'refesh token is expired' })
+                )
+                .catch((err) => next(err));
+            } else {
+              res.status(404).send({ message: 'refesh token is revoked' });
+            }
+          } else {
+            res.status(400).send({
+              message: 'The refresh token is invalid, revoked or expired',
+            });
           }
-        }
-        // check if token is expired
-        else if (refreshToken.expires < new Date()) {
-          // revoke expired token
-          await prisma.refreshToken
-            .update({
-              where: { id: refreshToken.id },
-              data: {
-                revoked: new Date(),
-                revokedByIp: req.ip,
-              },
-            })
-            .then((_) =>
-              res.status(404).send({ message: 'refesh token is expired' })
-            )
-            .catch((err) => next(err));
-        }
-      } else {
-        res.status(400).send({
-          message: 'The refresh token is invalid, revoked or expired',
-        });
-      }
+        })
+        .catch((err) => next(err));
     } else {
       // send invalid or expired token message if the function hasn't returned
       res.status(400).send({ message: 'The refresh token is invalid' });

@@ -53,24 +53,22 @@
 </template>
 
 <script>
-import EventService from "../../../services/event.service";
+import UserService from "../../../services/user.service";
 
 export default {
   name: "reservationlist",
   data() {
     return {
-      reservationList: []
+      reservationList: [],
+      eventList: [],
     };
   },
   mounted() {
-    const p = {
-      q: {},
-      h: {}
-    };
-    // user list
-    EventService.getEvents(p)
+    // reservation list
+    UserService.getReservationUserList(this.$store.state.auth.user.auth[0].id)
       .then((res) => {
-        this.reservationList = res.data.events;
+        // console.log(res);
+        this.reservationList = res.data.reservations;
         this.reservationList.forEach((element) => {
           element.detail = false;
         });

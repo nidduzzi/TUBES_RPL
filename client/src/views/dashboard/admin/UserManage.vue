@@ -35,7 +35,7 @@
                         ? 'btn-danger'
                         : user.status === 'SUSPENDED'
                         ? 'btn-warning text-white'
-                        : 'btn-light',
+                        : 'btn-light'
                     ]"
                   >
                     {{ user.status }}
@@ -73,13 +73,17 @@
     </div>
 
     <div class="text-left mt-4">
-      <button type="button" class="btn btn-secondary btn-sm">
+      <button
+        @click="generateUserPDF"
+        type="button"
+        class="btn btn-secondary btn-sm"
+      >
         <i class="fa fa-download" aria-hidden="true"></i> Unduh Laporan
       </button>
     </div>
     <notifications group="successTerminate" position="bottom right" />
     <notifications group="successunTerminate" position="bottom right" />
-    
+
     <!-- Modal Detail -->
     <SweetModal ref="modal">
       <template slot="title">
@@ -91,7 +95,8 @@
         <div class="row mb-3">
           <div class="offset-md-4 col-md-4">
             <img
-              src="../../../assets/slider.jpg"
+              v-if="userDetail[0].imageUrl"
+              :src="userDetail[0].imageUrl"
               width="150px"
               class="img-fluid rounded-circle"
               alt="profile-picture"
@@ -111,7 +116,7 @@
                     : userDetail[0].status === 'SUSPENDED'
                     ? 'btn-warning text-white'
                     : 'btn-light',
-                  'py-0 btn btn-sm border-radius2',
+                  'py-0 btn btn-sm border-radius2'
                 ]"
               >
                 <i
@@ -300,35 +305,39 @@
 import UserService from "../../../services/user.service";
 import { SweetModal, SweetModalTab } from "sweet-modal-vue";
 
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import moment from "moment";
+
 export default {
   name: "usermanage",
   components: {
     SweetModal,
-    SweetModalTab,
+    SweetModalTab
   },
   data() {
     return {
       userList: [
         {
-          username: "",
-        },
+          username: ""
+        }
       ],
       userDetail: [
         {
-          username: "",
-        },
+          username: ""
+        }
       ],
       suspendData: {
         policyBreach: "Ethical conduct",
         description: "User conducted unethical acts",
-        length: "",
+        length: ""
       },
       warnData: {
         policyBreach: "Peringatan",
-        description: "Deskripsi Peringatan",
+        description: "Deskripsi Peringatan"
       },
       message: "",
-      loader: false,
+      loader: false
     };
   },
   mounted() {
@@ -347,18 +356,29 @@ export default {
   methods: {
     showInfo(id) {
       this.userDetail = this.userList.filter((user) => user.id === id);
+      this.openFoto(this.userDetail[0].id);
       this.$refs.modal.open();
     },
     editInfo(id) {
       this.userDetail = this.userList.filter((user) => user.id === id);
       this.$refs.editModal.open("tab1");
     },
+    openFoto(id){
+      UserService.getProfilePicture(id)
+      .then((res) => res.data)
+      .then((data) => {
+        this.userDetail[0].imageUrl = URL.createObjectURL(data);
+        this.$forceUpdate();
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === "production") process.env.console.log(err);
+      });
+    },
     async terminateUser(id) {
       this.userDetail = this.userList.filter((user) => user.id === id);
       const body = {
         policyBreach: "Melanggar Aturan Tiketin",
-        description:
-          "Membuat banyak kegaduhan mengenai tiketin di sosial media",
+        description: "Membuat banyak kegaduhan mengenai tiketin di sosial media"
       };
       try {
         const res = await UserService.terminateUser(id, body);
@@ -368,7 +388,7 @@ export default {
             group: "successTerminate",
             title: "Terminate Berhasil",
             text: `Terminate akun ${this.userDetail[0].username} berhasil!`,
-            type: "success",
+            type: "success"
           });
           location.reload();
         }
@@ -385,7 +405,7 @@ export default {
             group: "successunTerminate",
             title: "Unterminate berhasil",
             text: `akun ${this.userDetail[0].username} berhasil di Unterminate!`,
-            type: "success",
+            type: "success"
           });
           location.reload();
         }
@@ -412,7 +432,7 @@ export default {
             group: "successSuspend",
             title: "Suspend berhasil",
             text: `akun ${this.userDetail[0].username} berhasil di suspend selama ${res.data.length} hari`,
-            type: "success",
+            type: "success"
           });
           location.reload();
         }
@@ -429,7 +449,7 @@ export default {
             group: "successunSuspend",
             title: "Unsuspend berhasil",
             text: `akun ${this.userDetail[0].username} berhasil di Unsuspend!`,
-            type: "success",
+            type: "success"
           });
           location.reload();
         }
@@ -451,7 +471,7 @@ export default {
             group: "successWarn",
             title: "Peringatan user berhasil",
             text: `akun ${this.userDetail[0].username} berhasil diberi Peringatan!`,
-            type: "success",
+            type: "success"
           });
           location.reload();
         }
@@ -459,7 +479,31 @@ export default {
         console.log(error);
       }
     },
-  },
+    generateUserPDF() {
+      const doc = new jsPDF();
+      const data = this.userList.map((el) => {
+        const date = moment(el.registrationDate).format("DD MMMM YYYY");
+        const lahir = moment(el.dateOfBirth).format("DD MMMM YYYY");
+        return [el.username, el.email, date, el.status, lahir, el.address];
+      });
+
+      doc.autoTable({
+        head: [
+          [
+            "Username",
+            "Email",
+            "Tanggal Pendaftaran",
+            "Status",
+            "Tanggal Lahir",
+            "Alamat"
+          ]
+        ],
+        body: data
+      });
+
+      doc.save("user-report.pdf");
+    }
+  }
 };
 </script>
 

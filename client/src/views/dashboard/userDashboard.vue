@@ -9,10 +9,29 @@
       ></span>
     </sidebar-menu>
     <div class="container">
-      <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut" />
+      <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut">
+        <template v-slot:custom-section>
+          <div class="custom-section-content offset-md-8 d-flex">
+            <img
+              v-if="userProfile.imageUrl"
+              :src="userProfile.imageUrl"
+              class="img-fluid rounded-circle"
+              style="
+                border-radius: 50%;
+                overflow: hidden;
+                width: 2rem;
+                height: 2rem;
+                background-size: cover;
+              "
+              alt="profile"
+            />
+          </div>
+        </template>
+      </VueNavigationBar>
     </div>
     <h1 class="container text-left mt-4">
       {{ userProfile.username }}'s Dashboard
+
       <div class="text-left">
         <button
           v-if="!verified"
@@ -46,13 +65,13 @@ export default {
   name: "dashboard",
   components: {
     VueNavigationBar,
-    SidebarMenu,
+    SidebarMenu
   },
   data() {
     return {
       currUser: this.$store.state.auth.user,
       userProfile: {
-        username: "",
+        username: ""
       },
       loader: false,
       verified: false,
@@ -74,7 +93,7 @@ export default {
             type: "link",
             text: "Event Organizer",
             path: "/user/dashboard/eoregister",
-            class: "font-weight-bold",
+            class: "font-weight-bold"
           },
           {
             type: "link",
@@ -87,18 +106,18 @@ export default {
                 type: "link",
                 text: "Pemberitahuan",
                 path: "/user/dashboard/notifications",
-                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>",
+                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>"
               },
               {
                 isLinkAction: true,
                 type: "link",
                 text: "Logout",
                 path: { name: "login" },
-                iconLeft: "<i class='fa fa-sign-out' aria-hidden='true'></i>",
-              },
-            ],
-          },
-        ],
+                iconLeft: "<i class='fa fa-sign-out' aria-hidden='true'></i>"
+              }
+            ]
+          }
+        ]
       },
       menu: [
         {
@@ -107,46 +126,46 @@ export default {
             this.$store.state.auth.user.auth[0].role[0].toUpperCase() +
             this.$store.state.auth.user.auth[0].role.slice(1)
           } Dashboard`,
-          hiddenOnCollapse: true,
+          hiddenOnCollapse: true
         },
         {
           href: {
-            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/profile`,
+            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/profile`
           },
           title: "Profil",
-          icon: "fa fa-user",
+          icon: "fa fa-user"
         },
         {
           href: {
-            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list`,
+            path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list`
           },
           title: "Reservasi",
           icon: "fa fa-paperclip",
           child: [
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list`,
+                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/list`
               },
               title: "Data Reservasi",
-              icon: "fa fa-th-list",
+              icon: "fa fa-th-list"
             },
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/checkorder`,
+                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/checkorder`
               },
               title: "Konfirmasi Reservasi",
-              icon: "fa  fa-check-square-o ",
+              icon: "fa  fa-check-square-o "
             },
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/history`,
+                path: `/${this.$store.state.auth.user.auth[0].role}/dashboard/reservation/history`
               },
               title: "Riwayat Reservasi",
-              icon: "fa fa-history",
-            },
-          ],
-        },
-      ],
+              icon: "fa fa-history"
+            }
+          ]
+        }
+      ]
     };
   },
   methods: {
@@ -166,7 +185,7 @@ export default {
             group: "successVerify",
             title: "Verifikasi Email berhasil",
             text: `Verifikasi akun berhasil!`,
-            type: "success",
+            type: "success"
           });
 
           this.loader = false;
@@ -175,17 +194,31 @@ export default {
       } catch (error) {
         console.log(error);
       }
-    },
+    }
   },
   mounted() {
     UserService.getUser(this.currUser.auth[0].id).then(
       (res) => {
         this.userProfile = res.data.user;
+
+        // email checking
+        if (!this.userProfile.emailVerified) {
+          this.$notify({
+            group: "verifyEmail",
+            title: `Verikasi Email`,
+            text:
+              "Verifikasi email anda segera untuk menikmati fitur di Tiketin",
+            type: "warn"
+          });
+        } else {
+          this.verified = true;
+        }
+
         this.$notify({
           group: "successLogin",
           title: `${this.userProfile.username}!, User Dashboard`,
           text: "Selamat Datang!",
-          type: "success",
+          type: "success"
         });
         this.navbarOptions.menuOptionsRight[1].text = this.userProfile.username;
       },
@@ -196,15 +229,18 @@ export default {
           error.toString();
       }
     );
-    if (!this.userProfile.emailVerified) {
-      this.$notify({
-        group: "verifyEmail",
-        title: `Verikasi Email`,
-        text: "Verifikasi email anda segera untuk menikmati fitur di Tiketin",
-        type: "warn",
+
+    // get foto profile
+    UserService.getProfilePicture(this.currUser.auth[0].id)
+      .then((res) => res.data)
+      .then((data) => {
+        this.userProfile.imageUrl = URL.createObjectURL(data);
+        this.$forceUpdate();
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === "production") process.env.console.log(err);
       });
-    }
-  },
+  }
 };
 </script>
 
@@ -224,6 +260,14 @@ export default {
 
 .font-1 {
   font-size: 0.9rem;
+}
+
+.btn-beli {
+  background-color: #f4743b;
+  &:hover {
+    background: darken(#f4743b, 10%);
+  }
+  border-radius: 3em;
 }
 </style>
 

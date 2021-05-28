@@ -12,9 +12,24 @@
       <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut" />
     </div>
     <div class="container">
+      <div class="text-left">
+        <button
+          v-if="!verified"
+          type="button"
+          class="text-white btn btn-resend mt-3 font-1"
+          @click="resendEmail"
+        >
+          <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+          <div v-else>
+            <i class="fa fa-envelope-o mr-2" aria-hidden="true"></i
+            ><span class="font-1">Resend Verification Email</span>
+          </div>
+        </button>
+      </div>
       <router-view></router-view>
     </div>
     <notifications group="successLoginEO" position="bottom right" />
+    <notifications group="verifyEmail" position="bottom right" />
   </div>
 </template>
 
@@ -30,14 +45,16 @@ export default {
   name: "eo-dashboard",
   components: {
     VueNavigationBar,
-    SidebarMenu,
+    SidebarMenu
   },
   data() {
     return {
+      verified: false,
       currUser: this.$store.state.auth.user,
       eoProfile: {
-        name: "",
+        name: ""
       },
+      loader: false,
       navbarOptions: {
         elementId: "main-navbar",
         isUsingVueRouter: true,
@@ -56,7 +73,7 @@ export default {
             type: "link",
             text: "User",
             path: "/user/dashboard",
-            class: "font-weight-bold",
+            class: "font-weight-bold"
           },
           {
             type: "link",
@@ -68,56 +85,56 @@ export default {
                 type: "link",
                 text: "Pemberitahuan",
                 path: "/eo/dashboard/notifications",
-                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>",
+                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>"
               },
               {
                 isLinkAction: true,
                 type: "link",
                 text: "Logout",
                 path: { name: "login" },
-                iconLeft: "<i class='fa fa-sign-out' aria-hidden='true'></i>",
-              },
-            ],
-          },
-        ],
+                iconLeft: "<i class='fa fa-sign-out' aria-hidden='true'></i>"
+              }
+            ]
+          }
+        ]
       },
       menu: [
         {
           header: true,
           title: `${this.$store.state.auth.user.auth[1].role} Dashboard`,
-          hiddenOnCollapse: true,
+          hiddenOnCollapse: true
         },
         {
           href: {
-            path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/profile`,
+            path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/profile`
           },
           title: "Profil",
-          icon: "fa fa-user",
+          icon: "fa fa-user"
         },
         {
           href: {
-            path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event`,
+            path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event`
           },
           title: "Acara",
           icon: "fa fa-calendar-o",
           child: [
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event/`,
+                path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event/`
               },
               title: "Daftar Acara",
-              icon: "fa fa-th-list",
+              icon: "fa fa-th-list"
             },
             {
               href: {
-                path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event/create`,
+                path: `/${this.$store.state.auth.user.auth[1].role}/dashboard/event/create`
               },
               title: "Acara Baru",
-              icon: "fa fa-calendar-plus-o",
-            },
-          ],
-        },
-      ],
+              icon: "fa fa-calendar-plus-o"
+            }
+          ]
+        }
+      ]
     };
   },
   methods: {
@@ -127,6 +144,26 @@ export default {
         location.reload();
       }
     },
+    async resendEmail() {
+      this.loader = true;
+      try {
+        const res = await EOService.resendVerifyEmailEO(this.eoProfile.id);
+        if (res.status === 200) {
+          // simple
+          this.$notify({
+            group: "successVerify",
+            title: "Verifikasi Email berhasil",
+            text: `Verifikasi akun berhasil!`,
+            type: "success"
+          });
+
+          this.loader = false;
+          this.$forceUpdate();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
   },
   mounted() {
     EOService.getEO(this.currUser.auth[1].id)
@@ -151,7 +188,19 @@ export default {
           error.toString();
       }
     );
-  },
+
+    // email checking
+    if (!this.eoProfile.emailVerified) {
+      this.$notify({
+        group: "verifyEmail",
+        title: `Verikasi Email`,
+        text: "Verifikasi email anda segera untuk menikmati fitur di Tiketin",
+        type: "warn"
+      });
+    } else {
+      this.verified = true;
+    }
+  }
 };
 </script>
 
@@ -159,6 +208,11 @@ export default {
 .vnb {
   @media (min-width: 992px) {
   }
+}
+
+.btn-resend {
+  background-color: #f4743b;
+  margin-bottom: 2em;
 }
 </style>
 

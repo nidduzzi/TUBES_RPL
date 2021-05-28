@@ -145,7 +145,7 @@
             </div>
           </div>
           <div class="text-left mt-4">
-            <button type="button" class="btn btn-secondary btn-sm">
+            <button type="button" class="btn btn-secondary btn-sm" @click="generateEOPDF">
               <i class="fa fa-download" aria-hidden="true"></i> Unduh Laporan
             </button>
           </div>
@@ -396,6 +396,10 @@
 import EOService from "../../../services/eo.service";
 import { SweetModal, SweetModalTab } from "sweet-modal-vue";
 
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import moment from "moment";
+
 export default {
   name: "eomanage",
   components: {
@@ -614,6 +618,36 @@ export default {
         console.log(error);
       }
     },
+    generateEOPDF() {
+      const doc = new jsPDF();
+      const data = this.EOVerified.map((el) => {
+        const date = moment(el.verificationDate).format("DD MMMM YYYY");
+        return [
+          el.name,
+          el.email,
+          date,
+          el.status,
+          el.phone,
+          el.address
+        ];
+      });
+
+      doc.autoTable({
+        head: [
+          [
+            "Nama",
+            "Email",
+            "Tanggal Verifikasi",
+            "Status",
+            "Telepon",
+            "Alamat"
+          ]
+        ],
+        body: data
+      });
+
+      doc.save('eo-report.pdf')
+    }
   },
 };
 </script>

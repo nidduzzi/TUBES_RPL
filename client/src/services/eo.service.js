@@ -60,12 +60,12 @@ class EOService {
   // update eo, add allowed user
   updateEO(id, data){
     return axios.put(API_EO + "/" + id, 
+    data,
     {
-      headers: authHeader(), 
-      body: data
+      headers: authHeader()
     })
     .then(response => {
-        return response.data;
+        return response;
       })
       .catch(err => {
         return err.response;
@@ -137,7 +137,7 @@ class EOService {
         headers: authHeader() 
       })
       .then(response => {
-        return response.data;
+        return response;
       })
       .catch(err => {
         return err.response;
@@ -146,18 +146,23 @@ class EOService {
 
   // profile picture
   getEOProfilePicture(id){
-    return axios.get( API_EO + "/" + id + "/profilePicture")
+    return axios.get( API_EO + "/" + id + "/profilePicture", 
+    {
+        headers: authHeader(),
+        responseType: "blob"
+    })
       .then(response => {
-        return response.data;
+        return response;
       })
       .catch(err => {
         return err.response;
       });
   }
 
-  updateEOProfilePicture(id, config){
+  updateEOProfilePicture(id, body, config){
     return axios.put(
       API_EO + "/" + id + "/profilePicture",
+      body,
       { 
         headers: { 
           ...authHeader(), 
@@ -179,7 +184,7 @@ class EOService {
         headers: authHeader() 
       })
       .then(response => {
-        return response.data;
+        return response;
       })
       .catch(err => {
         return err.response;

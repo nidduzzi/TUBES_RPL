@@ -28,12 +28,23 @@
                 ><b>{{ s.startDate }}</b></span
               >
               <p>{{ s.eventOrganizer.name }}</p>
+              <div class="d-flex flex-row justify-content-around w-50 m-auto">
+                <div class="align-self-stretch">
+                  <router-link
+                    :to="{ path: '/order', query: { event: s } }"
+                    class="d-block btn btn-beli"
+                    >Beli Tiket</router-link
+                  >
+                </div>
+                <div class="align-self-stretch">
+                  <router-link
+                    :to="{ path: '/event', query: { eventId: s.id } }"
+                    class="d-block btn btn-beli"
+                    >Details</router-link
+                  >
+                </div>
+              </div>
             </figcaption>
-            <router-link
-              :to="{ path: '/order', query: { event: s } }"
-              class="btn btn-beli py-1 px-3"
-              >Beli Tiket</router-link
-            >
           </figure>
         </slide>
       </carousel-3d>
@@ -80,7 +91,8 @@ export default {
         event.startDate = new Date(event.schedule[0].startTime).toDateString();
         event.image = event.images != [];
         if (event.images.length > 0) {
-          eventService.getImage(event.id, 0)
+          eventService
+            .getImage(event.id, 0)
             .then((res) => res.data)
             .then((data) => {
               event.imageUrl = URL.createObjectURL(data);
@@ -137,9 +149,7 @@ export default {
 .btn-beli {
   background-color: #f4743b;
   border-radius: 20px;
-  position: absolute;
-  bottom: 4%;
-  right: 38%;
+  position: relative;
   color: white;
   font-size: 0.8em;
   font-weight: 600;

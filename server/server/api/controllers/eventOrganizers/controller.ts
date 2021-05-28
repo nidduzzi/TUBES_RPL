@@ -378,7 +378,18 @@ export class Controller {
           where: {
             id: id,
           },
-          include: { events: true },
+          include: {
+            events: {
+              include: {
+                schedule: true,
+                reservations: { include: { tickets: true, payment: true } },
+                tags: true,
+                ticketTypes: {
+                  include: { attributes: { include: { values: true } } },
+                },
+              },
+            },
+          },
         })
         .then((eo) => {
           if (eo) {

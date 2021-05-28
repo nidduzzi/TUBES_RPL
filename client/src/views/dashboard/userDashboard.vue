@@ -106,7 +106,7 @@ export default {
                 type: "link",
                 text: "Pemberitahuan",
                 path: "/user/dashboard/notifications",
-                iconLeft: "<img class='fa fa-bell' aria-hidden='true'></img>"
+                iconLeft: "<i class='fa fa-bell' aria-hidden='true'></i>"
               },
               {
                 isLinkAction: true,

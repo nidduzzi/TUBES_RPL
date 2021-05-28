@@ -9,6 +9,7 @@
           <div class="offset-md-7 col-md-3">
             <div class="text-right pb-3">
               <router-link
+                v-if="verified"
                 to="/user/dashboard/eoregister"
                 class="btn btn-beli mt-3 font-1 text-white"
               >
@@ -115,7 +116,7 @@
               @change="fotoChange"
             />
             <div class="d-flex">
-              <button type="button" class="btn btn-danger mr-2">
+              <button type="button" class="btn btn-danger mr-2" @click="removeFotoProfil">
                 <i class="fa fa-trash-o" aria-hidden="true"></i>
               </button>
               <FormulateInput
@@ -132,6 +133,8 @@
     </div>
     <notifications group="successUpdate" position="bottom right" />
     <notifications group="successUpdateFoto" position="bottom right" />
+    <notifications group="successRemove" position="bottom right" />
+
   </div>
 </template>
 
@@ -144,8 +147,8 @@ const FormData = require("form-data");
 export default {
   data() {
     return {
-      file: "",
       fotoProfil: {},
+      file: "",
       currUser: this.$store.state.auth.user,
       loader: false,
       error: false,
@@ -199,6 +202,34 @@ export default {
       form.append("dateOfBirth", this.userUpdateProfile.dateOfBirth);
       return form;
     },
+    async removeFotoProfil(){
+      this.message = "";
+      try {
+        this.loader = true;
+        const res = await UserService.removeProfilePicture(
+          this.$store.state.auth.user.auth[0].id
+        );
+        if (res.status != 200) {
+          this.error = true;
+          this.message = res.data.errors.message;
+        } else {
+          // simple
+          this.$notify({
+            group: "successRemove",
+            title: "Foto Profil dihapus",
+            text: "Foto profil berhasil dihapus",
+            type: "success"
+          });
+          this.message = "Foto berhasil dihapus.";
+          this.$forceUpdate();
+        }
+      } catch (error) {
+        this.error = true;
+        this.message = error;
+      } finally {
+        this.loader = false;
+      }
+    },
     async updateProfile() {
       this.message = "";
       const data = this.processForm();
@@ -230,6 +261,11 @@ export default {
       } finally {
         this.loader = false;
       }
+    }
+  },
+  computed : {
+    verified(){
+      return this.currUser.auth.length > 1 ? false: true;
     }
   },
   mounted() {

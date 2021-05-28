@@ -10,9 +10,9 @@
       </thead>
       <tbody>
         <tr v-for="(ticketType, i) in ticketTypes" :key="i">
-          <td>{{ i }}</td>
+          <td>{{ i + 1 }}</td>
           <td>{{ ticketType.name }}</td>
-          <td>{{ ticketType.price }}</td>
+          <td>{{ currency + " " + ticketType.price }}</td>
         </tr>
       </tbody>
     </table>
@@ -21,7 +21,7 @@
 <script>
 export default {
   name: "ticketTypeTable",
-  props: ["ticketTypes"],
+  props: ["ticketTypes", "currency"]
 };
 </script>
 

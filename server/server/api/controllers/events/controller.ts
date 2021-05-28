@@ -385,7 +385,9 @@ export class Controller {
       prisma.event
         .findUnique({
           where: { id: id },
-          include: { reservations: true },
+          include: {
+            reservations: { include: { tickets: true, payment: true } },
+          },
         })
         .then((event) => {
           if (event) {

@@ -9,7 +9,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 export default express
   .Router()
   .post('/', checkPermissions([{ role: Roles.User }]), controller.postRegister)
-  .get('/', checkPermissions([{ role: Roles.Admin }]), controller.getAll)
+  .get(
+    '/',
+    checkPermissions([], { credentialsRequired: false }),
+    controller.getAll
+  )
   .get('/:id', controller.getById)
   .put(
     '/:id',
@@ -24,6 +28,7 @@ export default express
         role: Roles.Admin,
       },
     ]),
+    upload.none(),
     controller.putUpdateEO
   )
   .get('/:id/events', controller.getEvents)
@@ -53,7 +58,7 @@ export default express
       },
     ]),
     upload.single('profilePicture'),
-    controller.getProfilePicture
+    controller.putProfilePicture
   )
   .delete(
     '/:id/profilePicture',
@@ -68,7 +73,7 @@ export default express
         role: Roles.Admin,
       },
     ]),
-    controller.getProfilePicture
+    controller.deleteProfilePicture
   )
   .get(
     '/:id/notifications',
@@ -114,6 +119,11 @@ export default express
     '/suspend/:id',
     checkPermissions([{ role: Roles.Admin }]),
     controller.putSuspension
+  )
+  .delete(
+    '/suspend/:id',
+    checkPermissions([{ role: Roles.Admin }]),
+    controller.deleteSuspension
   )
   .post(
     '/warn/:id',

@@ -81,7 +81,8 @@ export default {
           include: {
             schedule: { orderBy: { startTime: "asc" }, take: 1 },
             eventOrganizer: { select: { name: true } },
-            images: { select: { id: true } }
+            images: { select: { id: true } },
+            ticketTypes: true
           },
           take: 7
         }

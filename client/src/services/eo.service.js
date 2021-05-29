@@ -80,7 +80,7 @@ class EOService {
         headers: authHeader() 
       })
       .then(response => {
-        return response;
+        return response.data;
       })
       .catch(err => {
         return err.response;

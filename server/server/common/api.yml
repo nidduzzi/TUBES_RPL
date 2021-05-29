@@ -1,0 +1,3032 @@
+openapi: 3.0.0
+info:
+  title: Tiketin
+  version: '1.0'
+  description: API Documentation for Tiketin API
+  contact:
+    email: ahmadizzuddin@upi.edu
+    name: Ahmad Izzuddin
+  license:
+    name: MPL 2.0
+    url: 'https://www.mozilla.org/en-US/MPL/2.0/'
+tags:
+  - name: Admin Endpoint
+  - name: Authentification Endpoint
+  - name: Event Endpoint
+  - name: Event Organizer Endpoint
+  - name: Moderation Endpoint
+  - name: Payment Endpoint
+  - name: Registration Endpoint
+  - name: Reservation Endpoint
+  - name: Tag Endpoint
+  - name: Ticket Endpoint
+  - name: User Endpoint
+  - name: Webhook
+servers:
+  - url: /api/v1
+paths:
+  /users:
+    post:
+      summary: Create New User
+      operationId: post-user
+      responses:
+        '201':
+          description: User Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                New User Bob Fellow:
+                  value:
+                    id: 12
+                    username: BobFellow
+                    email: bob.fellow@gmail.com
+                    emailVerified: false
+                    signUpDate: '2020-11-18'
+        '400':
+          description: Missing Required Information
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  pattern: '^[A-Za-z0-9-_]+$'
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+                  minLength: 8
+                  example: fFf9@qe!
+              required:
+                - username
+                - email
+                - password
+            examples:
+              Create User Bob Fellow:
+                value:
+                  username: BobFellow
+                  email: bob.fellow@gmail.com
+                  password: fFf9@qe!
+        description: Post the necessary fields for the API to create a new user.
+      description: Create a new user.
+      parameters: []
+      tags:
+        - Registration Endpoint
+        - User Endpoint
+    parameters: []
+    get:
+      summary: Query Users
+      operationId: get-users
+      responses:
+        '200':
+          description: Query successfull
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Query list of users for Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: q
+          description: query condition JSON string
+        - schema:
+            type: string
+          in: query
+          name: h
+          description: query format JSON string
+      tags:
+        - User Endpoint
+        - Admin Endpoint
+  '/users/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get User Details by id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                required:
+                  - user
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id
+      description: Retrieve the information of the user with the matching user ID.
+      security:
+        - bearerAuth: []
+      tags:
+        - User Endpoint
+    put:
+      summary: Update User Details by id
+      operationId: put-users-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                required:
+                  - user
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: Update the information of an existing user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  pattern: '^[A-Za-z0-9-_]'
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                  pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+                  format: password
+                  example: fFf9@qe!
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                  format: date
+            examples:
+              Update User Profile Picture:
+                value:
+                  profilePicture: string
+              Update Username and Email:
+                value:
+                  username: RebeccaBaker
+                  email: rebecca@gmail.com
+        description: Update user properties to update.
+      tags:
+        - User Endpoint
+  '/users/terminate/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    put:
+      summary: Terminate an Existing User by id
+      operationId: put-users-terminate-id
+      responses:
+        '200':
+          description: Successfully terminated user account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Termination'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Admins put existing user on the terminated users list
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policyBreach:
+                  type: string
+                description:
+                  type: string
+              required:
+                - policyBreach
+                - description
+      tags:
+        - Admin Endpoint
+        - Moderation Endpoint
+        - User Endpoint
+    delete:
+      summary: Remove user termination by id
+      operationId: delete-users-terminate-id
+      responses:
+        '204':
+          description: Successfully removed user from terminate list
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove user from the terminated users list
+      security:
+        - bearerAuth: []
+      tags:
+        - Admin Endpoint
+        - User Endpoint
+        - Moderation Endpoint
+  '/users/suspend/{id}':
+    put:
+      summary: Suspend an Existing User by id
+      operationId: put-users-suspend-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suspension'
+              examples:
+                Bob Ross Suspended for 1 week:
+                  value:
+                    policyBreach: Harassment
+                    length: 3d
+                    description: Bob Ross Suspended for 1 week
+                    adminId: 0
+                    id: 20
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      security:
+        - bearerAuth: []
+      description: Admins can suspend a user for a specific amount of time as specified in policy.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                length:
+                  type: string
+                  description: suspend user for specified ammount of time
+                  pattern: '^[1-9][0-9]*[smhdwMy]$'
+                  minLength: 2
+                policyBreach:
+                  type: string
+                description:
+                  type: string
+              required:
+                - length
+                - policyBreach
+                - description
+            examples:
+              Suspend User for 3 days:
+                value:
+                  policyBreach: Ethical conduct
+                  description: User conducted unethical acts
+                  length: 3d
+        description: 'Details of user suspension '
+      tags:
+        - Admin Endpoint
+        - Moderation Endpoint
+        - User Endpoint
+    delete:
+      summary: Unsuspend a Suspended User by id
+      operationId: delete-users-suspend-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      security:
+        - bearerAuth: []
+      description: Remove a user from the suspended list.
+      tags:
+        - Admin Endpoint
+        - User Endpoint
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+  '/users/warn/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    post:
+      summary: Warn a User by id
+      operationId: post-users-warn-id
+      responses:
+        '204':
+          description: Successfully warned user of breach
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: 'Admins can warn users of anything that is considered a breach of TOS, Policy, Guidelines, etc.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policyBreach:
+                  type: string
+                description:
+                  type: string
+              required:
+                - policyBreach
+                - description
+        description: Description of the breach and the moderating admin.
+      tags:
+        - Admin Endpoint
+        - Moderation Endpoint
+        - User Endpoint
+  /users/authenticate:
+    post:
+      summary: Authenticate User and return a JWT token and a cookie with a refresh token
+      operationId: post-users-authenticate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: BobFellow
+                password:
+                  type: string
+                  example: fFf9@qe!
+                  format: password
+                email:
+                  type: string
+                  format: email
+                  example: bob.fellow@gmail.com
+              required:
+                - password
+            examples:
+              BobFellow Login:
+                value:
+                  username: BobFellow
+                  password: fFf9@qe!
+                  email: bob.fellow@gmail.com
+        description: User Credentials
+      responses:
+        '200':
+          $ref: '#/components/responses/Authentificated'
+        '400':
+          description: The username or password is incorrect
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Username or password is incorrect
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Authentification based on user credentials
+      tags:
+        - Authentification Endpoint
+        - User Endpoint
+  /users/refresh-token:
+    post:
+      summary: Refresh User JWT token and get a new refresh token
+      description: The refresh token is sent and returned via cookies.
+      operationId: post-users-refreshToken
+      parameters:
+        - in: cookie
+          name: refreshToken
+          description: The `refreshToken` cookie
+          schema:
+            type: string
+            example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      responses:
+        '200':
+          $ref: '#/components/responses/Authentificated'
+        '400':
+          description: 'The refresh token is invalid, revoked or expired'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid token
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Authentification Endpoint
+        - User Endpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+  /users/revoke-token:
+    post:
+      summary: Revoke a refresh token (logout)
+      description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens (logout).'
+      operationId: post-users-revokeToken
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: cookie
+          name: refreshToken
+          description: 'The refresh token can be sent in a cookie or the post body, if both are sent the token in the body is used.'
+          schema:
+            type: string
+            example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      responses:
+        '200':
+          description: The refresh token was successfully revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token revoked
+        '400':
+          description: The refresh token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid token
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Authentification Endpoint
+        - User Endpoint
+        - Admin Endpoint
+  '/users/{id}/refresh-tokens':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get a list of all refresh tokens (active and revoked) of the user by id
+      description: 'Admin users can access any user''s refresh tokens, regular users are restricted to their own refresh tokens.'
+      operationId: get-users-id-RefreshTokens
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: An array of refresh tokens for the specified user id
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token:
+                      type: string
+                      example: 79ea9a5e825da7c27d30839c89295071842f2a44b22e917aaf795126f4486509d8511c6fdedb6f1e
+                    expires:
+                      type: string
+                      example: '2020-06-24T03:29:13.871Z'
+                    created:
+                      type: string
+                      example: '2020-06-17T03:29:13.871Z'
+                    createdByIp:
+                      type: string
+                      example: 127.0.0.1
+                    isExpired:
+                      type: boolean
+                      example: false
+                    isActive:
+                      type: boolean
+                      example: true
+                    revoked:
+                      type: string
+                      example: '2020-06-17T03:29:13.871Z'
+                    revokedByIp:
+                      type: string
+                      example: 127.0.0.1
+                    replacedByToken:
+                      type: string
+                      example: a01d3818db64961742f249beeded65739e9c3d1019570ea48ea820d274eac607043a6cbefd23c297
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      tags:
+        - Admin Endpoint
+        - Authentification Endpoint
+        - User Endpoint
+  '/users/{id}/reservations':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get a list of user's reservations by id
+      tags:
+        - User Endpoint
+        - Reservation Endpoint
+      responses:
+        '200':
+          description: Retrival of user reservations successfull
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+                required:
+                  - reservations
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id-reservations
+      description: A user can retrieve the reservations that they have made
+      security:
+        - bearerAuth: []
+  /events:
+    get:
+      summary: Query Events
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events
+      parameters:
+        - schema:
+            type: string
+            example: '{"schedule": {"every": { "startTime": { "gte": "2010-10-17T09:55:46.927Z" }}}}'
+          in: query
+          name: q
+          description: query conditions JSON string
+        - schema:
+            type: string
+            example: '{"take":5, "orderBy":[{ "unlimitedTickets": "desc" }, { "maxTickets": "asc" }]}'
+          in: query
+          name: h
+          description: query format JSON string
+      description: Queries events that meets the query conditions
+      tags:
+        - Event Endpoint
+    post:
+      summary: Create a New Event
+      operationId: post-events
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    $ref: '#/components/schemas/Event'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: Authorized Event Organizers create a new event.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                tagline:
+                  type: string
+                description:
+                  type: string
+                schedule:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/Schedule'
+                rsvpDeadline:
+                  type: string
+                  format: date-time
+                hasRsvp:
+                  type: boolean
+                ticketTypes:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/Ticket-Type'
+                tags:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                    required:
+                      - name
+                maxTickets:
+                  type: integer
+                unlimitedTickets:
+                  type: boolean
+                currency:
+                  type: string
+              required:
+                - name
+                - description
+                - schedule
+                - hasRsvp
+                - ticketTypes
+                - unlimitedTickets
+            examples:
+              example:
+                value:
+                  name: string
+                  tagline: string
+                  description: string
+                  schedule:
+                    - name: string
+                      description: string
+                      startTime: '2021-05-18T14:16:56.694Z'
+                      endTime: '2021-06-18T14:16:56.694Z'
+                      allDay: false
+                      place: string
+                  rsvpDeadline: '2021-05-18T14:16:56.694Z'
+                  hasRsvp: true
+                  tags:
+                    - name: string
+                      description: string
+                  maxTickets: 100
+                  unlimitedTickets: false
+                  ticketTypes:
+                    - name: gold
+                      description: string
+                      attributes:
+                        - name: window
+                          values:
+                            - value: hurray
+                      price: 0
+                  currency: str
+        description: Event creation form data.
+      tags:
+        - Event Endpoint
+  '/events/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Retrieve Details of an Event by id
+      operationId: get-events-id
+      responses:
+        '200':
+          description: Fetch successfull
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    $ref: '#/components/schemas/Event'
+                required:
+                  - event
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Retrieves information and details of an event associated with the Event ID.
+      tags:
+        - Event Endpoint
+    put:
+      summary: Update Event Details
+      operationId: put-events-id
+      responses:
+        '200':
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    $ref: '#/components/schemas/Event'
+                required:
+                  - event
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Authorized Event Organizer updates the details of the event associated to the event ID.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                schedule:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/Schedule'
+                description:
+                  type: string
+                rsvpDeadline:
+                  type: string
+                  format: date-time
+                  nullable: true
+                tagline:
+                  type: string
+                  nullable: true
+                ticketTypes:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/Ticket-Type'
+                tags:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                    required:
+                      - name
+                status:
+                  type: string
+                  enum:
+                    - ACTIVE
+                    - CANCELED
+                maxTickets:
+                  type: integer
+                  nullable: true
+                currency:
+                  type: string
+            examples:
+              example:
+                value:
+                  name: string
+                  tagline: string
+                  description: string
+                  schedule:
+                    - name: string
+                      description: string
+                      startTime: '2021-05-18T14:16:56.694Z'
+                      endTime: '2021-06-18T14:16:56.694Z'
+                      allDay: false
+                      place: string
+                  rsvpDeadline: '2021-05-18T14:16:56.694Z'
+                  hasRsvp: true
+                  tags:
+                    - name: string
+                      description: string
+                  maxTickets: 100
+                  unlimitedTickets: false
+                  ticketTypes:
+                    - name: gold
+                      description: string
+                      attributes:
+                        - name: window
+                          values:
+                            - value: hurray
+                      price: 0
+                  currency: str
+        description: Details of revised event
+      tags:
+        - Event Endpoint
+  '/events/{id}/reservations':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get reservations for event by id
+      responses:
+        '200':
+          description: Retrieval of Event reservations Successfull
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+                required:
+                  - reservations
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-reservations
+      description: Event Organizers can fetch reservations that has been made for a specific event
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Endpoint
+        - Reservation Endpoint
+  /reservations:
+    get:
+      summary: Query reservations
+      responses:
+        '200':
+          description: Query successfull
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+                required:
+                  - reservations
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-reservations
+      description: Admins can query the list of reservations
+      security:
+        - bearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: q
+          description: query condition JSON string
+        - schema:
+            type: string
+          in: query
+          name: h
+          description: query format JSON string
+      tags:
+        - Admin Endpoint
+    post:
+      summary: Create new reservation
+      operationId: post-reservations
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation:
+                    $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      description: Users create new reservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventId:
+                  type: integer
+                tickets:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      nama:
+                        type: string
+                      identification:
+                        type: string
+                      identificationNumber:
+                        type: string
+                      ticketTypeId:
+                        type: integer
+                    required:
+                      - nama
+                      - ticketTypeId
+              required:
+                - eventId
+                - tickets
+            examples:
+              example-1:
+                value:
+                  eventId: 0
+                  tickets:
+                    - nama: string
+                      identification: string
+                      identificationNumber: string
+                      ticketTypeId: 0
+        description: ''
+      tags:
+        - Reservation Endpoint
+  '/reservations/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Reservation Details by id
+      tags:
+        - Reservation Endpoint
+      responses:
+        '200':
+          description: Reservation found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation:
+                    $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-reservations-id_reservation
+      description: Users or Event Organizers retrieve the information of the reservation with the matching reservation ID.
+      security:
+        - bearerAuth: []
+    put:
+      summary: Put an Update to the Reservation
+      operationId: put-reservations-id
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: User put an Update to the Reservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tickets:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      nama:
+                        type: string
+                      identification:
+                        type: string
+                      identificationNumber:
+                        type: string
+                      ticketTypeId:
+                        type: integer
+                    required:
+                      - nama
+                      - ticketTypeId
+              required:
+                - tickets
+      tags:
+        - Reservation Endpoint
+  '/reservations/cancel/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    put:
+      summary: Cancel a Reservation by id
+      operationId: put-reservations-cancel-id
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      tags:
+        - Reservation Endpoint
+      security:
+        - bearerAuth: []
+      description: Users cancel a reservation
+    delete:
+      summary: Remove a Reservation Cancelation by id
+      operationId: delete-reservations-cancel-id
+      responses:
+        '204':
+          description: Reservation removed from canceled reservations list
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      tags:
+        - Reservation Endpoint
+      security:
+        - bearerAuth: []
+      description: Admins remove reservation from cancelation list
+  /payments:
+    post:
+      summary: Create Payment Intent
+      operationId: post-payments
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_intent:
+                    $ref: '#/components/schemas/Payment'
+                required:
+                  - payment_intent
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: User creates Payment intent with payment provider
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_reservation:
+                  type: integer
+              required:
+                - id_reservation
+        description: Details of payment intent
+      tags:
+        - Payment Endpoint
+  '/payments/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Payment information by id
+      tags:
+        - Payment Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+                required:
+                  - payment
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-payments-id
+      description: User fetch their payment information related to payment ID.
+      security:
+        - bearerAuth: []
+    put:
+      summary: Put Payment confirmation by id
+      operationId: put-payments-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: External Payment provider update the pending payment specified by payment ID.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+              required:
+                - result
+        description: result status
+      tags:
+        - Webhook
+  /eventOrganizers:
+    get:
+      summary: Query Event Organizers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventOrganizers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event-Organizer'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers
+      description: Retrieve all verified Event Organizers that match the query condition if any.
+      tags:
+        - Event Organizer Endpoint
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: q
+          description: query conditions JSON string
+        - schema:
+            type: string
+          in: query
+          name: h
+          description: query format JSON string
+    post:
+      summary: Create a New Event Organizer
+      operationId: post-eventOrganizers
+      responses:
+        '201':
+          description: Created
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_user:
+                  type: integer
+                name:
+                  type: string
+                  minLength: 1
+                email:
+                  type: string
+                  description: event organizer email (eg. organization email)
+                  format: email
+                phone:
+                  type: string
+                address:
+                  type: string
+              required:
+                - id_user
+                - name
+                - email
+      description: Create a new event organizer to be verified by admin.
+      tags:
+        - Registration Endpoint
+        - Event Organizer Endpoint
+  '/eventOrganizers/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Details of an Event Organizer by id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_organizer:
+                    $ref: '#/components/schemas/Event-Organizer'
+                required:
+                  - event_organizer
+              examples: {}
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers-id
+      description: Retrieve details of an Event Organizer associated to the Event Organizer ID.
+      tags:
+        - Event Organizer Endpoint
+    put:
+      summary: Update Event Organizer Details (add allowed users) by id
+      operationId: put-eventOrganizers-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event Organizer:
+                    $ref: '#/components/schemas/Event-Organizer'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: |-
+        Update Event Organizer Details associated to the Event Organizer ID.
+        Modify Event Organizer Profile.
+        Add or remove allowed users.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                address:
+                  type: string
+                phone:
+                  type: string
+                password:
+                  type: string
+                  format: password
+        description: ''
+      tags:
+        - Event Organizer Endpoint
+  '/eventOrganizers/terminate/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    put:
+      summary: Terminate an Existing Event Organizers by id
+      operationId: put-eventOrganizers-terminate-id
+      responses:
+        '200':
+          description: Successfully terminated user account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Termination'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Admins put existing event organizers on the terminated users list
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policyBreach:
+                  type: string
+                description:
+                  type: string
+              required:
+                - policyBreach
+                - description
+      tags:
+        - Admin Endpoint
+        - Moderation Endpoint
+        - User Endpoint
+    delete:
+      summary: Remove Event Organizer from Terminate list by id
+      operationId: delete-eventOrganizers-terminate-id
+      responses:
+        '204':
+          description: Successfully removed user from terminate list
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove event organizer from the terminated event organizer list
+      security:
+        - bearerAuth: []
+      tags:
+        - Admin Endpoint
+        - User Endpoint
+        - Moderation Endpoint
+  '/eventOrganizers/suspend/{id}':
+    put:
+      summary: Suspend an Existing Event Organizer by id
+      operationId: put-eventOrganizers-suspend-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suspension'
+              examples:
+                Bob Ross Suspended for 1 week:
+                  value:
+                    policyBreach: Harassment
+                    length: 3d
+                    description: Bob Ross Suspended for 1 week
+                    adminId: 0
+                    id: 20
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      security:
+        - bearerAuth: []
+      description: Admins can suspend a Event Organizer for a specific amount of time as specified in policy.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                length:
+                  type: string
+                  description: suspend user for specified ammount of time
+                  pattern: '^[1-9][0-9]*[smhdwMy]$'
+                  minLength: 2
+                policyBreach:
+                  type: string
+                description:
+                  type: string
+              required:
+                - length
+                - policyBreach
+                - description
+            examples:
+              Suspend User for 3 days:
+                value:
+                  policyBreach: Ethical conduct
+                  description: User conducted unethical acts
+                  length: 3d
+        description: 'Details of event organizer suspension '
+      tags:
+        - Admin Endpoint
+        - Moderation Endpoint
+        - User Endpoint
+    delete:
+      summary: Unsuspend a Suspended Event Organizer by id
+      operationId: delete-eventOrganizers-suspend-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      security:
+        - bearerAuth: []
+      description: Remove an event organizer from the suspended list.
+      tags:
+        - Admin Endpoint
+        - User Endpoint
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+  '/eventOrganizers/warn/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    post:
+      summary: Warn an Event Organizer by id
+      operationId: post-eventOrganizers-warn-id
+      responses:
+        '204':
+          description: Successfully warned event organizer of breach
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: 'Admins can warn event organizers of anything that is considered a breach of TOS, Policy, Guidelines, etc.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policyBreach:
+                  type: string
+                description:
+                  type: string
+              required:
+                - policyBreach
+                - description
+        description: Description of the breach and the moderating admin.
+      tags:
+        - Admin Endpoint
+        - Moderation Endpoint
+        - User Endpoint
+  '/admins/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Admin details by id
+      operationId: get-admins-id
+      responses:
+        '200':
+          description: Successfully retrieved admin account information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    $ref: '#/components/schemas/Admin'
+                required:
+                  - admin
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Retrieve the account information of an admin
+      security:
+        - bearerAuth: []
+      tags:
+        - Admin Endpoint
+  /admins/authenticate:
+    post:
+      summary: Authenticate Admin and return a JWT token and a cookie with a refresh token
+      operationId: post-admins-authenticate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                  example: FfA4!wif2
+              required:
+                - username
+                - password
+        description: Admin Credentials
+      responses:
+        '200':
+          $ref: '#/components/responses/Authentificated'
+        '400':
+          description: The username or password is incorrect
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Username or password is incorrect
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Authentification based on Admin credentials
+      tags:
+        - Authentification Endpoint
+        - Admin Endpoint
+  /admins/refresh-token:
+    post:
+      summary: Refresh Admin JWT token and get a new refresh token
+      description: The refresh token is sent and returned via cookies.
+      operationId: post-admins-refreshToken
+      parameters:
+        - in: cookie
+          name: refreshToken
+          description: The `refreshToken` cookie
+          schema:
+            type: string
+            example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      responses:
+        '200':
+          $ref: '#/components/responses/Authentificated'
+        '400':
+          description: 'The refresh token is invalid, revoked or expired'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid token
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Authentification Endpoint
+        - Admin Endpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+  /admins/revoke-token:
+    post:
+      summary: Revoke an Admin refresh token (logout)
+      description: 'Admin users can revoke the tokens of any user, regular users can only revoke their own tokens.'
+      operationId: post-admins-revokeToken
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: cookie
+          name: refreshToken
+          description: 'The refresh token can be sent in a cookie or the post body, if both are sent the token in the body is used.'
+          schema:
+            type: string
+            example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: 51872eca5efedcf424db4cf5afd16a9d00ad25b743a034c9c221afc85d18dcd5e4ad6e3f08607550
+      responses:
+        '200':
+          description: The refresh token was successfully revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token revoked
+        '400':
+          description: The refresh token is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid token
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Admin Endpoint
+        - Authentification Endpoint
+  '/admins/{id}/refresh-tokens':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get a list of all refresh tokens (active and revoked) of the admin by id
+      description: 'Admin users can access any user''s refresh tokens, regular users are restricted to their own refresh tokens.'
+      operationId: get-admins-id-RefreshTokens
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: An array of refresh tokens for the specified admin id
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token:
+                      type: string
+                      example: 79ea9a5e825da7c27d30839c89295071842f2a44b22e917aaf795126f4486509d8511c6fdedb6f1e
+                    expires:
+                      type: string
+                      example: '2020-06-24T03:29:13.871Z'
+                    created:
+                      type: string
+                      example: '2020-06-17T03:29:13.871Z'
+                    createdByIp:
+                      type: string
+                      example: 127.0.0.1
+                    isExpired:
+                      type: boolean
+                      example: false
+                    isActive:
+                      type: boolean
+                      example: true
+                    revoked:
+                      type: string
+                      example: '2020-06-17T03:29:13.871Z'
+                    revokedByIp:
+                      type: string
+                      example: 127.0.0.1
+                    replacedByToken:
+                      type: string
+                      example: a01d3818db64961742f249beeded65739e9c3d1019570ea48ea820d274eac607043a6cbefd23c297
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      tags:
+        - Authentification Endpoint
+        - Admin Endpoint
+  '/eventOrganizers/{id}/events':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get events created by event organizer by id
+      tags:
+        - Event Organizer Endpoint
+        - Event Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers-id-events
+      description: Retrieve all details of events created by the specified event organizer
+      security:
+        - bearerAuth: []
+  '/eventOrganizers/verify/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    put:
+      summary: Verify Event Organizer by id
+      operationId: put-eventOrganizers-verify-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      tags:
+        - Event Organizer Endpoint
+        - Admin Endpoint
+      security:
+        - bearerAuth: []
+      description: Put event organizer on verified list by Admin
+    delete:
+      summary: Unverify Event Organizer
+      operationId: delete-eventOrganizers-verify-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      tags:
+        - Admin Endpoint
+        - Event Organizer Endpoint
+      security:
+        - bearerAuth: []
+      description: Remove event organizer from verified list by Admin
+  '/users/verify-email/{verification_token}':
+    parameters:
+      - schema:
+          type: string
+        name: verification_token
+        in: path
+        required: true
+    get:
+      summary: Verify User Email
+      tags:
+        - User Endpoint
+        - Registration Endpoint
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        '400':
+          description: Bad Request
+      operationId: get-users-verify-email-verification-token
+      description: Verify user email by sending request with verification token sent to email
+  '/eventOrganizers/verify-email/{verification_token}':
+    parameters:
+      - schema:
+          type: string
+        name: verification_token
+        in: path
+        required: true
+    get:
+      summary: Verify Event Organizer Email
+      tags:
+        - Event Organizer Endpoint
+        - Registration Endpoint
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      operationId: get-eventOrganizers-verify-email-verification_token
+      description: Verify event organizer email by sending request with verification token sent to email
+  '/users/{id}/profilePicture':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get User's Profile Picture
+      tags:
+        - User Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: byte
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id-profilePicture
+      security:
+        - bearerAuth: []
+      description: Users can retrieve their profile picture
+    put:
+      summary: Put a profile picture
+      operationId: put-users-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Users put a profile picture for themselves
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  format: binary
+      tags:
+        - User Endpoint
+    delete:
+      summary: Remove a User's Profile Picture
+      operationId: delete-users-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove a User's Profile Picture
+      security:
+        - bearerAuth: []
+      tags:
+        - User Endpoint
+  '/eventOrganizers/{id}/profilePicture':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Event Organizer Profile Picture
+      tags:
+        - Event Organizer Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: byte
+      operationId: get-eventOrganizers-id-profilePicture
+      description: Retrive profile pictures of event organizers
+    put:
+      summary: Put an Event Organizer's Profile Picture
+      operationId: put-eventOrganizers-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Put an Event Organizer's Profile Picture
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  format: binary
+      tags:
+        - Event Organizer Endpoint
+    delete:
+      summary: Remove an Event Organizer's Profile Picture
+      operationId: delete-eventOrganizers-id-profilePicture
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove an Event Organizer's Profile Picture
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Organizer Endpoint
+  '/users/{id}/notifications':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get users notifications
+      tags:
+        - User Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                required:
+                  - notifications
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id-notifications
+      security:
+        - bearerAuth: []
+      description: Users retrieve notifications for their accounts
+  '/eventOrganizers/{id}/notifications':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Event Organizer notifications
+      tags:
+        - Event Organizer Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                required:
+                  - notifications
+      operationId: get-eventOrganizers-id-notifications
+      security:
+        - bearerAuth: []
+      description: Event organizers retrieve their notifications
+  '/events/{id}/verify-ticket/{token}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+        description: event id
+      - schema:
+          type: string
+        name: token
+        in: path
+        required: true
+        description: ticket token
+    get:
+      summary: Verify the ticket for a certain event
+      tags:
+        - Ticket Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validTicket:
+                    type: boolean
+                required:
+                  - validTicket
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-verify-ticket-token
+      description: event organizers verify whether a ticket is valid or not based on the provided token
+      security:
+        - bearerAuth: []
+  '/users/{id}/resend-verification':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Resend User verification email
+      tags:
+        - User Endpoint
+        - Registration Endpoint
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-users-id-resend-verification
+      security:
+        - bearerAuth: []
+      description: User requests another email verification
+  '/eventOrganizers/{id}/resend-verification':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Resend EO verification email
+      tags:
+        - Event Organizer Endpoint
+        - Registration Endpoint
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers-id-resend-verification
+      security:
+        - bearerAuth: []
+      description: EO requests another verification email
+  '/events/{id}/logo':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get the logo of an event
+      tags:
+        - Event Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-logo
+      description: Get the logo stored for an event
+    put:
+      summary: Put an Event's Logo
+      operationId: put-events-id-logo
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Event Organizers put an Event's Logo
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                logo:
+                  type: string
+                  format: binary
+        description: ''
+      tags:
+        - Event Endpoint
+    delete:
+      summary: Remove an Event's Logo
+      operationId: delete-events-id-logo
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove an Event's Logo
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Endpoint
+  '/events/{id}/image/{image_number}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: image_number
+        in: path
+        required: true
+    get:
+      summary: Get a specific image of an Event
+      tags:
+        - Event Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-events-id-image-image_number
+      description: Get an image for an event
+    put:
+      summary: Put replace a specific Image of an event
+      operationId: put-events-id-image-image_number
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Replace a specific Image of an event
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      tags:
+        - Event Endpoint
+    delete:
+      summary: Delete Remove a specific image of an Event
+      operationId: delete-events-id-image-image_number
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Remove a specific image of an Event
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Endpoint
+  '/events/{id}/image':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    post:
+      summary: Post a new images to an Event
+      operationId: post-events-id-image
+      responses:
+        '201':
+          description: Created
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Post a new images to an Event
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: string
+                  format: binary
+      tags:
+        - Event Endpoint
+  /tags:
+    get:
+      summary: Get existing tags
+      tags:
+        - Tag Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+                required:
+                  - tags
+      operationId: get-tags
+      description: Get existing tags
+    parameters: []
+    post:
+      summary: Post a new tag
+      operationId: post-tags
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: '#/components/schemas/Tag'
+                required:
+                  - tag
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mesage:
+                    type: string
+                required:
+                  - mesage
+      description: Event Organizer post a new Event tag
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+                - description
+      tags:
+        - Tag Endpoint
+  '/tags/{id}/events':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Events with specified tag
+      tags:
+        - Tag Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                required:
+                  - events
+      operationId: get-tags-id-events
+      description: Get Events with specified tag
+  '/eventOrganizers/{id}/allowed-users/{userId}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    put:
+      summary: Put a user to an event organizer
+      operationId: put-eventOrganizers-id-allowed-users-userId
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Put a user to an event organizer
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Organizer Endpoint
+    delete:
+      summary: Delete a user from an event organizer
+      operationId: delete-eventOrganizers-id-allowed-users-userId
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      description: Delete a user from an event organizer
+      security:
+        - bearerAuth: []
+      tags:
+        - Event Organizer Endpoint
+  '/eventOrganizers/{id}/allowed-users':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get list of allowed users for an Event Organizer
+      tags:
+        - Event Organizer Endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                required:
+                  - users
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+      operationId: get-eventOrganizers-id-allowed-users
+      description: Get list of allowed users for an Event Organizer
+      security:
+        - bearerAuth: []
+  /admins:
+    post:
+      summary: Post register admin
+      operationId: post-admins
+      responses:
+        '200':
+          description: OK
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+      description: RESTRICTED endpoint available only if specified in .env and request from localhost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  pattern: '^[A-Za-z0-9-_]+$'
+                  minLength: 1
+                password:
+                  type: string
+                  pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+                  minLength: 8
+                  example: FfA4!wif2
+                  format: password
+              required:
+                - username
+                - password
+        description: ''
+      tags:
+        - Admin Endpoint
+        - Registration Endpoint
+  '/tags/{id}':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Get Tag details
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: '#/components/schemas/Tag'
+                required:
+                  - tag
+        '404':
+          $ref: '#/components/responses/UnauthorizedError'
+      operationId: get-tags-id
+      description: Get Tag details
+components:
+  schemas:
+    User:
+      title: User
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        id:
+          description: Unique identifier for the given user.
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        emailVerified:
+          type: boolean
+          description: Set to true if the user's email has been verified.
+        ragistrationDate:
+          type: string
+          format: date
+          description: The date that the user was created.
+        profilePicture:
+          type: string
+          format: byte
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    Event:
+      title: Event
+      type: object
+      description: ''
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+        rsvpDeadline:
+          type: string
+        hasRsvp:
+          type: boolean
+        eventOrganizerId:
+          type: integer
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        maxTickets:
+          type: integer
+        unlimitedTickets:
+          type: boolean
+        reservedTickets:
+          type: integer
+        public:
+          type: boolean
+        reservations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reservation'
+        ticketTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket-Type'
+        hasLogo:
+          type: boolean
+        numImages:
+          type: integer
+    Tag:
+      title: Tag
+      type: object
+      description: Event Tags
+      x-examples:
+        Sport tag:
+          id: 21
+          name: Sport
+          description: 'There’s nothing like a good sports event, whether it’s football or basketball, baseball or soccer. Game, set, watch!'
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+    Event-Organizer:
+      title: Event-Organizer
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        verified:
+          type: boolean
+        profilePicture:
+          type: string
+          format: binary
+        address:
+          type: string
+        registrationDate:
+          type: string
+          format: date
+        verificationDate:
+          type: string
+          format: date
+        phone:
+          type: string
+          pattern: '^[+][0-9]{2,}[0-9]+$'
+          minLength: 1
+        usersId:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: users authorized to use event organizer
+          items:
+            type: integer
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    Schedule:
+      title: Schedule
+      type: object
+      description: Describes When and Where something happens for an event
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        allDay:
+          type: boolean
+        place:
+          type: string
+    Reservation:
+      title: Reservation
+      type: object
+      properties:
+        id:
+          type: integer
+        id_user:
+          type: integer
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+        confirmed:
+          type: boolean
+        numTickets:
+          type: integer
+        price:
+          type: integer
+        currency:
+          type: string
+          maxLength: 4
+    Ticket:
+      title: Ticket
+      type: object
+      properties:
+        id:
+          type: integer
+        nama:
+          type: string
+          description: Name of ticket holder
+        indentificaitionType:
+          type: string
+          enum:
+            - KTP
+            - Passport
+            - Other
+        identificationNumber:
+          type: string
+        id_ticket_type:
+          type: integer
+    Ticket-Type:
+      title: Ticket-Type
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket-Attribute'
+        price:
+          type: integer
+    Ticket-Attribute:
+      title: Ticket-Attribute
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket-Value'
+    Payment:
+      title: Payment
+      type: object
+      properties:
+        id:
+          type: integer
+        amount:
+          type: integer
+        currency:
+          type: string
+        id_reservation:
+          type: integer
+        completed:
+          type: boolean
+          default: false
+    Admin:
+      title: Admin
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+    Authentification:
+      title: Authentification
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        role:
+          type: string
+    Termination:
+      title: Termination
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        policyBreach:
+          type: string
+        adminId:
+          type: integer
+    Suspension:
+      title: Suspension
+      type: object
+      properties:
+        id:
+          type: integer
+        policyBreach:
+          type: string
+        description:
+          type: string
+        length:
+          type: string
+          pattern: '^[1-9][0-9]*[smhdwMy]$'
+          minLength: 2
+        adminId:
+          type: integer
+    Notification:
+      title: Notification
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+    Ticket-Value:
+      title: Ticket-Value
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JSON Web Token Authentification
+  responses:
+    UnauthorizedError:
+      description: 'Access token is missing or invalid, or the user does not have access to perform the action'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthorized
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Not Found
+    Forbidden:
+      description: 'Forbidden access, insuffcient privilege'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+      headers: {}
+    Authentificated:
+      description: Successfully authentificated using the provided credentials or refresh token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              auth:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Authentification'
+              jwtToken:
+                type: string
+            required:
+              - auth
+              - jwtToken
+      headers:
+        Set-Cookie:
+          schema:
+            type: string
+          description: '`refreshToken`'

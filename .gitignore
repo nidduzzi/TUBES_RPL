@@ -89,9 +89,16 @@ typings/
 
 **/package-lock.json
 
+<<<<<<< HEAD
+# Compiled typescript
+**/dist
+
+*.cpuprofile
+=======
 **/dist
 
 
 
+>>>>>>> 63198a43b31a37a604f454f8440342680f83d1fa
 
 server/prisma/migrations/

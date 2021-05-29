@@ -9,25 +9,7 @@
       ></span>
     </sidebar-menu>
     <div class="container">
-      <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut">
-        <template v-slot:custom-section>
-          <div class="custom-section-content offset-md-8 d-flex">
-            <img
-              v-if="imageUrl"
-              :src="imageUrl"
-              class="img-fluid rounded-circle"
-              style="
-                border-radius: 50%;
-                overflow: hidden;
-                width: 2rem;
-                height: 2rem;
-                background-size: cover;
-              "
-              alt="profile"
-            />
-          </div>
-        </template>
-      </VueNavigationBar>
+      <VueNavigationBar :options="navbarOptions" @vnb-item-clicked="logOut" />
     </div>
     <div class="container">
       <div class="text-left">
@@ -72,7 +54,6 @@ export default {
       eoProfile: {
         name: ""
       },
-      imageUrl: "",
       loader: false,
       navbarOptions: {
         elementId: "main-navbar",
@@ -207,17 +188,6 @@ export default {
           error.toString();
       }
     );
-
-    // get foto profile
-    EOService.getEOProfilePicture(this.currUser.auth[1].id)
-      .then((res) => res.data)
-      .then((data) => {
-        this.imageUrl = URL.createObjectURL(data);
-        this.$forceUpdate();
-      })
-      .catch((err) => {
-        if (process.env.NODE_ENV === "production") process.env.console.log(err);
-      });
 
     // email checking
     if (!this.eoProfile.emailVerified) {

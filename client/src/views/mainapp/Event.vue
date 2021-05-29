@@ -6,16 +6,14 @@
 
 <script>
 import Event from "@/components/EventCard.vue";
-import eventService from '../../services/event.service';
 export default {
   components: {
     Event,
   },
   props: ["id"],
-  asyncComputed: {
-    async event () {
-      let res = await eventService.getEvent(this.id);
-      return res.data.event;
+  computed: {
+    event: function () {
+      return {};
     },
   },
 };

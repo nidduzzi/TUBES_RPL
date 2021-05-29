@@ -1,0 +1,241 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+enum AccountStatus {
+    ACTIVE
+    INACTIVE
+    SUSPENDED
+    TERMINATED
+}
+
+model User {
+    id               Int             @id @default(autoincrement())
+    email            String          @unique
+    username         String          @unique
+    passwordHash     String
+    profilePicture   Bytes?
+    dateOfBirth      DateTime?
+    emailVerified    Boolean         @default(false)
+    address          String?
+    status           AccountStatus   @default(INACTIVE)
+    registrationDate DateTime        @default(now())
+    eventOrganizer   EventOrganizer? @relation(fields: [eventOrganizerId], references: [id])
+    eventOrganizerId Int?
+    reservations     Reservation[]
+    suspensions      Suspension[]
+    termination      Termination?
+    notifications    Notification[]
+    refreshTokens    RefreshToken[]
+}
+
+model EventOrganizer {
+    id               Int            @id @default(autoincrement())
+    name             String         @unique
+    email            String         @unique
+    profilePicture   Bytes?
+    phone            String
+    address          String
+    status           AccountStatus  @default(INACTIVE)
+    emailVerified    Boolean        @default(false)
+    verificationDate DateTime?
+    verified         Boolean
+    allowedUsers     User[]
+    suspensions      Suspension[]
+    termination      Termination?
+    notifications    Notification[]
+    events           Event[]
+}
+
+model Admin {
+    id                 Int            @id @default(autoincrement())
+    username           String         @unique
+    passwordHash       String
+    suspensionsIssued  Suspension[]
+    terminationsIssued Termination[]
+    refreshTokens      RefreshToken[]
+}
+
+model Payment {
+    id            Int         @id @default(autoincrement())
+    amount        Int
+    currency      String
+    reservation   Reservation @relation(fields: [reservationId], references: [id])
+    reservationId Int
+    completed     Boolean     @default(false)
+}
+
+enum ReservationStatus {
+    WAITING
+    CONFIRMED
+    CANCELED
+}
+
+model Reservation {
+    id        Int               @id @default(autoincrement())
+    price     Int
+    orderDate DateTime          @default(now())
+    status    ReservationStatus @default(WAITING)
+    tickets   Ticket[]
+    user      User              @relation(fields: [userId], references: [id])
+    userId    Int
+    payment   Payment?
+    Event     Event             @relation(fields: [eventId], references: [id])
+    eventId   Int
+}
+
+model Ticket {
+    id                    Int                        @id @default(autoincrement())
+    uuid                  String                     @unique @default(uuid())
+    nama                  String
+    identification        Identification
+    identificationNumber  String
+    reservation           Reservation                @relation(fields: [reservationId], references: [id])
+    type                  TicketType                 @relation(fields: [ticketTypeId], references: [id])
+    ticketTypeId          Int
+    ticketAttributeValues TicketTypeAttributeValue[]
+    reservationId         Int
+}
+
+model TicketType {
+    id          Int                   @id @default(autoincrement())
+    name        String
+    description String?               @db.Text
+    ticket      Ticket[]
+    attributes  TicketTypeAttribute[]
+    price       Int
+    Event       Event                 @relation(fields: [eventId], references: [id])
+    eventId     Int
+}
+
+model TicketTypeAttribute {
+    id           Int                        @id @default(autoincrement())
+    name         String
+    values       TicketTypeAttributeValue[]
+    ticketType   TicketType                 @relation(fields: [ticketTypeId], references: [id])
+    ticketTypeId Int
+}
+
+model TicketTypeAttributeValue {
+    id                    Int                 @id @default(autoincrement())
+    value                 String
+    attribute             TicketTypeAttribute @relation(fields: [ticketTypeAttributeId], references: [id])
+    ticketTypeAttributeId Int
+    tickets               Ticket[]
+}
+
+enum Identification {
+    KTP
+    SIM
+    PASSPORT
+    OTHER
+}
+
+model Suspension {
+    id               Int             @id @default(autoincrement())
+    policyBreach     String
+    description      String          @db.Text
+    endDate          DateTime
+    user             User?           @relation(fields: [userId], references: [id])
+    eventOrganizer   EventOrganizer? @relation(fields: [eventOrganizerId], references: [id])
+    userId           Int?
+    eventOrganizerId Int?
+    admin            Admin           @relation(fields: [adminId], references: [id])
+    adminId          Int
+}
+
+model Termination {
+    id               Int             @id @default(autoincrement())
+    policyBreach     String
+    description      String          @db.Text
+    user             User?           @relation(fields: [userId], references: [id])
+    eventOrganizer   EventOrganizer? @relation(fields: [eventOrganizerId], references: [id])
+    admin            Admin           @relation(fields: [adminId], references: [id])
+    userId           Int?
+    eventOrganizerId Int?
+    adminId          Int
+}
+
+model Tag {
+    id          Int     @id @default(autoincrement())
+    name        String  @unique
+    description String  @db.Text
+    events      Event[]
+}
+
+model Notification {
+    id               Int             @id @default(autoincrement())
+    title            String
+    content          String          @db.MediumText
+    user             User?           @relation(fields: [userId], references: [id])
+    eventOrganizer   EventOrganizer? @relation(fields: [eventOrganizerId], references: [id])
+    userId           Int?
+    eventOrganizerId Int?
+}
+
+enum EventStatus {
+    ACTIVE
+    CANCELED
+}
+
+model Event {
+    id               Int            @id @default(autoincrement())
+    name             String         @unique
+    tagline          String?
+    description      String         @db.LongText
+    schedule         Schedule[]
+    ticketTypes      TicketType[]
+    tags             Tag[]
+    logo             Bytes?         @db.MediumBlob
+    images           EventImage[]
+    rsvpDeadline     DateTime?
+    hasRsvp          Boolean
+    maxTickets       Int?
+    unlimitedTickets Boolean
+    currency         String         @default("IDR")
+    status           EventStatus    @default(ACTIVE)
+    reservations     Reservation[]
+    eventOrganizerId Int
+    eventOrganizer   EventOrganizer @relation(fields: [eventOrganizerId], references: [id])
+}
+
+model EventImage {
+    id      Int   @id @default(autoincrement())
+    image   Bytes @db.MediumBlob
+    event   Event @relation(fields: [eventId], references: [id])
+    eventId Int
+}
+
+model Schedule {
+    id          Int       @id @default(autoincrement())
+    name        String
+    description String    @db.MediumText
+    startTime   DateTime
+    endTime     DateTime?
+    allDay      Boolean
+    place       String
+    Event       Event?    @relation(fields: [eventId], references: [id])
+    eventId     Int?
+}
+
+model RefreshToken {
+    id              Int       @id @default(autoincrement())
+    token           String    @unique
+    expires         DateTime
+    createdByIp     String
+    revoked         DateTime?
+    revokedByIp     String?
+    replacedByToken String?
+    user            User?     @relation(fields: [userId], references: [id])
+    admin           Admin?    @relation(fields: [adminId], references: [id])
+    userId          Int?
+    adminId         Int?
+}

@@ -78,6 +78,16 @@
                         <i class="fa fa-plus" aria-hidden="true"></i>
                       </button>
                     </td>
+                    <td>
+                      <button
+                        class="btn btn-success"
+                        :class="{ 'btn-hide': !lastElement(i) || i === 0 }"
+                        @click="deleteTicket"
+                        type="button"
+                      >
+                        <i class="fa fa-minus" aria-hidden="true"></i>
+                      </button>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -87,12 +97,12 @@
       </div>
       <div class="row">
         <div class="offset-md-1 col-md-5">
-          <button @click="updateTiket" class="btn btn-submit btn-block">
+          <button @click="createReservation" class="btn btn-submit btn-block">
             Submit
           </button>
         </div>
         <div class="col-md-5">
-          <button @click="updateForm" class="btn btn-checkout btn-block">
+          <button @click="checkout" class="btn btn-checkout btn-block">
             Checkout
           </button>
         </div>
@@ -103,6 +113,7 @@
 
 <script>
 import TicketTypeTable from "@/components/TicketTypeTable.vue";
+import ReservationService from "../services/reservation.service";
 
 export default {
   name: "reservation",
@@ -112,14 +123,8 @@ export default {
   data() {
     return {
       userId: null,
-      tickets: {
-        nama: "",
-        identification: "KTP",
-        identificationNumber: "",
-        ticketTypeId: this.event.ticketTypes[0].id
-      },
       formModel: {
-        eventId: this.event.id,
+        eventId: null,
         tickets: []
       }
     };
@@ -129,26 +134,50 @@ export default {
     this.userId = JSON.parse(localStorage.getItem("user")).auth.find(
       (a) => a.role === "user"
     ).id;
-    this.formModel.eventId = this.event.id;
-    this.formModel.tickets.push(this.tickets);
-    // console.log(this.formModel);
     console.log(this.event);
+
+    this.formModel.eventId = this.event.id;
+    this.formModel.tickets.push({
+      nama: "",
+      identification: "KTP",
+      identificationNumber: "",
+      ticketTypeId: this.event.ticketTypes[0].id
+    });
   },
   methods: {
-    updateForm() {
-      this.$emit("submitReserv", this.formModel);
-      this.$router.push("/checkout");
+    createReservation() {
+      ReservationService.createReservation(this.formModel)
+        .then(() => {
+          this.$router.push("/");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    checkout() {
+      ReservationService.createReservation(this.formModel)
+        .then((res) => {
+          this.$router.push({
+            path: "/checkout",
+            query: {
+              reservation: res.data.reservation
+            }
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      // this.$router.push({
+      //   path: "/checkout",
+      //   query: {
+      //     reservation: this.formModel
+      //   }
+      // });
     },
     currencyFormat(i) {
       i = parseInt(i);
       i = this.event.ticketTypes.findIndex((e) => e.id == i);
       var n = this.event.ticketTypes[i].price;
-      console.log(
-        Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: this.event.currency
-        }).format(n)
-      );
 
       return Intl.NumberFormat("en-US", {
         style: "currency",
@@ -156,8 +185,15 @@ export default {
       }).format(n);
     },
     addTicket() {
-      this.formModel.tickets.push(this.tickets);
-      console.log(this.formModel.tickets);
+      this.formModel.tickets.push({
+        nama: "",
+        identification: "KTP",
+        identificationNumber: "",
+        ticketTypeId: this.event.ticketTypes[0].id
+      });
+    },
+    deleteTicket() {
+      this.formModel.tickets.pop();
     },
     lastElement(i) {
       return !(i < this.formModel.tickets.length - 1);

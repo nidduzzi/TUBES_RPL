@@ -4,33 +4,23 @@
       <h3 class="font-weight-bold">Checkout</h3>
       <hr />
       <div class="card-body text-left px-5">
-        <h4>Webinar Something</h4>
+        <h4>{{ event.name }}</h4>
         <hr />
         <h5>Detail Reservasi</h5>
         <div class="card card-style card-tickets mb-4">
           <div class="card-body">
             <table class="table">
               <tbody>
-                <tr>
-                  <td>Silver</td>
-                  <td>x2</td>
-                  <td>1000000 IDR</td>
+                <tr v-for="(rsv, i) in getReservationDetails" :key="i">
+                  <td>{{ getNameById(rsv.ticketTypeId) }}</td>
+                  <td>{{ "x" + rsv.pcs }}</td>
+                  <td>
+                    {{
+                      currencyFormat(rsv.pcs * getPriceById(rsv.ticketTypeId))
+                    }}
+                  </td>
                   <td></td>
-                  <td>500000 IDR</td>
-                </tr>
-                <tr>
-                  <td>VIP</td>
-                  <td>x1</td>
-                  <td>1500000 IDR</td>
-                  <td></td>
-                  <td>1500000 IDR</td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td>2500000 IDR</td>
-                  <td></td>
-                  <td></td>
+                  <td>{{ currencyFormat(getPriceById(rsv.ticketTypeId)) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -93,7 +83,7 @@
 
       <div class="row">
         <div class="offset-md-3 col-md-6">
-          <button @click="updateTiket" class="btn btn-orange btn-block">
+          <button @click="payment" class="btn btn-orange btn-block">
             Submit
           </button>
         </div>
@@ -103,18 +93,98 @@
 </template>
 
 <script>
+import EventService from "../services/event.service";
+import ReservationService from "../services/reservation.service";
+
 export default {
   name: "checkout",
   data() {
     return {
       tempForm: {},
+      event: null
     };
   },
-  methods: {
-    updateForm() {
-      this.$emit("submitReserv", this.tempForm);
-    },
+  created() {
+    this.getEvent;
   },
+  asyncComputed: {
+    async getEvent() {
+      console.log(this.reservation);
+      let res = await EventService.getEvents({
+        q: {
+          id: this.reservation.eventId
+        },
+        h: {
+          include: { ticketTypes: true },
+          select: {
+            currency: true,
+            id: true,
+            name: true,
+            ticketTypes: true
+          }
+        }
+      });
+
+      this.event = res.data.events[0];
+      console.log(res.data.events[0]);
+      return res.data.events[0];
+    }
+  },
+  props: ["reservation"],
+  computed: {
+    getReservationDetails() {
+      var reservationDetails = [];
+
+      this.reservation.tickets.forEach((e) => {
+        var found = false;
+
+        for (let i = 0; i < reservationDetails.length && !found; i++) {
+          if (e.ticketTypeId == reservationDetails[i].ticketTypeId) {
+            reservationDetails[i].pcs++;
+            found = true;
+          }
+        }
+
+        if (!found) {
+          reservationDetails.push({
+            ticketTypeId: e.ticketTypeId,
+            pcs: 1,
+            price: e.price
+          });
+        }
+      });
+
+      console.log(reservationDetails);
+      return reservationDetails;
+    }
+  },
+  methods: {
+    getPriceById(id) {
+      return this.event.ticketTypes.find((e) => e.id == id).price;
+    },
+    getNameById(id) {
+      return this.event.ticketTypes.find((e) => e.id == id).name;
+    },
+    currencyFormat(n) {
+      n = parseInt(n);
+      return Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: this.event.currency
+      }).format(n);
+    },
+    payment() {
+      var id_reservation = parseInt(this.reservation.id);
+      ReservationService.createPayment({
+        id_reservation
+      })
+        .then(() => {
+          this.$router.push("/");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }
 };
 </script>
 

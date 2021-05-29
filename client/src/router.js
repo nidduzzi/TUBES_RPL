@@ -53,12 +53,13 @@ export default new Router({
           path: "/event",
           name: "event",
           component: () => import("./views/mainapp/Event.vue"),
-          props: route => ({ id: route.query.idEvent })
+          props: route => ({ id: route.query.eventId })
         },
         {
           path: "/event/result",
           name: "searcheventresult",
-          component: () => import("./components/ResultSearch.vue")
+          component: () => import("./components/ResultSearch.vue"),
+          props: route => ({ query: {name: route.query.name, date: route.query.date, place: route.query.place} })
         },
         {
           // idEvent=, Event=
@@ -77,6 +78,7 @@ export default new Router({
                 path: "/checkout",
                 name: "checkout",
                 component: () => import("./components/CheckoutForm.vue"),
+                props: route => ({ reservation: route.query.reservation })
               },
           ]
         },

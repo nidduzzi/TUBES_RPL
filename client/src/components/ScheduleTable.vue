@@ -12,7 +12,7 @@
       </thead>
       <tbody>
         <tr v-for="(schedule, i) in schedules" :key="i">
-          <td>{{ i }}</td>
+          <td>{{ i + 1 }}</td>
           <td>{{ schedule.name }}</td>
           <td>{{ schedule.place }}</td>
           <td>{{ schedule.startDateTime }}</td>
@@ -34,7 +34,7 @@ export default {
   },
   created() {
     this.schedules.forEach((s) => {
-      s.startDateTime = new Date(s.startTime).toDate();
+      s.startDateTime = new Date(s.startTime).toString();
       s.endDateTime = s.allDay ? "-" : new Date(s.endTime).toString();
       s.place = s.place ? s.place : "-";
     });

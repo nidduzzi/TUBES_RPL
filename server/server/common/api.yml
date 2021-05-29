@@ -2671,6 +2671,24 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
       operationId: get-tags-id
       description: Get Tag details
+  '/users/{id}/reservations/waiting':
+    get:
+      summary: Get all waiting reservations from one user
+      tags:
+        - Reservation Endpoint
+        - User Endpoint
+      responses:
+        '200':
+          description: OK
+      operationId: 'get-users-:id-reservations-waiting'
+      description: User can see all waiting reservations then can confirm it
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+        description: User's id
 components:
   schemas:
     User:

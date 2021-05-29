@@ -17,10 +17,10 @@
             </div>
             <span class="col-md-2"></span>
           </d>
-          <div>
+          <div v-for="(event, index) in eventList" :key="index">
             <div class="row mb-2">
               <div class="row row-data col-md-10">
-                <span class="col-md-3">Webinar</span>
+                <span class="col-md-3">{{ event.name }}</span>
                 <span class="col-md-2">Bandung</span>
                 <span class="col-md-3"> 22 Mei 2021 </span>
                 <span class="col-md-2"> 25 </span>
@@ -270,19 +270,16 @@
         </FormulateInput>
       </FormulateForm>
     </SweetModal> -->
-    -->
   </div>
 </template>
 
 <script>
 import EOService from '../../../services/eo.service'
-import EventService from '../../../services/event.service'
 
 export default {
   name: "eventmanage",
   data(){
      return {
-        eoProfile: {},
         eventList: []
 
      }
@@ -297,29 +294,16 @@ export default {
   },
   mounted(){
    //   EO list
-     EOService.getEOEvent(this.currUser.auth[1].id)
+     EOService.getEOEvent(this.$store.state.auth.user.auth[1].id)
       .then((res) => {
         if (res) {
-         console.log(res)
-          this.eoProfile = res.eventOrganizer;
+          this.eventList= res.data.events;
         }
       })
       .catch((error) => {
         console.log(error);
       });
-
-   // event list
-    EventService.getEvent(this.eoProfile.id)
-      .then((res) => {
-        this.eventList = res.data.events;
-        this.eventList.forEach((element) => {
-          element.detail = false;
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
+  },
 };
 </script>
 

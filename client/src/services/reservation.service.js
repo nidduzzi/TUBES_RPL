@@ -23,6 +23,23 @@ class ReservationService {
       });
   }
 
+  cancelReservation(id) {
+    return axios
+      .put(
+        API_RESERVATION + "/cancel/" + id,
+        {
+          headers: authHeader(),
+        }
+      )
+      .then(response => {
+        return response;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+  // Crete payment intent
   createPayment(data) {
     return axios
       .post(

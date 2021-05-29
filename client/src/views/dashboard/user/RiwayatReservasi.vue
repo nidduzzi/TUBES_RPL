@@ -25,13 +25,27 @@
                 ><i class="fa fa-suitcase" aria-hidden="true"></i> Penyelenggara
                 Acara</span
               >
+              <span class="col-md-3"
+                ><i class="fa fa-suitcase" aria-hidden="true"></i> Status</span
+              >
               <span class="col-md-1"></span>
             </div>
-            <div class="row row-data mb-2">
-              <span class="col-md-3 py-2">Major Bowl</span>
-              <span class="col-md-2 py-2">Bandung</span>
-              <span class="col-md-3 py-2"> Selasa, 27 mei 2021 </span>
-              <span class="col-md-3 py-2"> Alibaba </span>
+            <div
+              class="row row-data mb-2"
+              v-for="(reservation, index) in reservationList"
+              :key="index"
+            >
+              <span class="col-md-3 py-2">{{ reservation.Event.name }}</span>
+              <span class="col-md-2 py-2">{{
+                reservation.Event.schedule[0].place
+              }}</span>
+              <span class="col-md-3 py-2">{{
+                reservation.Event.startDate
+              }}</span>
+              <span class="col-md-3 py-2">{{
+                reservation.Event.eventOrganizer.name
+              }}</span>
+              <span class="col-md-3 py-2">{{ reservation.status }}</span>
               <span class="col-md-1">
                 <div class="text-white btn btn-tiket btn-md border-radius2">
                   <img src="../../../assets/logotiket.png" />
@@ -47,7 +61,36 @@
 </template>
 
 <script>
-export default {};
+import UserService from "../../../services/user.service";
+
+export default {
+  name: "riwayatReservasi",
+  data() {
+    return {
+      reservationList: [],
+      userId: null
+    };
+  },
+  mounted() {
+    this.userId = JSON.parse(localStorage.getItem("user")).auth.find(
+      (a) => a.role === "user"
+    ).id;
+    // user list
+    UserService.getReservationUserList(this.userId)
+      .then((res) => {
+        this.reservationList = res.data.reservations;
+        this.reservationList.forEach((element) => {
+          element.Event.startDate = new Date(
+            element.Event.schedule[0].startTime
+          ).toDateString();
+          element.detail = false;
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+};
 </script>
 
 <style lang="scss" scoped>

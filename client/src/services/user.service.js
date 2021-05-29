@@ -262,6 +262,20 @@ class UserService {
         return err.response;
       }); 
   }
+
+  getWaitingReservationUserList(id){
+    return axios.get(
+      API_USER + "/" + id + "/reservations/waiting", 
+      { 
+        headers: authHeader() 
+      })
+       .then(response => {
+        return response;
+      })
+      .catch(err => {
+        return err.response;
+      }); 
+  }
 }
 
 export default new UserService();

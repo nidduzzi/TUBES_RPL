@@ -1,6 +1,6 @@
 <template>
   <div class="create-event px-5">
-    <FormulateForm class="formevent text-left">
+    <FormulateForm class="formevent text-left" #default="{ hasErrors }">
       <div class="row">
         <div class="col-md-6">
           <FormulateInput type="text" label="Nama Acara" />
@@ -22,6 +22,14 @@
               validation="bail|required"
             />
           </div>
+          <FormulateInput
+            name="currency"
+            type="text"
+            label="Kurs Pembayaran"
+            placeholder="Misal: IDR"
+            validation="bail|required"
+            class="mb-3"
+          />
         </div>
         <div class="col-md-6">
           <div class="text-left">
@@ -36,6 +44,7 @@
                 alt=""
               />
             </div>
+            <!-- Tags -->
             <h5 class="font-weight-light">Tags</h5>
             <div class="tags d-flex flex-wrap">
               <span
@@ -63,11 +72,25 @@
       <div class="row">
         <div class="col-md-6">
           <!-- Form Daftar Tiket -->
-          <h4 class="font-weight-light">Tiket</h4>
-          <FormulateForm class="formticket">
-            <FormulateInput type="text" label="Nama Tiket" />
-            <FormulateInput type="number" label="Harga Tiket" />
-            <FormulateInput type="textarea" label="Deskripsi Tiket" />
+          <FormulateForm class="formticket card p-4" #default="{ hasErrors }">
+            <h4 class="font-weight-light">Tiket</h4>
+            <FormulateInput
+              type="text"
+              label="Nama Tiket"
+              v-model="ticket.name"
+              validation="bail|required"
+            />
+            <FormulateInput
+              type="number"
+              label="Harga Tiket"
+              v-model="ticket.price"
+              validation="bail|required"
+            />
+            <FormulateInput
+              type="textarea"
+              label="Deskripsi Tiket"
+              v-model="ticket.description"
+            />
 
             <!-- Atribut  -->
             <h5 class="font-weight-light">Atribut</h5>
@@ -77,7 +100,7 @@
                 :key="index"
                 class="tag-item mr-2 border-radius2 mt-2"
               >
-                {{ atribut}}
+                {{ atribut.name }}
               </span>
               <button
                 @click="atributModal"
@@ -86,18 +109,68 @@
                 <i class="fa fa-plus" aria-hidden="true"></i>
               </button>
             </div>
+
+            <FormulateInput
+              class="text-center mt-2"
+              type="button"
+              label="Tambahkan"
+              @click="addTicketType"
+              :disabled="hasErrors"
+            >
+              <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+            </FormulateInput>
             <!-- ------------ -->
           </FormulateForm>
         </div>
-        <div class="col-md-6">
-           <!-- Jenis Tiket -->
+        <!-- Jenis Tiket -->
+        <div class="jtiket offset-md-1 col-md-4 text-center px-5 py-3">
+          <!-- Thead -->
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Jenis Tiket</h5>
+            </div>
+            <div class="col-md-6">
+              <h5>Harga</h5>
+            </div>
+          </div>
+          <!-- Tbody -->
+          <div
+            v-for="(ticket, index) in ticketType"
+            :key="index"
+            class="row row-data mb-2"
+          >
+            <div class="col-md-6">
+              <!-- Jenis Tiket -->
+              {{ ticket.name }}
+            </div>
+            <div class="col-md-6">
+              <!-- Harga -->
+              {{ ticket.price }}
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="offset-md-11 col-md-12"></div>
+        </div>
+      </div>
+      <div class="row mb-5">
+        <div class="col-md-12">
+          <FormulateInput
+            class="text-center mt-2"
+            type="button"
+            label="Submit This Event"
+            @click="createEvent"
+            :disabled="hasErrors"
+          >
+            <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+          </FormulateInput>
         </div>
       </div>
     </FormulateForm>
 
     <!-- Tag Modal -->
     <SweetModal ref="tagModal">
-      <FormulateForm class="formevent text-left">
+      <FormulateForm class="formmodal text-left">
         <FormulateInput type="text" label="Tag" v-model="tag.name" />
         <FormulateInput type="textarea" label="Deskripsi" v-model="tag.desc" />
         <FormulateInput
@@ -112,17 +185,17 @@
 
     <!-- Atribut Modal -->
     <SweetModal ref="atributModal">
-      <FormulateForm class="formevent text-left">
+      <FormulateForm class="formmodal text-left">
         <FormulateInput type="text" label="Atribut" v-model="atribut.name" />
         <!-- Values  -->
         <h5 class="font-weight-light">Values</h5>
         <div class="tags d-flex flex-wrap mb-3">
           <span
-            v-for="(value, index) in atributs.values"
+            v-for="(value, index) in atribut.values"
             :key="index"
             class="tag-item mr-2 border-radius2 mt-2"
           >
-            {{ value }}
+            {{ value.value }}
           </span>
           <button
             @click="valuesModal"
@@ -144,7 +217,7 @@
 
     <!-- Values Modal -->
     <SweetModal ref="valuesModal">
-      <FormulateForm class="formevent text-left">
+      <FormulateForm class="formmodal text-left">
         <FormulateInput type="text" label="Value" v-model="nilai.value" />
         <FormulateInput
           type="button"
@@ -165,84 +238,109 @@ import { SweetModal } from "sweet-modal-vue";
 export default {
   name: "create-event",
   components: {
-    SweetModal,
+    SweetModal
   },
   data() {
     return {
-      tags: [],
+      loader: false,
+      // client tag data
       tag: {
         name: "",
-        desc: "",
+        desc: ""
       },
-      atributs: [],
+      // client atribut data
       atribut: {
-         name: "A",
-         values: []
+        name: "A",
+        values: []
       },
+      // client values for atribut data
       nilai: {
-         value: "B",
+        value: "B"
       },
+      // client ticket data
+      ticket: {
+        name: "",
+        description: "",
+        price: 0,
+        attributes: []
+      },
+
+      // array of tag to req API
+      tags: [],
+      // array of attributs to req API
+      atributs: [],
+      // array of ticket type to req API
+      ticketType: [],
     };
   },
   methods: {
     tagModal() {
+      this.tag.name = "";
+      this.tag.desc = "";
       this.$refs.tagModal.open();
     },
     atributModal() {
-      this.$refs.atributModal.open();
-    },
-    valuesModal(){
-       this.$refs.valuesModal.open();
-    },
-    addAtribut(){
-      this.atributs.push(this.atribut);
-      this.$refs.atributModal.close();
       this.atribut.name = "";
       this.atribut.values = [];
+      this.$refs.atributModal.open();
+    },
+    valuesModal() {
+      this.nilai.value = "";
+      this.$refs.valuesModal.open();
+    },
+    addAtribut() {
+      this.atributs.push({ ...this.atribut });
+      this.$refs.atributModal.close();
       // simple
       this.$notify({
         group: "atributSuccess",
         title: "Berhasil",
         text: "Atribute ditambahkan!",
-        type: "success",
+        type: "success"
       });
     },
-    addValue(){
-       console.log(this.nilai);
-      this.atribut.values.push(this.nilai);
+    addValue() {
+      this.atribut.values.push({ ...this.nilai });
       this.$refs.valuesModal.close();
-      this.nilai.value = "";
       // simple
       this.$notify({
         group: "valueSuccess",
         title: "Berhasil",
         text: "Value Atribute ditambahkan!",
-        type: "success",
+        type: "success"
       });
     },
     addTag() {
-      this.tags.push(this.tag);
+      this.tags.push({ ...this.tag });
       this.$refs.tagModal.close();
-      this.tag.name = "";
-      this.tag.desc = "";
       // simple
       this.$notify({
         group: "tagSuccess",
         title: "Berhasil",
         text: "Tag ditambahkan!",
-        type: "success",
+        type: "success"
       });
     },
-  },
+    addTicketType() {
+      this.loader = true;
+      this.ticket.attributes = this.atributs;
+      this.ticketType.push({ ...this.ticket });
+      this.loader = false;
+    },
+    async createEvent() {}
+  }
 };
 </script>
 
 <style lang="scss" scoped>
-.formevent::v-deep .formulate-input .formulate-input-element {
+.formevent::v-deep .formulate-input .formulate-input-element,
+.formmodal::v-deep .formulate-input .formulate-input-element {
   max-width: none;
 }
 
-.formevent::v-deep .formulate-input .formulate-input-element--button {
+.formevent::v-deep .formulate-input-element--button,
+.formmodal::v-deep .formulate-input .formulate-input-element--button {
+  max-width: none;
   background-color: #f4743b;
   border-radius: 2em;
 }
@@ -273,5 +371,21 @@ export default {
     left: 0.6em;
     right: 0.6em;
   }
+}
+
+.row-data {
+  background-color: #efefef;
+  border-radius: 0.4em;
+  padding: {
+    left: 1.2em;
+    right: 1.2em;
+    top: 0.5em;
+    bottom: 0.5em;
+  }
+  box-shadow: 0 2px 2px rgba($color: #000000, $alpha: 0.2);
+}
+
+.jtiket .row-data:nth-child(odd) {
+  background-color: #fff;
 }
 </style>

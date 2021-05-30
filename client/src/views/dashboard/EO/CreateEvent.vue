@@ -3,8 +3,8 @@
     <FormulateForm class="formevent text-left" #default="{ hasErrors }">
       <div class="row">
         <div class="col-md-6">
-          <FormulateInput type="text" label="Nama Acara" />
-          <FormulateInput type="text" label="Tagline" />
+          <FormulateInput type="text" label="Nama Acara" v-model="name" />
+          <FormulateInput type="text" label="Tagline" v-model="tagline" />
           <div class="double-wide">
             <FormulateInput
               type="datetime-local"
@@ -13,6 +13,7 @@
               placeholder="Tanggal Acara"
               help="Waktu Acara dimulai"
               validation="required"
+              v-model="schedule.startTime"
             />
             <FormulateInput
               name="place"
@@ -20,6 +21,7 @@
               label="Tempat"
               placeholder="Tempat Acara"
               validation="bail|required"
+              v-model="schedule.place"
             />
           </div>
           <FormulateInput
@@ -29,6 +31,7 @@
             placeholder="Misal: IDR"
             validation="bail|required"
             class="mb-3"
+            v-model="currency"
           />
         </div>
         <div class="col-md-6">
@@ -66,7 +69,11 @@
       </div>
       <div class="row mb-5">
         <div class="col-md-12">
-          <FormulateInput type="textarea" label="Deskripsi Acara" />
+          <FormulateInput
+            type="textarea"
+            label="Deskripsi Acara"
+            v-model="description"
+          />
         </div>
       </div>
       <div class="row">
@@ -172,7 +179,11 @@
     <SweetModal ref="tagModal">
       <FormulateForm class="formmodal text-left">
         <FormulateInput type="text" label="Tag" v-model="tag.name" />
-        <FormulateInput type="textarea" label="Deskripsi" v-model="tag.desc" />
+        <FormulateInput
+          type="textarea"
+          label="Deskripsi"
+          v-model="tag.description"
+        />
         <FormulateInput
           type="button"
           @click="addTag"
@@ -235,6 +246,8 @@
 
 <script>
 import { SweetModal } from "sweet-modal-vue";
+import EventService from "../../../services/event.service";
+
 export default {
   name: "create-event",
   components: {
@@ -246,7 +259,7 @@ export default {
       // client tag data
       tag: {
         name: "",
-        desc: ""
+        description: ""
       },
       // client atribut data
       atribut: {
@@ -264,6 +277,15 @@ export default {
         price: 0,
         attributes: []
       },
+      // client schedule data
+      schedule: {
+        name: "",
+        description: "",
+        startTime: "",
+        endTime: "",
+        allDay: false,
+        place: ""
+      },
 
       // array of tag to req API
       tags: [],
@@ -271,7 +293,15 @@ export default {
       atributs: [],
       // array of ticket type to req API
       ticketType: [],
+      name: "",
+      tagline: "",
+      schedules: [],
+      currency: "",
+      description: ""
     };
+  },
+  created() {
+    this.addTag = this.addTag.bind(this);
   },
   methods: {
     tagModal() {
@@ -311,23 +341,71 @@ export default {
       });
     },
     addTag() {
-      this.tags.push({ ...this.tag });
-      this.$refs.tagModal.close();
-      // simple
-      this.$notify({
-        group: "tagSuccess",
-        title: "Berhasil",
-        text: "Tag ditambahkan!",
-        type: "success"
-      });
+      EventService.createEventTag(this.tag)
+        .then((e) => {
+          this.tags.push({ id: e.data.tag.id, name: e.data.tag.name });
+          this.$refs.tagModal.close();
+
+          this.$notify({
+            group: "tagSuccess",
+            title: "Berhasil",
+            text: "Tag ditambahkan!",
+            type: "success"
+          });
+        })
+        .catch((err) => console.log(err));
     },
     addTicketType() {
       this.loader = true;
       this.ticket.attributes = this.atributs;
-      this.ticketType.push({ ...this.ticket });
+      this.ticketType.push({
+        name: this.ticket.name,
+        description: this.ticket.description,
+        price: parseInt(this.ticket.price),
+        attributes: this.ticket.attributes
+      });
       this.loader = false;
     },
-    async createEvent() {}
+    addSchedule() {
+      this.schedules.push({
+        name: this.schedule.name,
+        description: this.schedule.description,
+        startTime: new Date(this.schedule.startTime)
+          .toISOString()
+          .slice(0, 19)
+          .replace("T", " "),
+        endTime: new Date(this.schedule.startTime)
+          .toISOString()
+          .slice(0, 19)
+          .replace("T", " "),
+        allDay: this.schedule.allDay,
+        place: this.schedule.place
+      });
+    },
+    createEvent() {
+      this.addSchedule();
+      var request = {
+        name: this.name,
+        tagline: this.tagline,
+        description: this.description,
+        schedule: this.schedules,
+        hasRsvp: false,
+        tags: this.tags,
+        maxTickets: 100,
+        unlimitedTickets: false,
+        ticketTypes: this.ticketType,
+        currency: this.currency
+      };
+
+      console.log(request);
+      EventService.createEvent(request)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   }
 };
 </script>

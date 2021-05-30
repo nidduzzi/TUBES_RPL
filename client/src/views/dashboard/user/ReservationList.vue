@@ -44,10 +44,13 @@
                   reservation.Event.eventOrganizer.name
                 }}</span>
                 <span class="col-md-1">
-                  <div class="text-white btn btn-tiket btn-md border-radius2">
+                  <button
+                    class="text-white btn btn-tiket btn-md border-radius2"
+                    @click="ticketDetailsModal"
+                  >
                     <img src="../../../assets/logotiket.png" />
                     Tiket
-                  </div>
+                  </button>
                 </span>
               </div>
             </div>
@@ -55,15 +58,36 @@
         </div>
       </div>
     </div>
+    <!-- Tickets Modal -->
+    <SweetModal ref="ticketsModal">
+      <FormulateForm class="formmodal text-left">
+        <FormulateInput type="text" label="Tag" v-model="tag.name" />
+        <FormulateInput
+          type="textarea"
+          label="Deskripsi"
+          v-model="tag.description"
+        />
+        <FormulateInput
+          type="button"
+          @click="addTag"
+          label="Tambahkan"
+          class="text-center"
+        >
+        </FormulateInput>
+      </FormulateForm>
+    </SweetModal>
   </div>
 </template>
 
 <script>
-// import EventService from "../../../services/event.service";
+import { SweetModal } from "sweet-modal-vue";
 import UserService from "../../../services/user.service";
 
 export default {
   name: "reservationlist",
+  components: {
+    SweetModal
+  },
   data() {
     return {
       reservationList: [],
@@ -88,6 +112,11 @@ export default {
       .catch((error) => {
         console.log(error);
       });
+  },
+  methods: {
+    ticketDetailsModal() {
+      this.$refs.ticketsModal.open();
+    }
   }
 };
 </script>

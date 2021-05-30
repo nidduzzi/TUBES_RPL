@@ -654,20 +654,7 @@ export class Controller {
           },
           select: {
             id: true,
-            tickets: {
-              select: {
-                id: true,
-                identification: true,
-                identificationNumber: true,
-                nama: true,
-                type: {
-                  select: {
-                    name: true,
-                    price: true
-                  }
-                }
-              }
-            },
+            tickets: true,
             Event: {
               select: {
                 id: true,

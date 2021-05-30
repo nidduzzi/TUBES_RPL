@@ -137,6 +137,21 @@ export default express
     ]),
     controller.getReservations
   )
+  .get(
+    '/:id/reservations/waiting',
+    checkPermissions([
+      {
+        role: Roles.User,
+        idValidator: (id: number, roleId: number): boolean => {
+          return id == roleId;
+        },
+      },
+      {
+        role: Roles.Admin,
+      },
+    ]),
+    controller.getWaitingReservations
+  )
   .put(
     '/terminate/:id',
     checkPermissions([{ role: Roles.Admin }]),

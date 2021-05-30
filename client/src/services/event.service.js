@@ -105,6 +105,26 @@ class EventService {
     this.last = r;
     return r;
   }
+
+  newImage(id, body, config){
+    return this.axios.put(
+      API_URL + "/events/" + id + "/image",
+      body,
+      {
+        headers: 
+        {
+          ...authHeader(),
+          ...config
+        }
+      }
+    )
+    .then(res => {
+      return res;
+    })
+    .catch(err => {
+      return err.response;
+    })
+  }
 }
 
 export default new EventService();

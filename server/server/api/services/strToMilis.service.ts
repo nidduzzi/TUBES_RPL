@@ -1,6 +1,6 @@
 export function strToMilis(str: string): number {
-  const t: number = Number.parseInt(str.slice(0, str.length - 2));
-  switch (str.slice(str.length - 2, str.length - 1)) {
+  const t: number = Number.parseInt(str.slice(0, str.length - 1));
+  switch (str.slice(str.length - 1, str.length)) {
     case 's':
       return t * 1000;
     case 'm':

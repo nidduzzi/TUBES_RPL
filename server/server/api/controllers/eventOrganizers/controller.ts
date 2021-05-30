@@ -39,6 +39,23 @@ function sendVerificationEmail(req: Request, eo: EventOrganizer) {
   emailService(eo.email, 'Ticketin Email Verification', emailHtml);
 }
 
+function checkNested(o: any, searchKeys: Array<string>): boolean {
+  //Early return
+  if (Object.keys(o).some((key) => searchKeys.includes(key))) {
+    return true;
+  }
+  let result, p;
+  for (p in o) {
+    if (o.hasOwnProperty(p) && typeof o[p] === 'object') {
+      result = checkNested(o[p], searchKeys);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return false;
+}
+
 export class Controller {
   getAll(req: Request, res: Response, next: NextFunction): void {
     let q = undefined;
@@ -48,6 +65,63 @@ export class Controller {
     let h = undefined;
     if (req.query.h) {
       h = JSON.parse(req.query.h as string);
+    }
+    const user = req.user as JwtDataStore;
+    if (
+      h &&
+      (!user ||
+        (user &&
+          user.scopes &&
+          !user.scopes.some((s) => s.role == Roles.Admin)))
+    ) {
+      if (h.include) {
+        if (
+          checkNested(h.include, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden include in query' });
+          return;
+        }
+      }
+      if (h.select) {
+        if (
+          checkNested(h.select, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden select in query' });
+          return;
+        }
+      }
     }
     const query =
       // check if q is sent
@@ -120,7 +194,19 @@ export class Controller {
         })
         .then((eo) => {
           if (eo) {
-            res.status(200).send({ eventOrganizer: eo });
+            res.status(200).send({
+              eventOrganizer: {
+                address: eo.address,
+                email: eo.email,
+                emailVerified: eo.emailVerified,
+                id: eo.id,
+                name: eo.name,
+                phone: eo.phone,
+                status: eo.status,
+                verificationDate: eo.verificationDate,
+                verified: eo.verified,
+              },
+            });
           } else {
             res.status(404).send({ message: 'id not found' });
           }
@@ -292,7 +378,18 @@ export class Controller {
           where: {
             id: id,
           },
-          include: { events: true },
+          include: {
+            events: {
+              include: {
+                schedule: true,
+                reservations: { include: { tickets: true, payment: true } },
+                tags: true,
+                ticketTypes: {
+                  include: { attributes: { include: { values: true } } },
+                },
+              },
+            },
+          },
         })
         .then((eo) => {
           if (eo) {
@@ -310,35 +407,39 @@ export class Controller {
   putVerifyEO(req: Request, res: Response, next: NextFunction): void {
     if (req.params.id) {
       const id = Number.parseInt(req.params.id);
-      prisma.eventOrganizer
-        .findUnique({
-          where: {
-            id: id,
-          },
-        })
-        .then((eo) => {
-          if (!eo?.verified) {
-            prisma.eventOrganizer
-              .update({
-                where: {
-                  id: eo?.id,
-                },
-                data: {
-                  verified: true,
-                  verificationDate: new Date(),
-                  status: 'ACTIVE',
-                },
-              })
-              .then((eo) => {
-                res.status(204).send({ eventOrganizer: eo });
-              });
-          } else {
-            res
-              .status(400)
-              .send({ message: 'event organizer already verified' });
-          }
-        })
-        .catch((err) => next(err));
+      if (id != NaN) {
+        prisma.eventOrganizer
+          .findUnique({
+            where: {
+              id: id,
+            },
+          })
+          .then((eo) => {
+            if (!eo?.verified) {
+              prisma.eventOrganizer
+                .update({
+                  where: {
+                    id: eo?.id,
+                  },
+                  data: {
+                    verified: true,
+                    verificationDate: new Date(),
+                    status: 'ACTIVE',
+                  },
+                })
+                .then((eo) => {
+                  res.status(204).send({ eventOrganizer: eo });
+                });
+            } else {
+              res
+                .status(400)
+                .send({ message: 'event organizer already verified' });
+            }
+          })
+          .catch((err) => next(err));
+      } else {
+        res.status(400).send({ message: 'invalid request id' });
+      }
     } else {
       res.status(400).send({ message: 'invalid request' });
     }
@@ -681,15 +782,15 @@ export class Controller {
                 where: { id: eo.termination.id },
               })
               .then((_termination) => {
-                prisma.user
+                prisma.eventOrganizer
                   .update({
                     where: { id: eo.id },
                     data: { status: 'ACTIVE' },
                   })
                   .then((_) =>
-                    res
-                      .status(200)
-                      .send({ message: 'user removed from termination list' })
+                    res.status(200).send({
+                      message: 'event organizer removed from termination list',
+                    })
                   );
               })
               .catch((err) => {
@@ -741,7 +842,7 @@ export class Controller {
                     },
                   })
                   .then((suspension) => {
-                    prisma.user
+                    prisma.eventOrganizer
                       .update({
                         where: { id: eo.id },
                         data: { status: 'SUSPENDED' },
@@ -766,6 +867,45 @@ export class Controller {
           res.status(404).send({ message: 'invalid id given' });
         }
       });
+    } else {
+      res.status(400).send({ message: 'invalid request' });
+    }
+  }
+
+  deleteSuspension(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id) {
+      const id: number = Number.parseInt(req.params.id);
+      prisma.eventOrganizer
+        .findUnique({
+          where: { id: id },
+          include: {
+            suspensions: { orderBy: { id: 'desc' } },
+          },
+        })
+        .then((eo) => {
+          if (eo && eo.suspensions[0]) {
+            prisma.suspension
+              .delete({
+                where: { id: eo.suspensions[0].id },
+              })
+              .then((_suspension) => {
+                prisma.eventOrganizer
+                  .update({
+                    where: { id: eo.id },
+                    data: { status: 'ACTIVE' },
+                  })
+                  .then((_) =>
+                    res.status(200).send({
+                      message: 'event organizer removed from suspension list',
+                    })
+                  )
+                  .catch((err) => next(err));
+              })
+              .catch((err) => next(err));
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
+        });
     } else {
       res.status(400).send({ message: 'invalid request' });
     }

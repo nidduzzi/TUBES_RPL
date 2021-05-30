@@ -38,52 +38,61 @@ export class Controller {
     if (req.query.h) {
       h = JSON.parse(req.query.h as string);
     }
-    if (h.include) {
-      if (
-        checkNested(h.include, [
-          'admin',
-          'passwordHash',
-          'allowedUsers',
-          'notifications',
-          'suspensions',
-          'reservations',
-          'tickets',
-          'notification',
-          'payment',
-          'refreshToken',
-          'reservation',
-          'suspension',
-          'termination',
-          'ticket',
-          'user',
-        ])
-      ) {
-        res.status(403).send({ message: 'forbidden include in query' });
-        return;
+    const user = req.user as JwtDataStore;
+    if (
+      h &&
+      (!user ||
+        (user &&
+          user.scopes &&
+          !user.scopes.some((s) => s.role == Roles.Admin)))
+    ) {
+      if (h.include) {
+        if (
+          checkNested(h.include, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden include in query' });
+          return;
+        }
       }
-    }
-    if (h.select) {
-      if (
-        checkNested(h.select, [
-          'admin',
-          'passwordHash',
-          'allowedUsers',
-          'notifications',
-          'suspensions',
-          'reservations',
-          'tickets',
-          'notification',
-          'payment',
-          'refreshToken',
-          'reservation',
-          'suspension',
-          'termination',
-          'ticket',
-          'user',
-        ])
-      ) {
-        res.status(403).send({ message: 'forbidden select in query' });
-        return;
+      if (h.select) {
+        if (
+          checkNested(h.select, [
+            'admin',
+            'passwordHash',
+            'allowedUsers',
+            'notifications',
+            'suspensions',
+            'reservations',
+            'tickets',
+            'notification',
+            'payment',
+            'refreshToken',
+            'reservation',
+            'suspension',
+            'termination',
+            'ticket',
+            'user',
+          ])
+        ) {
+          res.status(403).send({ message: 'forbidden select in query' });
+          return;
+        }
       }
     }
     const query =
@@ -190,6 +199,7 @@ export class Controller {
               ticketTypes: event.ticketTypes,
               hasLogo: event.logo ? true : false,
               numImages: event.images.length,
+              currency: event.currency,
             };
             res.status(200).send({ event: body });
           } else {
@@ -375,7 +385,9 @@ export class Controller {
       prisma.event
         .findUnique({
           where: { id: id },
-          include: { reservations: true },
+          include: {
+            reservations: { include: { tickets: true, payment: true } },
+          },
         })
         .then((event) => {
           if (event) {

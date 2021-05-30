@@ -11,6 +11,7 @@ interface scopeValidator {
 interface options {
   checkAllScopes?: boolean;
   failWithError?: boolean;
+  credentialsRequired?: boolean;
 }
 
 export const checkPermissions = (
@@ -31,6 +32,7 @@ export const checkPermissions = (
     expressjwt({
       secret: process.env.SESSION_SECRET ?? 'TEMPORARYSECRETTTTT',
       algorithms: ['HS256'],
+      credentialsRequired: options?.credentialsRequired,
     }),
     (req: Request, res: Response, next: NextFunction): void => {
       const error = (res: Response) => {
@@ -54,37 +56,39 @@ export const checkPermissions = (
         );
         res.status(403).send({ message: err_message });
       };
-      const user = req.user as JwtDataStore;
       // verify user permissions
-      let allowed = false;
-      const id: number = Number.parseInt(req.params.id);
-      if (options && options.checkAllScopes) {
-        // check all scopes provided in the request
-        allowed = user.scopes.every((scope) =>
-          // against scopes expected for the path
-          expectedScopes.some(
-            async (expectedScope) =>
-              // validate role
-              scope.role == expectedScope.role &&
-              // validate id if provided with id validator by expected scopes
-              (expectedScope.idValidator != undefined
-                ? await expectedScope.idValidator(id, scope.id)
-                : true)
-          )
-        );
-      } else {
-        // check scopes provided in the request if at least one satisfy the expected scopes
-        allowed = user.scopes.some((scope) =>
-          expectedScopes.some(
-            async (expectedScope) =>
-              // validate role
-              scope.role == expectedScope.role &&
-              // validate id if provided with id validator by expected scopes
-              (expectedScope.idValidator != undefined && id != NaN
-                ? await expectedScope.idValidator(id, scope.id)
-                : true)
-          )
-        );
+      let allowed = !options?.credentialsRequired ?? false;
+      const user = req.user as JwtDataStore;
+      if (!allowed && user) {
+        const id: number = Number.parseInt(req.params.id);
+        if (options && options.checkAllScopes) {
+          // check all scopes provided in the request
+          allowed = user.scopes.every((scope) =>
+            // against scopes expected for the path
+            expectedScopes.some(
+              async (expectedScope) =>
+                // validate role
+                scope.role == expectedScope.role &&
+                // validate id if provided with id validator by expected scopes
+                (expectedScope.idValidator != undefined
+                  ? await expectedScope.idValidator(id, scope.id)
+                  : true)
+            )
+          );
+        } else {
+          // check scopes provided in the request if at least one satisfy the expected scopes
+          allowed = user.scopes.some((scope) =>
+            expectedScopes.some(
+              async (expectedScope) =>
+                // validate role
+                scope.role == expectedScope.role &&
+                // validate id if provided with id validator by expected scopes
+                (expectedScope.idValidator != undefined && id != NaN
+                  ? await expectedScope.idValidator(id, scope.id)
+                  : true)
+            )
+          );
+        }
       }
       return allowed ? next() : error(res);
     },

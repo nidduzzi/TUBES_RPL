@@ -167,12 +167,6 @@ export default {
         .catch((err) => {
           console.log(err);
         });
-      // this.$router.push({
-      //   path: "/checkout",
-      //   query: {
-      //     reservation: this.formModel
-      //   }
-      // });
     },
     currencyFormat(i) {
       i = parseInt(i);

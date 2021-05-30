@@ -33,10 +33,16 @@
               :key="index"
             >
               <div class="row row-data mb-2">
-                <span class="col-md-3 py-2">{{ reservation.name }}</span>
-                <span class="col-md-2 py-2">Tempat</span>
-                <span class="col-md-3 py-2"> Waktu </span>
-                <span class="col-md-3 py-2"> [Alibaba] </span>
+                <span class="col-md-3 py-2">{{ reservation.Event.name }}</span>
+                <span class="col-md-2 py-2">{{
+                  reservation.Event.schedule[0].place
+                }}</span>
+                <span class="col-md-3 py-2">
+                  {{ reservation.Event.startDate }}
+                </span>
+                <span class="col-md-3 py-2">{{
+                  reservation.Event.eventOrganizer.name
+                }}</span>
                 <span class="col-md-1">
                   <div class="text-white btn btn-tiket btn-md border-radius2">
                     <img src="../../../assets/logotiket.png" />
@@ -53,25 +59,29 @@
 </template>
 
 <script>
-import EventService from "../../../services/event.service";
+// import EventService from "../../../services/event.service";
+import UserService from "../../../services/user.service";
 
 export default {
   name: "reservationlist",
   data() {
     return {
-      reservationList: []
+      reservationList: [],
+      userId: null
     };
   },
   mounted() {
-    const p = {
-      q: {},
-      h: {}
-    };
+    this.userId = JSON.parse(localStorage.getItem("user")).auth.find(
+      (a) => a.role === "user"
+    ).id;
     // user list
-    EventService.getEvents(p)
+    UserService.getWaitingReservationUserList(this.userId)
       .then((res) => {
-        this.reservationList = res.data.events;
+        this.reservationList = res.data.reservations;
         this.reservationList.forEach((element) => {
+          element.Event.startDate = new Date(
+            element.Event.schedule[0].startTime
+          ).toDateString();
           element.detail = false;
         });
       })

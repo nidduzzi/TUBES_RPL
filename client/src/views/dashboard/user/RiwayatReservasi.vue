@@ -9,7 +9,7 @@
         <div class="card-body text-left">
           <div class="col-md-12">
             <div class="row mb-2 font-weight-bold">
-              <span class="col-md-3"
+              <span class="col-md-2"
                 ><i class="fa fa-building" aria-hidden="true"></i> Nama
                 Acara</span
               >
@@ -17,7 +17,7 @@
                 ><i class="fa fa-map-marker" aria-hidden="true"></i> Tempat
                 Acara</span
               >
-              <span class="col-md-3"
+              <span class="col-md-2"
                 ><i class="fa fa-calendar" aria-hidden="true"></i> Tanggal
                 Mulai</span
               >
@@ -25,7 +25,7 @@
                 ><i class="fa fa-suitcase" aria-hidden="true"></i> Penyelenggara
                 Acara</span
               >
-              <span class="col-md-3"
+              <span class="col-md-2"
                 ><i class="fa fa-suitcase" aria-hidden="true"></i> Status</span
               >
               <span class="col-md-1"></span>
@@ -35,17 +35,32 @@
               v-for="(reservation, index) in reservationList"
               :key="index"
             >
-              <span class="col-md-3 py-2">{{ reservation.Event.name }}</span>
+              <span class="col-md-2 py-2">{{ reservation.Event.name }}</span>
               <span class="col-md-2 py-2">{{
                 reservation.Event.schedule[0].place
               }}</span>
-              <span class="col-md-3 py-2">{{
+              <span class="col-md-2 py-2">{{
                 reservation.Event.startDate
               }}</span>
               <span class="col-md-3 py-2">{{
                 reservation.Event.eventOrganizer.name
               }}</span>
-              <span class="col-md-3 py-2">{{ reservation.status }}</span>
+              <span class="col-md-2 py-2">
+                <div
+                    :class="[
+                      'btn btn-sm font-status border-radius2 px-2 py-0',
+                      reservation.status === 'CONFIRMED'
+                        ? 'btn-success'
+                        : reservation.status === 'CANCELED'
+                        ? 'btn-danger'
+                        : reservation.status === 'WAITING'
+                        ? 'btn-info text-white'
+                        : 'btn-light'
+                    ]"
+                  >
+                    {{ reservation.status }}
+                  </div>
+                </span>
               <span class="col-md-1">
                 <div
                   class="text-white btn btn-tiket btn-md border-radius2"

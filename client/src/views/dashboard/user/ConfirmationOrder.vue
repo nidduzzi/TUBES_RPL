@@ -9,8 +9,9 @@
       <div class="col-md-12">
         <div class="card-body text-left">
           <div class="col-md-12">
+            <!-- Thead -->
             <div class="row mb-2 font-weight-bold">
-              <span class="col-md-3"
+              <span class="col-md-2"
                 ><i class="fa fa-building" aria-hidden="true"></i> Nama
                 Acara</span
               >
@@ -26,14 +27,15 @@
                 ><i class="fa fa-suitcase" aria-hidden="true"></i> Penyelenggara
                 Acara</span
               >
-              <span class="col-md-1"></span>
+              <span class="col-md-2"></span>
             </div>
+            <!-- Tbody -->
             <div
               class="row row-data mb-2"
               v-for="(reservation, index) in reservationList"
               :key="index"
             >
-              <span class="col-md-3 py-2">{{ reservation.Event.name }}</span>
+              <span class="col-md-2 py-2">{{ reservation.Event.name }}</span>
               <span class="col-md-2 py-2">{{
                 reservation.Event.schedule[0].place
               }}</span>
@@ -43,17 +45,15 @@
               <span class="col-md-3 py-2">{{
                 reservation.Event.eventOrganizer.name
               }}</span>
-              <span class="col-md-1">
+              <span class="text-right col-md-2 py-2">
                 <button
-                  class="offset-md-6 text-white btn btn-confirm btn-md rounded-circle"
+                  class="mr-1 text-white btn btn-confirm btn-md rounded-circle"
                   @click="confirmOrder(reservation)"
                 >
                   <i class="fa fa-check-square-o" aria-hidden="true"></i>
                 </button>
-              </span>
-              <span class="col-md-1">
                 <button
-                  class="offset-md-6 text-white btn btn-confirm btn-md rounded-circle"
+                  class="text-white btn btn-confirm btn-md rounded-circle"
                   @click="cancelOrder(reservation.id)"
                 >
                   <i class="fa fa-times-circle" aria-hidden="true"></i>

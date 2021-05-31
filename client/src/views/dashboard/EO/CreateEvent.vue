@@ -31,6 +31,7 @@
             placeholder="Misal: IDR"
             validation="bail|required"
             v-model="currency"
+            class="mb-3"
           />
         </div>
         <div class="col-md-6">

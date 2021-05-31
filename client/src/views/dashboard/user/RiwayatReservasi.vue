@@ -47,7 +47,10 @@
               }}</span>
               <span class="col-md-3 py-2">{{ reservation.status }}</span>
               <span class="col-md-1">
-                <div class="text-white btn btn-tiket btn-md border-radius2">
+                <div
+                  class="text-white btn btn-tiket btn-md border-radius2"
+                  @click="ticketDetailsModal(reservation)"
+                >
                   <img src="../../../assets/logotiket.png" />
                   Tiket
                 </div>
@@ -57,18 +60,71 @@
         </div>
       </div>
     </div>
+
+    <SweetModal ref="ticketsModal">
+      <div class="grid">
+        <div class="row">
+          <h3 class="md-3 float-left">{{ reservationToShow.Event.name }}</h3>
+        </div>
+        <div class="row">
+          <h5 class="md-3 float-left">
+            {{ reservationToShow.Event.eventOrganizer.name }}
+          </h5>
+        </div>
+        <div class="row">
+          <h5 class="md-3 float-left">
+            {{ reservationToShow.Event.startDate }}
+          </h5>
+        </div>
+      </div>
+      <table class="table table-striped text-center">
+        <thead>
+          <tr>
+            <th scope="col">Nama</th>
+            <th scope="col">Jenis Tiket</th>
+            <th scope="col">Harga</th>
+            <th scope="col">Identifikasi</th>
+            <th scope="col">Nomor Identifikasi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(ticket, index) in reservationToShow.tickets" :key="index">
+            <td>{{ ticket.nama }}</td>
+            <td>{{ ticket.type.name }}</td>
+            <td>{{ currencyFormat(ticket.type.price) }}</td>
+            <td>{{ ticket.identification }}</td>
+            <td>{{ ticket.identificationNumber }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </SweetModal>
   </div>
 </template>
 
 <script>
 import UserService from "../../../services/user.service";
+import { SweetModal } from "sweet-modal-vue";
 
 export default {
   name: "riwayatReservasi",
+  components: {
+    SweetModal
+  },
   data() {
     return {
       reservationList: [],
-      userId: null
+      userId: null,
+      reservationToShow: {
+        Event: {
+          name: null,
+          currency: "",
+          eventOrganizer: {
+            name: ""
+          },
+          startDate: ""
+        },
+        tickets: []
+      }
     };
   },
   mounted() {
@@ -89,6 +145,21 @@ export default {
       .catch((error) => {
         console.log(error);
       });
+  },
+  methods: {
+    ticketDetailsModal(reservation) {
+      this.reservationToShow = reservation;
+      this.$refs.ticketsModal.open();
+      console.log(this.reservationToShow);
+    },
+    currencyFormat(i) {
+      i = parseInt(i);
+
+      return Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: this.reservationToShow.Event.currency
+      }).format(i);
+    }
   }
 };
 </script>

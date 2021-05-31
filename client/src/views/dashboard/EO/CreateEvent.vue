@@ -30,25 +30,64 @@
             label="Kurs Pembayaran"
             placeholder="Misal: IDR"
             validation="bail|required"
-            class="mb-3"
             v-model="currency"
           />
         </div>
         <div class="col-md-6">
           <div class="text-left">
-            <div class="foto">
+            <!-- <div class="foto">
               <h5 class="font-weight-light">Logo Acara</h5>
-              <button type="button" class="btn htn-sm btn-dark py-0 mb-2">
-                Pilih Foto
-              </button>
-              <img
-                src="../../../assets/slider.jpg"
-                class="mb-2 img-fluid w-25 d-block"
-                alt=""
+              <FormulateInput
+                type="image"
+                v-model="fotoEvent.files"
+                label="Select an image to upload"
+                help="Select a png, jpg or gif to upload."
+                validation="mime:image/jpeg,image/png,image/gif"
+                @change="fotoChange"
               />
-            </div>
+              <img
+                width="200px"
+                height="200px"
+                v-if="imageUrl"
+                :src="imageUrl"
+                class="img-fluid"
+                alt="eventPicture"
+              />
+            </div> -->
+            <FormulateInput
+              name="rsvp"
+              type="checkbox"
+              label="RSVP?"
+              v-model="hasRsvp"
+              :class="hasRsvp ? '' : 'mb-3'"
+            />
+            <FormulateInput
+              v-if="hasRsvp"
+              type="datetime-local"
+              name="datetime"
+              label="RSVP Tenggat Waktu"
+              help="Tenggat waktu konfirmasi"
+              v-model="rsvpDeadline"
+              :class="hasRsvp ? '' : 'mb-3'"
+            />
+            <FormulateInput
+              name="unlimitedTickets"
+              type="checkbox"
+              label="Tiket Terbatas?"
+              v-model="unlimitedTickets"
+              :class="unlimitedTickets ? '' : 'mb-3'"
+            />
+            <FormulateInput
+              v-if="unlimitedTickets"
+              type="text"
+              validation="bail|number"
+              name="maxTickets"
+              label="Tiket Maksimum"
+              v-model="maxTickets"
+              class="mb-3"
+            />
             <!-- Tags -->
-            <h5 class="font-weight-light">Tags</h5>
+            <h5 class="font-weight-light mt-3">Tags</h5>
             <div class="tags d-flex flex-wrap">
               <span
                 v-for="(tag, index) in tags"
@@ -64,6 +103,13 @@
                 <i class="fa fa-plus" aria-hidden="true"></i>
               </button>
             </div>
+            <FormulateInput
+              v-model="tagChoosed"
+              :options="tags.map((el) => el.name)"
+              type="checkbox"
+              label="Pilih tag acara"
+              class="mt-3"
+            />
           </div>
         </div>
       </div>
@@ -297,11 +343,19 @@ export default {
       tagline: "",
       schedules: [],
       currency: "",
-      description: ""
+      description: "",
+      tagChoosed: [],
+      hasRsvp: false,
+      rsvpDeadline: "",
+      unlimitedTickets: false,
+      maxTickets: 100
     };
   },
   created() {
     this.addTag = this.addTag.bind(this);
+  },
+  mounted() {
+    this.getTag();
   },
   methods: {
     tagModal() {
@@ -340,6 +394,13 @@ export default {
         type: "success"
       });
     },
+    getTag() {
+      EventService.getAllTags()
+        .then((e) => {
+          this.tags = e.data.tags;
+        })
+        .catch((err) => console.log(err));
+    },
     addTag() {
       EventService.createEventTag(this.tag)
         .then((e) => {
@@ -367,6 +428,13 @@ export default {
       this.loader = false;
     },
     addSchedule() {
+      console.log(this.schedule.startTime);
+      this.tagChoosed = this.tags.filter((el) =>
+        this.tagChoosed.includes(el.name)
+      );
+      this.tagChoosed = this.tagChoosed.map((el) => {
+        return { name: el.name, description: el.description };
+      });
       this.schedules.push({
         name: this.schedule.name,
         description: this.schedule.description,
@@ -389,10 +457,11 @@ export default {
         tagline: this.tagline,
         description: this.description,
         schedule: this.schedules,
-        hasRsvp: false,
-        tags: this.tags,
-        maxTickets: 100,
-        unlimitedTickets: false,
+        hasRsvp: this.hasRsvp,
+        rsvpDeadline: this.rsvpDeadline,
+        tags: this.tagChoosed,
+        maxTickets: this.maxTickets,
+        unlimitedTickets: this.unlimitedTickets,
         ticketTypes: this.ticketType,
         currency: this.currency
       };

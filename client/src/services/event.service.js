@@ -18,47 +18,40 @@ class EventService {
   }
 
   createEvent(data) {
-    return this.axios.post(
-      API_URL + "/events",
-      data,
-      {
+    return this.axios
+      .post(API_URL + "/events", data, {
         headers: authHeader()
-      }
-    )
-    .then(res => {
-      return res;
-    })
-    .catch(err => {
-      return err.response;
-    })
+      })
+      .then(res => {
+        return res;
+      })
+      .catch(err => {
+        return err.response;
+      });
   }
 
   createEventTag(data) {
-    return this.axios.post(
-      API_URL + "/tags",
-      data,
-      {
+    return this.axios
+      .post(API_URL + "/tags", data, {
         headers: authHeader()
-      }
-    )
-    .then(res => {
-      return res;
-    })
-    .catch(err => {
-      return err.response;
-    })
+      })
+      .then(res => {
+        return res;
+      })
+      .catch(err => {
+        return err.response;
+      });
   }
 
   getAllTags() {
-    return this.axios.get(
-      API_URL + "/tags",
-    )
-    .then(res => {
-      return res;
-    })
-    .catch(err => {
-      return err.response;
-    })
+    return this.axios
+      .get(API_URL + "/tags")
+      .then(res => {
+        return res;
+      })
+      .catch(err => {
+        return err.response;
+      });
   }
 
   getEvent(id) {
@@ -106,24 +99,36 @@ class EventService {
     return r;
   }
 
-  newImage(id, body, config){
-    return this.axios.put(
-      API_URL + "/events/" + id + "/image",
-      body,
-      {
-        headers: 
-        {
+  newImage(id, body, config) {
+    return this.axios
+      .put(API_URL + "/events/" + id + "/image", body, {
+        headers: {
           ...authHeader(),
           ...config
         }
-      }
-    )
-    .then(res => {
-      return res;
-    })
-    .catch(err => {
-      return err.response;
-    })
+      })
+      .then(res => {
+        return res;
+      })
+      .catch(err => {
+        return err.response;
+      });
+  }
+
+  newLogo(id, body, config) {
+    return this.axios
+      .put(API_URL + "/events/" + id + "/logo", body, {
+        headers: {
+          ...authHeader(),
+          ...config
+        }
+      })
+      .then(res => {
+        return res;
+      })
+      .catch(err => {
+        return err.response;
+      });
   }
 }
 

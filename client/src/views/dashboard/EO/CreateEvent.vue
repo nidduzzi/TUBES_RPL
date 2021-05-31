@@ -1,496 +1,310 @@
 <template>
   <div class="create-event px-5">
-    <FormulateForm class="formevent text-left" #default="{ hasErrors }">
-      <div class="row">
-        <div class="col-md-6">
-          <FormulateInput type="text" label="Nama Acara" v-model="name" />
-          <FormulateInput type="text" label="Tagline" v-model="tagline" />
-          <div class="double-wide">
-            <FormulateInput
-              type="datetime-local"
-              name="datetime"
-              label="Tanggal"
-              placeholder="Tanggal Acara"
-              help="Waktu Acara dimulai"
-              validation="required"
-              v-model="schedule.startTime"
-            />
-            <FormulateInput
-              name="place"
-              type="text"
-              label="Tempat"
-              placeholder="Tempat Acara"
-              validation="bail|required"
-              v-model="schedule.place"
-            />
-          </div>
+    <FormulateForm
+      v-model="values"
+      #default="{ hasErrors }"
+      @submit="submissionHandler"
+    >
+      <div class="d-flex flex-row flex-wrap">
+        <div class="d-flex flex-column flex-wrap mx-4 my-2">
           <FormulateInput
-            name="currency"
             type="text"
-            label="Kurs Pembayaran"
-            placeholder="Misal: IDR"
+            name="name"
+            placeholder="The Amazing Event"
+            label="Event Name"
             validation="bail|required"
-            v-model="currency"
-            class="mb-3"
           />
-        </div>
-        <div class="col-md-6">
-          <div class="text-left">
-            <!-- <div class="foto">
-              <h5 class="font-weight-light">Logo Acara</h5>
-              <FormulateInput
-                type="image"
-                v-model="fotoEvent.files"
-                label="Select an image to upload"
-                help="Select a png, jpg or gif to upload."
-                validation="mime:image/jpeg,image/png,image/gif"
-                @change="fotoChange"
-              />
-              <img
-                width="200px"
-                height="200px"
-                v-if="imageUrl"
-                :src="imageUrl"
-                class="img-fluid"
-                alt="eventPicture"
-              />
-            </div> -->
-            <FormulateInput
-              name="rsvp"
-              type="checkbox"
-              label="RSVP?"
-              v-model="hasRsvp"
-              :class="hasRsvp ? '' : 'mb-3'"
-            />
-            <FormulateInput
-              v-if="hasRsvp"
-              type="datetime-local"
-              name="datetime"
-              label="RSVP Tenggat Waktu"
-              help="Tenggat waktu konfirmasi"
-              v-model="rsvpDeadline"
-              :class="hasRsvp ? '' : 'mb-3'"
-            />
-            <FormulateInput
-              name="unlimitedTickets"
-              type="checkbox"
-              label="Tiket Terbatas?"
-              v-model="unlimitedTickets"
-              :class="unlimitedTickets ? '' : 'mb-3'"
-            />
-            <FormulateInput
-              v-if="unlimitedTickets"
-              type="text"
-              validation="bail|number"
-              name="maxTickets"
-              label="Tiket Maksimum"
-              v-model="maxTickets"
-              class="mb-3"
-            />
-            <!-- Tags -->
-            <h5 class="font-weight-light mt-3">Tags</h5>
-            <div class="tags d-flex flex-wrap">
-              <span
-                v-for="(tag, index) in tags"
-                :key="index"
-                class="tag-item mr-2 border-radius2 mt-2"
-              >
-                {{ tag.name }}
-              </span>
-              <button
-                @click="tagModal"
-                class="btn btn-dark btn-sm py-1 border-radius2"
-              >
-                <i class="fa fa-plus" aria-hidden="true"></i>
-              </button>
-            </div>
-            <FormulateInput
-              v-model="tagChoosed"
-              :options="tags.map((el) => el.name)"
-              type="checkbox"
-              label="Pilih tag acara"
-              class="mt-3"
-            />
-          </div>
-        </div>
-      </div>
-      <div class="row mb-5">
-        <div class="col-md-12">
           <FormulateInput
-            type="textarea"
-            label="Deskripsi Acara"
-            v-model="description"
+            type="text"
+            name="tagline"
+            placeholder="Event of the century"
+            label="TagLine"
           />
+          <FormulateInput
+            type="text"
+            name="description"
+            placeholder="This event is where you want to be"
+            label="Description"
+            validation="bail|required"
+          />
+          <FormulateInput
+            type="text"
+            name="currency"
+            placeholder="IDR"
+            label="Currency"
+            validation="bail|required"
+          />
+          <FormulateInput
+            type="image"
+            name="logo"
+            label="Your Logo"
+            :uploader="uploadFile"
+            validation="mime:image/jpeg,image/png,image/gif"
+          />
+          <FormulateInput
+            type="number"
+            name="maxTickets"
+            label="Max. Tickets"
+            validation="optional|number|min:1,value"
+            @change="
+              (e) => $set(values, 'unlimitedTickets', !(e.target.value > 0))
+            "
+          />
+          <FormulateInput
+            type="datetime-local"
+            name="rsvpDeadline"
+            label="RSVP Deadline"
+            :validation="'^optional|after:' + new Date()"
+            @change="
+              (e) =>
+                $set(values, 'hasRsvp', new Date(e.target.value) >= new Date())
+            "
+          />
+          <FormulateInput type="hidden" name="unlimitedTickets" :value="true" />
+          <FormulateInput type="hidden" name="hasRsvp" :value="false" />
         </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6">
-          <!-- Form Daftar Tiket -->
-          <FormulateForm class="formticket card p-4" #default="{ hasErrors }">
-            <h4 class="font-weight-light">Tiket</h4>
+        <div class="d-flex flex-column flex-wrap mx-3 my-2">
+          <FormulateInput
+            type="group"
+            name="schedule"
+            validation="min:1,length"
+            :repeatable="true"
+            label="Schedule"
+            add-label="+ Add sechedule"
+            #default="{ index }"
+          >
             <FormulateInput
               type="text"
-              label="Nama Tiket"
-              v-model="ticket.name"
-              validation="bail|required"
+              name="name"
+              label="Name"
+              validation="required"
+            />
+            <FormulateInput
+              type="text"
+              name="description"
+              label="Description"
+              validation="required"
+            />
+            <FormulateInput
+              type="datetime-local"
+              name="startTime"
+              label="Start Time"
+              :validation="'^required|after:' + new Date()"
+              @submit="
+                (e) => {
+                  $set(
+                    values.schedule[index],
+                    'startTime',
+                    new Date(e.target.value)
+                  );
+                }
+              "
+            />
+            <FormulateInput
+              type="datetime-local"
+              name="endTime"
+              :validation="
+                '^optional|after:' +
+                (values &&
+                values.schedule &&
+                values.schedule[index] &&
+                values.schedule[index].startTime
+                  ? values.schedule[index].startTime
+                  : new Date())
+              "
+              label="End Time"
+              @change="
+                (e) =>
+                  $set(
+                    values.schedule[index],
+                    'allDay',
+                    !(new Date(e.target.value) >= new Date())
+                  )
+              "
+              @submit="
+                (e) => {
+                  $set(
+                    values.schedule[index],
+                    'endTime',
+                    new Date(e.target.value)
+                  );
+                }
+              "
+            />
+            <FormulateInput
+              type="text"
+              name="place"
+              label="Place"
+              validation="required"
+            />
+            <FormulateInput type="hidden" name="allDay" :value="true" />
+          </FormulateInput>
+        </div>
+        <div class="d-flex flex-column flex-wrap mx-3 my-2">
+          <FormulateInput
+            type="group"
+            name="ticketTypes"
+            validation="min:1,length"
+            :repeatable="true"
+            label="Ticket Type"
+            add-label="+ Add ticket type"
+          >
+            <FormulateInput
+              type="text"
+              name="name"
+              label="Name"
+              validation="required"
             />
             <FormulateInput
               type="number"
-              label="Harga Tiket"
-              v-model="ticket.price"
-              validation="bail|required"
+              name="price"
+              label="Price"
+              validation="^required|number"
             />
             <FormulateInput
-              type="textarea"
-              label="Deskripsi Tiket"
-              v-model="ticket.description"
-            />
-
-            <!-- Atribut  -->
-            <h5 class="font-weight-light">Atribut</h5>
-            <div class="tags d-flex flex-wrap">
-              <span
-                v-for="(atribut, index) in atributs"
-                :key="index"
-                class="tag-item mr-2 border-radius2 mt-2"
-              >
-                {{ atribut.name }}
-              </span>
-              <button
-                @click="atributModal"
-                class="btn btn-dark btn-sm py-1 border-radius2"
-              >
-                <i class="fa fa-plus" aria-hidden="true"></i>
-              </button>
-            </div>
-
-            <FormulateInput
-              class="text-center mt-2"
-              type="button"
-              label="Tambahkan"
-              @click="addTicketType"
-              :disabled="hasErrors"
+              type="group"
+              name="attributes"
+              :repeatable="true"
+              label="Ticket Type Attributes"
+              add-label="+ Add attribute"
             >
-              <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
+              <FormulateInput type="text" name="name" label="Name" />
+              <FormulateInput
+                type="group"
+                name="values"
+                label="Ticket Type Attribute Values"
+                :repeatable="true"
+                add-label="+ Add value"
+              >
+                <FormulateInput type="text" name="value" label="Value" />
+              </FormulateInput>
             </FormulateInput>
-            <!-- ------------ -->
-          </FormulateForm>
-        </div>
-        <!-- Jenis Tiket -->
-        <div class="jtiket offset-md-1 col-md-4 text-center px-5 py-3">
-          <!-- Thead -->
-          <div class="row">
-            <div class="col-md-6">
-              <h5>Jenis Tiket</h5>
-            </div>
-            <div class="col-md-6">
-              <h5>Harga</h5>
-            </div>
-          </div>
-          <!-- Tbody -->
-          <div
-            v-for="(ticket, index) in ticketType"
-            :key="index"
-            class="row row-data mb-2"
-          >
-            <div class="col-md-6">
-              <!-- Jenis Tiket -->
-              {{ ticket.name }}
-            </div>
-            <div class="col-md-6">
-              <!-- Harga -->
-              {{ ticket.price }}
-            </div>
-          </div>
-        </div>
-        <div class="row mt-3">
-          <div class="offset-md-11 col-md-12"></div>
-        </div>
-      </div>
-      <div class="row mb-5">
-        <div class="col-md-12">
-          <FormulateInput
-            class="text-center mt-2"
-            type="button"
-            label="Submit This Event"
-            @click="createEvent"
-            :disabled="hasErrors"
-          >
-            <div v-if="loader"><i class="fa fa-spinner fa-spin"></i></div>
           </FormulateInput>
+        </div>
+        <div class="d-flex flex-column flex-wrap mx-3 my-2">
+          <label class="typo__label">Tags</label>
+          <multiselect
+            v-model="values.tags"
+            tag-placeholder="Add this as new tag"
+            placeholder="Search or add a tag"
+            label="name"
+            track-by="name"
+            :options="availableTags"
+            :multiple="true"
+            :taggable="true"
+            @tag="addTag"
+          ></multiselect>
+        </div>
+        <div class="d-flex justify-content-center mx-auto my-2 w-100">
+          <FormulateInput
+            type="submit"
+            label="Submit New Event"
+            :disabled="hasErrors"
+          />
         </div>
       </div>
     </FormulateForm>
-
-    <!-- Tag Modal -->
-    <SweetModal ref="tagModal">
-      <FormulateForm class="formmodal text-left">
-        <FormulateInput type="text" label="Tag" v-model="tag.name" />
-        <FormulateInput
-          type="textarea"
-          label="Deskripsi"
-          v-model="tag.description"
-        />
-        <FormulateInput
-          type="button"
-          @click="addTag"
-          label="Tambahkan"
-          class="text-center"
-        >
-        </FormulateInput>
-      </FormulateForm>
-    </SweetModal>
-
-    <!-- Atribut Modal -->
-    <SweetModal ref="atributModal">
-      <FormulateForm class="formmodal text-left">
-        <FormulateInput type="text" label="Atribut" v-model="atribut.name" />
-        <!-- Values  -->
-        <h5 class="font-weight-light">Values</h5>
-        <div class="tags d-flex flex-wrap mb-3">
-          <span
-            v-for="(value, index) in atribut.values"
-            :key="index"
-            class="tag-item mr-2 border-radius2 mt-2"
-          >
-            {{ value.value }}
-          </span>
-          <button
-            @click="valuesModal"
-            class="btn btn-dark btn-sm py-1 border-radius2"
-          >
-            <i class="fa fa-plus" aria-hidden="true"></i>
-          </button>
-        </div>
-        <!-- ------------ -->
-        <FormulateInput
-          type="button"
-          @click="addAtribut"
-          label="Tambahkan"
-          class="text-center"
-        >
-        </FormulateInput>
-      </FormulateForm>
-    </SweetModal>
-
-    <!-- Values Modal -->
-    <SweetModal ref="valuesModal">
-      <FormulateForm class="formmodal text-left">
-        <FormulateInput type="text" label="Value" v-model="nilai.value" />
-        <FormulateInput
-          type="button"
-          @click="addValue"
-          label="Tambahkan"
-          class="text-center"
-        >
-        </FormulateInput>
-      </FormulateForm>
-    </SweetModal>
-    <notifications group="tagSuccess" position="bottom right" />
-    <notifications group="atributSuccess" position="bottom right" />
   </div>
 </template>
 
 <script>
-import { SweetModal } from "sweet-modal-vue";
 import EventService from "../../../services/event.service";
+import Multiselect from "vue-multiselect";
 
 export default {
   name: "create-event",
   components: {
-    SweetModal
+    Multiselect
   },
   data() {
     return {
-      loader: false,
-      // client tag data
-      tag: {
-        name: "",
-        description: ""
-      },
-      // client atribut data
-      atribut: {
-        name: "A",
-        values: []
-      },
-      // client values for atribut data
-      nilai: {
-        value: "B"
-      },
-      // client ticket data
-      ticket: {
-        name: "",
-        description: "",
-        price: 0,
-        attributes: []
-      },
-      // client schedule data
-      schedule: {
-        name: "",
-        description: "",
-        startTime: "",
-        endTime: "",
-        allDay: false,
-        place: ""
-      },
-
-      // array of tag to req API
-      tags: [],
-      // array of attributs to req API
-      atributs: [],
-      // array of ticket type to req API
-      ticketType: [],
-      name: "",
-      tagline: "",
-      schedules: [],
-      currency: "",
-      description: "",
-      tagChoosed: [],
-      hasRsvp: false,
-      rsvpDeadline: "",
-      unlimitedTickets: false,
-      maxTickets: 100
+      values: { tags: [] }
     };
   },
-  created() {
-    this.addTag = this.addTag.bind(this);
+  computed: {
+    availableTags() {
+      return this.tags instanceof Array
+        ? this.tags.map((t) => ({ name: t.name }))
+        : [];
+    }
   },
-  mounted() {
-    this.getTag();
+  asyncComputed: {
+    async tags() {
+      try {
+        let res = await EventService.getAllTags();
+        return res.data.tags;
+      } catch (err) {
+        console.warn(err);
+      }
+    }
   },
   methods: {
-    tagModal() {
-      this.tag.name = "";
-      this.tag.desc = "";
-      this.$refs.tagModal.open();
+    log(v) {
+      console.log(v);
     },
-    atributModal() {
-      this.atribut.name = "";
-      this.atribut.values = [];
-      this.$refs.atributModal.open();
+    async uploadFile(file, progress) {
+      console.log(file);
+      progress(100);
+      return Promise.resolve({});
     },
-    valuesModal() {
-      this.nilai.value = "";
-      this.$refs.valuesModal.open();
-    },
-    addAtribut() {
-      this.atributs.push({ ...this.atribut });
-      this.$refs.atributModal.close();
-      // simple
-      this.$notify({
-        group: "atributSuccess",
-        title: "Berhasil",
-        text: "Atribute ditambahkan!",
-        type: "success"
+    submissionHandler() {
+      const formData = new FormData();
+      let hasLogo = false;
+      this.values.schedule.forEach((s) => {
+        s.startTime = new Date(s.startTime).toISOString();
+        if (s.endTime) s.endTime = new Date(s.endTime).toISOString();
       });
-    },
-    addValue() {
-      this.atribut.values.push({ ...this.nilai });
-      this.$refs.valuesModal.close();
-      // simple
-      this.$notify({
-        group: "valueSuccess",
-        title: "Berhasil",
-        text: "Value Atribute ditambahkan!",
-        type: "success"
+      this.values.ticketTypes.forEach((t) => {
+        t.price = Number.parseInt(t.price);
       });
-    },
-    getTag() {
-      EventService.getAllTags()
-        .then((e) => {
-          this.tags = e.data.tags;
-        })
-        .catch((err) => console.log(err));
-    },
-    addTag() {
-      EventService.createEventTag(this.tag)
-        .then((e) => {
-          this.tags.push({ id: e.data.tag.id, name: e.data.tag.name });
-          this.$refs.tagModal.close();
-
-          this.$notify({
-            group: "tagSuccess",
-            title: "Berhasil",
-            text: "Tag ditambahkan!",
-            type: "success"
-          });
-        })
-        .catch((err) => console.log(err));
-    },
-    addTicketType() {
-      this.loader = true;
-      this.ticket.attributes = this.atributs;
-      this.ticketType.push({
-        name: this.ticket.name,
-        description: this.ticket.description,
-        price: parseInt(this.ticket.price),
-        attributes: this.ticket.attributes
-      });
-      this.loader = false;
-    },
-    addSchedule() {
-      console.log(this.schedule.startTime);
-      this.tagChoosed = this.tags.filter((el) =>
-        this.tagChoosed.includes(el.name)
-      );
-      this.tagChoosed = this.tagChoosed.map((el) => {
-        return { name: el.name, description: el.description };
-      });
-      this.schedules.push({
-        name: this.schedule.name,
-        description: this.schedule.description,
-        startTime: new Date(this.schedule.startTime)
-          .toISOString()
-          .slice(0, 19)
-          .replace("T", " "),
-        endTime: new Date(this.schedule.startTime)
-          .toISOString()
-          .slice(0, 19)
-          .replace("T", " "),
-        allDay: this.schedule.allDay,
-        place: this.schedule.place
-      });
-    },
-    createEvent() {
-      this.addSchedule();
-      var request = {
-        name: this.name,
-        tagline: this.tagline,
-        description: this.description,
-        schedule: this.schedules,
-        hasRsvp: this.hasRsvp,
-        rsvpDeadline: this.rsvpDeadline,
-        tags: this.tagChoosed,
-        maxTickets: this.maxTickets,
-        unlimitedTickets: this.unlimitedTickets,
-        ticketTypes: this.ticketType,
-        currency: this.currency
-      };
-
-      console.log(request);
-      EventService.createEvent(request)
+      if (this.values.logo) {
+        formData.append("logo", this.values.logo.files[0].file);
+        hasLogo = true;
+        this.values.logo = undefined;
+        delete this.values.logo;
+      }
+      if (this.values.maxTickets && this.values.maxTickets > 0) {
+        this.values.maxTickets = Number.parseInt(this.values.maxTickets);
+        this.values.unlimitedTickets = false;
+      } else {
+        this.values.unlimitedTickets = true;
+      }
+      if (this.values.rsvpDeadline) {
+        this.values.rsvpDeadline = new Date(
+          this.values.rsvpDeadline
+        ).toISOString();
+        this.values.hasRsvp = false;
+      } else {
+        this.values.hasRsvp = true;
+      }
+      EventService.createEvent(this.values)
         .then((res) => {
-          console.log(res);
+          if (
+            res &&
+            res.data &&
+            res.data.event &&
+            res.data.event.id &&
+            hasLogo
+          ) {
+            EventService.newLogo(res.data.event.id, formData, {
+              "Content-Type": "multipart/form-data"
+            })
+              .then((r) => console.log(r))
+              .catch((e) => console.warn(e));
+          }
         })
-        .catch((err) => {
-          console.log(err);
-        });
+        .catch((e) => console.warn(e));
+    },
+    addTag(newTag) {
+      this.values.tags.push(newTag);
     }
   }
 };
 </script>
-
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 <style lang="scss" scoped>
-.formevent::v-deep .formulate-input .formulate-input-element,
-.formmodal::v-deep .formulate-input .formulate-input-element {
-  max-width: none;
-}
-
-.formevent::v-deep .formulate-input-element--button,
-.formmodal::v-deep .formulate-input .formulate-input-element--button {
-  max-width: none;
-  background-color: #f4743b;
-  border-radius: 2em;
+.create-event {
+  text-align: initial;
 }
 
 @media (min-width: 420px) {

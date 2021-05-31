@@ -613,8 +613,20 @@ export class Controller {
           where: { userId: id },
           select: {
             id: true,
-            tickets: true,
-            status: true,
+            tickets: {
+              select: {
+                id: true,
+                identification: true,
+                identificationNumber: true,
+                nama: true,
+                type: {
+                  select: {
+                    name: true,
+                    price: true
+                  }
+                }
+              }
+            },
             Event: {
               select: {
                 id: true,
@@ -625,9 +637,11 @@ export class Controller {
                     name: true
                   }
                 },
-                schedule: true
+                schedule: true,
+                currency: true
               }
-            }
+            },
+            status: true
           },
         })
         .then((rsv) => {
@@ -678,9 +692,11 @@ export class Controller {
                     name: true
                   }
                 },
-                schedule: true
+                schedule: true,
+                currency: true
               }
-            }
+            },
+            status: true
           },
         })
         .then((rsv) => {

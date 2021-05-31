@@ -1184,7 +1184,7 @@ export class Controller {
             prisma.notification
               .create({
                 data: {
-                  title: 'Policy breach waring: ' + req.body.policyBreach,
+                  title: 'Policy breach warning: ' + req.body.policyBreach,
                   content: req.body.description,
                   user: {
                     connect: { id: user.id },

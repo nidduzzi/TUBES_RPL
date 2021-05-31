@@ -33,15 +33,24 @@
               :key="index"
             >
               <div class="row row-data mb-2">
-                <span class="col-md-3 py-2">{{ reservation.name }}</span>
-                <span class="col-md-2 py-2">Tempat</span>
-                <span class="col-md-3 py-2"> Waktu </span>
-                <span class="col-md-3 py-2"> [Alibaba] </span>
+                <span class="col-md-3 py-2">{{ reservation.Event.name }}</span>
+                <span class="col-md-2 py-2">{{
+                  reservation.Event.schedule[0].place
+                }}</span>
+                <span class="col-md-3 py-2">
+                  {{ reservation.Event.startDate }}
+                </span>
+                <span class="col-md-3 py-2">{{
+                  reservation.Event.eventOrganizer.name
+                }}</span>
                 <span class="col-md-1">
-                  <div class="text-white btn btn-tiket btn-md border-radius2">
+                  <button
+                    class="text-white btn btn-tiket btn-md border-radius2"
+                    @click="ticketDetailsModal(reservation)"
+                  >
                     <img src="../../../assets/logotiket.png" />
                     Tiket
-                  </div>
+                  </button>
                 </span>
               </div>
             </div>
@@ -49,33 +58,106 @@
         </div>
       </div>
     </div>
+    <!-- Tickets Modal -->
+    <SweetModal ref="ticketsModal">
+      <div class="grid">
+        <div class="row">
+          <h3 class="md-3 float-left">{{ reservationToShow.Event.name }}</h3>
+        </div>
+        <div class="row">
+          <h5 class="md-3 float-left">
+            {{ reservationToShow.Event.eventOrganizer.name }}
+          </h5>
+        </div>
+        <div class="row">
+          <h5 class="md-3 float-left">
+            {{ reservationToShow.Event.startDate }}
+          </h5>
+        </div>
+      </div>
+      <table class="table table-striped text-center">
+        <thead>
+          <tr>
+            <th scope="col">Nama</th>
+            <th scope="col">Jenis Tiket</th>
+            <th scope="col">Harga</th>
+            <th scope="col">Identifikasi</th>
+            <th scope="col">Nomor Identifikasi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(ticket, index) in reservationToShow.tickets" :key="index">
+            <td>{{ ticket.nama }}</td>
+            <td>{{ ticket.type.name }}</td>
+            <td>{{ currencyFormat(ticket.type.price) }}</td>
+            <td>{{ ticket.identification }}</td>
+            <td>{{ ticket.identificationNumber }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </SweetModal>
   </div>
 </template>
 
 <script>
+import { SweetModal } from "sweet-modal-vue";
 import UserService from "../../../services/user.service";
 
 export default {
   name: "reservationlist",
+  components: {
+    SweetModal
+  },
   data() {
     return {
       reservationList: [],
-      eventList: [],
+      userId: null,
+      reservationToShow: {
+        Event: {
+          name: null,
+          currency: "",
+          eventOrganizer: {
+            name: ""
+          },
+          startDate: ""
+        },
+        tickets: []
+      }
     };
   },
   mounted() {
-    // reservation list
-    UserService.getReservationUserList(this.$store.state.auth.user.auth[0].id)
+    this.userId = JSON.parse(localStorage.getItem("user")).auth.find(
+      (a) => a.role === "user"
+    ).id;
+    // user list
+    UserService.getWaitingReservationUserList(this.userId)
       .then((res) => {
-        // console.log(res);
         this.reservationList = res.data.reservations;
         this.reservationList.forEach((element) => {
+          element.Event.startDate = new Date(
+            element.Event.schedule[0].startTime
+          ).toDateString();
           element.detail = false;
         });
       })
       .catch((error) => {
         console.log(error);
       });
+  },
+  methods: {
+    ticketDetailsModal(reservation) {
+      this.reservationToShow = reservation;
+      this.$refs.ticketsModal.open();
+      console.log(this.reservationToShow);
+    },
+    currencyFormat(i) {
+      i = parseInt(i);
+
+      return Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: this.reservationToShow.Event.currency
+      }).format(i);
+    }
   }
 };
 </script>

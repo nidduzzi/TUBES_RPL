@@ -2,11 +2,15 @@
   <div class="reserv-form">
     <div class="card border-radius2 card-style text-left my-5 py-5">
       <div class="card-body px-5">
-        <h3 class="font-weight-bold">Webinar Something</h3>
+        <h3 class="font-weight-bold">{{ event.name }}</h3>
         <hr />
 
         <!-- jenis Tiket component -->
-        <TicketTypeTable class="w-50" />
+        <TicketTypeTable
+          class="w-50"
+          :ticket-types="event.ticketTypes"
+          :currency="event.currency"
+        />
 
         <h4>Tickets</h4>
         <div class="card card-style card-tickets">
@@ -23,11 +27,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <th scope="row">
+                  <tr v-for="(ticket, i) in this.formModel.tickets" :key="i">
+                    <td scope="row">
                       <select
                         class="custom-select bg-success text-white"
-                        id="inputGroupSelect01"
+                        v-model="ticket.ticketTypeId"
                       >
                         <option
                           v-for="(ticketType, i) in event.ticketTypes"
@@ -37,42 +41,22 @@
                           {{ ticketType.name }}
                         </option>
                       </select>
-                    </th>
-                    <td>2000000 IDR</td>
-                    <td>Jane Doe</td>
-                    <td>
-                      <select
-                        class="custom-select bg-success text-white"
-                        id="inputGroupSelect01"
-                      >
-                        <option selected calue="KTP">KTP</option>
-                        <option value="SIM">SIM</option>
-                      </select>
                     </td>
-                    <td>16329809830980</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      <select
-                        class="custom-select bg-success text-white"
-                        id="inputGroupSelect01"
-                      >
-                        <option selected value="Silver">Silver</option>
-                        <option value="VIP">VIP</option>
-                      </select>
-                    </th>
+                    <td>{{ currencyFormat(ticket.ticketTypeId) }}</td>
                     <td>
-                      <input class="form-control" type="number" name="harga" />
-                    </td>
-                    <td>
-                      <input class="form-control" type="text" name="nama" />
+                      <input
+                        class="form-control"
+                        type="text"
+                        name="nama"
+                        v-model="ticket.nama"
+                      />
                     </td>
                     <td>
                       <select
                         class="custom-select bg-success text-white"
-                        id="inputGroupSelect01"
+                        v-model="ticket.identification"
                       >
-                        <option selected calue="KTP">KTP</option>
+                        <option selected value="KTP">KTP</option>
                         <option value="SIM">SIM</option>
                       </select>
                     </td>
@@ -81,11 +65,27 @@
                         class="form-control"
                         type="text"
                         name="identifikasi"
+                        v-model="ticket.identificationNumber"
                       />
                     </td>
                     <td>
-                      <button class="btn btn-success">
+                      <button
+                        class="btn btn-success"
+                        :class="{ 'btn-hide': !lastElement(i) }"
+                        @click="addTicket"
+                        type="button"
+                      >
                         <i class="fa fa-plus" aria-hidden="true"></i>
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-success"
+                        :class="{ 'btn-hide': !lastElement(i) || i === 0 }"
+                        @click="deleteTicket"
+                        type="button"
+                      >
+                        <i class="fa fa-minus" aria-hidden="true"></i>
                       </button>
                     </td>
                   </tr>
@@ -97,12 +97,12 @@
       </div>
       <div class="row">
         <div class="offset-md-1 col-md-5">
-          <button @click="updateTiket" class="btn btn-submit btn-block">
+          <button @click="createReservation" class="btn btn-submit btn-block">
             Submit
           </button>
         </div>
         <div class="col-md-5">
-          <button @click="updateForm" class="btn btn-checkout btn-block">
+          <button @click="checkout" class="btn btn-checkout btn-block">
             Checkout
           </button>
         </div>
@@ -113,34 +113,86 @@
 
 <script>
 import TicketTypeTable from "@/components/TicketTypeTable.vue";
+import ReservationService from "../services/reservation.service";
 
 export default {
   name: "reservation",
   components: {
-    TicketTypeTable,
+    TicketTypeTable
   },
   data() {
     return {
       userId: null,
       formModel: {
-        eventId: this.event.id,
-        tickets: [{ nama: "", identification: "", ticketTypeId: this.event.ticketType }],
-      },
+        eventId: null,
+        tickets: []
+      }
     };
   },
   props: ["event"],
-  created(){
-    this.userId = JSON.parse(localStorage.getItem("user")).auth.find(a => a.role === "user").id;
+  created() {
+    this.userId = JSON.parse(localStorage.getItem("user")).auth.find(
+      (a) => a.role === "user"
+    ).id;
+    console.log(this.event);
+
     this.formModel.eventId = this.event.id;
-    this.formModel.tickets = this.event.ticketType;
+    this.formModel.tickets.push({
+      nama: "",
+      identification: "KTP",
+      identificationNumber: "",
+      ticketTypeId: this.event.ticketTypes[0].id
+    });
   },
   methods: {
-    updateForm() {
-      this.$emit("submitReserv", this.formModel);
-      this.$router.push("/checkout");
+    createReservation() {
+      ReservationService.createReservation(this.formModel)
+        .then(() => {
+          this.$router.push("/");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     },
-    addTicket() {},
-  },
+    checkout() {
+      ReservationService.createReservation(this.formModel)
+        .then((res) => {
+          this.$router.push({
+            path: "/checkout",
+            query: {
+              reservation: res.data.reservation
+            }
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    currencyFormat(i) {
+      i = parseInt(i);
+      i = this.event.ticketTypes.findIndex((e) => e.id == i);
+      var n = this.event.ticketTypes[i].price;
+
+      return Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: this.event.currency
+      }).format(n);
+    },
+    addTicket() {
+      this.formModel.tickets.push({
+        nama: "",
+        identification: "KTP",
+        identificationNumber: "",
+        ticketTypeId: this.event.ticketTypes[0].id
+      });
+    },
+    deleteTicket() {
+      this.formModel.tickets.pop();
+    },
+    lastElement(i) {
+      return !(i < this.formModel.tickets.length - 1);
+    }
+  }
 };
 </script>
 
@@ -169,5 +221,9 @@ export default {
   &:hover {
     background: darken(#beee62, 10%);
   }
+}
+
+.btn-hide {
+  visibility: hidden;
 }
 </style>

@@ -12,7 +12,7 @@
         <tr v-for="(ticketType, i) in ticketTypes" :key="i">
           <td>{{ i + 1 }}</td>
           <td>{{ ticketType.name }}</td>
-          <td>{{ currency + " " + ticketType.price }}</td>
+          <td>{{ currencyFormat(ticketType.price) }}</td>
         </tr>
       </tbody>
     </table>
@@ -21,7 +21,16 @@
 <script>
 export default {
   name: "ticketTypeTable",
-  props: ["ticketTypes", "currency"]
+  props: ["ticketTypes", "currency"],
+  methods: {
+    currencyFormat(n) {
+      n = parseInt(n);
+      return Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: this.currency
+      }).format(n);
+    }
+  }
 };
 </script>
 

@@ -78,6 +78,7 @@ export default new Router({
                 path: "/checkout",
                 name: "checkout",
                 component: () => import("./components/CheckoutForm.vue"),
+                props: route => ({ reservation: route.query.reservation })
               },
           ]
         },

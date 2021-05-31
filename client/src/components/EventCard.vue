@@ -80,7 +80,6 @@
 <script>
 import TicketTypeTable from "@/components/TicketTypeTable.vue";
 import ScheduleTable from "@/components/ScheduleTable.vue";
-
 export default {
   name: "EventCard",
   components: {
@@ -115,7 +114,6 @@ export default {
   background-color: #beee62;
   border-radius: 5em;
 }
-
 .btn-beli {
   background-color: #f4743b;
   border-radius: 20px;

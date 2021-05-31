@@ -89,9 +89,17 @@ typings/
 
 **/package-lock.json
 
+<<<<<<< HEAD
 # Compiled typescript
 **/dist
 
 *.cpuprofile
+=======
+**/dist
+
+
+
+*.cpuprofile
+>>>>>>>>> Temporary merge branch 2
 
 server/prisma/migrations/

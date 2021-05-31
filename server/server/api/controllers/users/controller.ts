@@ -83,37 +83,11 @@ export class Controller {
       // check if q is sent
       q
         ? // check if h is sent
-          h
-          ? // check if h.select is sent
-            h.select
-            ? prisma.user.findMany({
-                where: q,
-                select: h.select ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-            : // or if h.include is sent instead
-              prisma.user.findMany({
-                where: q,
-                include: h.include ?? undefined,
-                cursor: h.cursor ?? undefined,
-                skip: h.skip ?? h.cursor ? 1 : undefined,
-                distinct: h.distinct ?? undefined,
-                orderBy: h.orderBy ?? undefined,
-                take: h.take ?? undefined,
-              })
-          : // or if h is not sent
-            prisma.user.findMany({
-              where: q,
-            })
-        : // or if q isn't sent and then check if h is sent
         h
-        ? // check if h.select is sent
+          ? // check if h.select is sent
           h.select
-          ? prisma.user.findMany({
+            ? prisma.user.findMany({
+              where: q,
               select: h.select ?? undefined,
               cursor: h.cursor ?? undefined,
               skip: h.skip ?? h.cursor ? 1 : undefined,
@@ -121,7 +95,33 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-          : // or if h.include is sent instead
+            : // or if h.include is sent instead
+            prisma.user.findMany({
+              where: q,
+              include: h.include ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+          : // or if h is not sent
+          prisma.user.findMany({
+            where: q,
+          })
+        : // or if q isn't sent and then check if h is sent
+        h
+          ? // check if h.select is sent
+          h.select
+            ? prisma.user.findMany({
+              select: h.select ?? undefined,
+              cursor: h.cursor ?? undefined,
+              skip: h.skip ?? h.cursor ? 1 : undefined,
+              distinct: h.distinct ?? undefined,
+              orderBy: h.orderBy ?? undefined,
+              take: h.take ?? undefined,
+            })
+            : // or if h.include is sent instead
             prisma.user.findMany({
               include: h.include ?? undefined,
               cursor: h.cursor ?? undefined,
@@ -130,7 +130,7 @@ export class Controller {
               orderBy: h.orderBy ?? undefined,
               take: h.take ?? undefined,
             })
-        : // or if h is not sent
+          : // or if h is not sent
           prisma.user.findMany({});
 
     query
@@ -611,7 +611,93 @@ export class Controller {
       prisma.reservation
         .findMany({
           where: { userId: id },
-          include: { tickets: true },
+          select: {
+            id: true,
+            tickets: {
+              select: {
+                id: true,
+                identification: true,
+                identificationNumber: true,
+                nama: true,
+                type: {
+                  select: {
+                    name: true,
+                    price: true
+                  }
+                }
+              }
+            },
+            Event: {
+              select: {
+                id: true,
+                name: true,
+                eventOrganizer: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                },
+                schedule: true,
+                currency: true
+              }
+            },
+            status: true
+          },
+        })
+        .then((rsv) => {
+          if (rsv) {
+            res.status(200).send({ reservations: rsv });
+          } else {
+            res.status(404).send({ message: 'invalid id given' });
+          }
+        })
+        .catch((err) => next(err));
+    } else {
+      res.status(404).send({ message: 'invalid id given' });
+    }
+  }
+
+  getWaitingReservations(req: Request, res: Response, next: NextFunction): void {
+    if (req.params.id != undefined) {
+      const id = Number.parseInt(req.params.id);
+      prisma.reservation
+        .findMany({
+          where: {
+            userId: id,
+            status: 'WAITING'
+          },
+          select: {
+            id: true,
+            tickets: {
+              select: {
+                id: true,
+                identification: true,
+                identificationNumber: true,
+                nama: true,
+                type: {
+                  select: {
+                    name: true,
+                    price: true
+                  }
+                }
+              }
+            },
+            Event: {
+              select: {
+                id: true,
+                name: true,
+                eventOrganizer: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                },
+                schedule: true,
+                currency: true
+              }
+            },
+            status: true
+          },
         })
         .then((rsv) => {
           if (rsv) {
@@ -1098,7 +1184,7 @@ export class Controller {
             prisma.notification
               .create({
                 data: {
-                  title: 'Policy breach waring: ' + req.body.policyBreach,
+                  title: 'Policy breach warning: ' + req.body.policyBreach,
                   content: req.body.description,
                   user: {
                     connect: { id: user.id },

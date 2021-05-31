@@ -259,6 +259,57 @@ export class Controller {
                 NoUndefinedField<NewSchedule>
               >;
               cleanUp(schedule);
+              const data = {
+                name: req.body.name,
+                description: req.body.description,
+                hasRsvp: req.body.hasRsvp,
+                rsvpDeadline: new Date(req.body.rsvpDeadline),
+                unlimitedTickets: req.body.unlimitedTickets,
+                schedule: {
+                  create: schedule,
+                },
+                eventOrganizer: {
+                  connect: { id: eo.id },
+                },
+                maxTickets: req.body.maxTickets,
+                tagline: req.body.tagline,
+                tags: {
+                  connect: tagNames,
+                },
+                ticketTypes: {
+                  create: newTicketTypes.map((ntt) => {
+                    const r = {
+                      name: ntt.name,
+                      description: ntt.description,
+                      price: ntt.price,
+                      attributes: ntt.attributes
+                        ? {
+                            create: ntt.attributes.map((a) => {
+                              const r = {
+                                name: a.name,
+                                values: a.values
+                                  ? {
+                                      createMany: {
+                                        data: a.values.map((v) => {
+                                          return { value: v.value };
+                                        }),
+                                      },
+                                    }
+                                  : {},
+                              };
+                              cleanUp(r);
+                              return r;
+                            }),
+                          }
+                        : {},
+                      currency: ntt.currency,
+                    };
+                    cleanUp(r);
+                    return r;
+                  }),
+                },
+              };
+              cleanUp(data, [undefined, null, '', [], {}]);
               prisma.event
                 .findUnique({ where: { name: req.body.name } })
                 .then((_name) => {
@@ -269,52 +320,7 @@ export class Controller {
                   } else {
                     prisma.event
                       .create({
-                        data: {
-                          name: req.body.name,
-                          description: req.body.description,
-                          hasRsvp: req.body.hasRsvp,
-                          rsvpDeadline: new Date(req.body.rsvpDeadline),
-                          unlimitedTickets: req.body.unlimitedTickets,
-                          schedule: {
-                            create: schedule,
-                          },
-                          eventOrganizer: {
-                            connect: { id: eo.id },
-                          },
-                          maxTickets: req.body.maxTickets,
-                          tagline: req.body.tagline,
-                          tags: {
-                            connect: tagNames,
-                          },
-                          ticketTypes: {
-                            create: newTicketTypes.map((ntt) => {
-                              const r = {
-                                name: ntt.name,
-                                description: ntt.description,
-                                price: ntt.price,
-                                attributes: {
-                                  create: ntt.attributes.map((a) => {
-                                    const r = {
-                                      name: a.name,
-                                      values: {
-                                        createMany: {
-                                          data: a.values.map((v) => {
-                                            return { value: v.value };
-                                          }),
-                                        },
-                                      },
-                                    };
-                                    cleanUp(r);
-                                    return r;
-                                  }),
-                                },
-                                currency: ntt.currency,
-                              };
-                              cleanUp(r);
-                              return r;
-                            }),
-                          },
-                        },
+                        data: data,
                       })
                       .then((event) => {
                         if (event) {

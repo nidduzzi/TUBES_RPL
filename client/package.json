@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@braid/vue-formulate": "^2.5.2",
-    "axios": "^0.21.1",
+    "axios": "^1.21.0",
     "core-js": "^2.6.5",
     "dotenv": "^9.0.2",
     "fecha": "^4.2.1",
     "form-data": "^4.0.0",
-    "jspdf": "^2.3.1",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^3.5.14",
     "moment": "^2.29.1",
     "nprogress": "^0.2.0",
@@ -44,7 +44,7 @@
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
     "lint-staged": "^8.1.5",
-    "node-sass": "^5.0.0",
+    "node-sass": "^9.0.0",
     "sass-loader": "^10.0.1",
     "vue-template-compiler": "^2.6.10"
   },
